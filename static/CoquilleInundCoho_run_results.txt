@@ -1,0 +1,147 @@
+BUDGET ($ million)	0.0	1.0	2.0	3.0	4.0	5.0	6.0	7.0	8.0	9.0	10.0
+Barrier Count	0	2	3	5	7	8	10	12	15	17	20
+Tide gate Count	0	2	3	5	7	8	10	12	15	17	20
+Upstream Count	0	0	0	0	0	0	0	0	0	0	0
+Dominant Count	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
+											
+NET POTENTIAL BENEFIT (TARGET UNITS):											
+Coho_salmon	0.0	5.86537644724425	17.076412774819516	26.677416165249088	29.185164416652206	34.31533689162184	36.81375171452922	38.263014155917105	39.30896240718387	39.93682644048208	39.93682644048208
+InundHab_Current	0.0	1388.653137207031	1899.00112915039	2183.865409851072	2404.0944175720188	2439.76207065582	2550.3340806961032	2666.0504360198943	2856.7071094512908	2972.8794403076135	3143.503055572506
+											
+NET POTENTIAL BENEFIT (STANDARDIZED VALUES):											
+Target Weights:											
+InundHab_Current	1.0000										
+Coho_salmon	1.0000										
+Net Potential Benefit by Target:											
+InundHab_Current	0.0000	0.7730	1.0570	1.2156	1.3382	1.3580	1.4196	1.4840	1.5901	1.6548	1.7498
+Coho_salmon	0.0000	0.3916	1.1402	1.7813	1.9488	2.2913	2.4582	2.5549	2.6248	2.6667	2.6667
+Weighted Net Gain Across Targets	0.0000	1.1646	2.1973	2.9969	3.2870	3.6494	3.8777	4.0389	4.2149	4.3215	4.4165
+											
+BARID	0.0	1.0	2.0	3.0	4.0	5.0	6.0	7.0	8.0	9.0	10.0	InSoln	Name	Cost	Region	BarrierType	Downstr BARID	PrimaryTG	DominantTG	Exclude_Reason	Coho_salmon	InundHab_Current	POINT_X	POINT_Y
+10Ats1	0	1	1	1	1	1	1	1	1	1	1	10	Foster Dairy	550000	Coquille	Tide gate		1	0		3.14329095063267	824.971008300781	-124.27287483	43.18261515
+36Ats1	0	1	1	1	1	1	1	1	1	1	1	10	Iowa Slough	390000	Coquille	Tide gate		1	0		2.72208549661158	563.68212890625	-124.28468037	43.15616964
+61Bts1	0	0	1	1	1	1	1	1	1	1	1	9	Beaver Slough	815000	Coquille	Tide gate		1	0		10.211133178967	510.347991943359	-124.26389842	43.20806167
+14ts1	0	0	0	1	1	1	1	1	1	1	1	8	Seestrom Creek	390000	Coquille	Tide gate		1	0		1.64462391508618	175.316635131835	-124.297129	43.14594066
+35ts1	0	0	0	1	1	1	1	1	1	1	1	8	Sevenmile Creek	815000	Coquille	Tide gate		1	0		7.94192359001191	109.547645568847	-124.34925398	43.16793137
+34ts1	0	0	0	0	1	1	1	1	1	1	1	7	Randolph Slough Island	390000	Coquille	Tide gate		1	0		0.828027580411816	176.132720947265	-124.35327645	43.16780184
+13ts1	0	0	0	0	0	1	1	1	1	1	1	6	Hatchet Slough	815000	Coquille	Tide gate		1	0		3.36809026748528	68.9256973266601	-124.2961944	43.15446634
+15ts1	0	0	0	0	1	0	1	1	1	1	1	6	Alder Creek	550000	Coquille	Tide gate		1	0		0.638988431140058	44.0962867736816	-124.29021283	43.13570577
+37ts1	0	0	0	0	0	1	1	1	1	1	1	6	Gray Creek	815000	Coquille	Tide gate		1	0		3.44180287847565	10.8382425308227	-124.17692698	43.11761781
+22ts1	0	0	0	0	0	0	1	1	1	1	1	5		390000	Coquille	Tide gate		1	0		0.818694151916082	66.4757232666015	-124.3184429	43.12539158
+18ts1	0	0	0	0	0	0	0	1	1	1	1	4	Cochran Property	390000	Coquille	Tide gate		1	0		0.485378244466683	105.995895385742	-124.29103766	43.12416237
+55Ats1	0	0	0	0	0	0	0	1	1	1	1	4	Offield Creek	390000	Coquille	Tide gate		1	0		0.963884196921208	9.72045993804931	-124.3388371	43.15868445
+19ts1	0	0	0	0	0	0	0	0	1	1	1	3	 	390000	Coquille	Tide gate		1	0		0.344776853060679	60.8874282836914	-124.29245819	43.12148639
+25ts1	0	0	0	0	0	0	0	0	1	1	1	3	 	390000	Coquille	Tide gate		1	0		0.197403199124444	92.2558441162109	-124.34244277	43.13939674
+54ts1	0	0	0	0	0	0	0	0	1	1	1	3	 	390000	Coquille	Tide gate		1	0		0.503768199081642	37.5134010314941	-124.33955482	43.15202949
+16ts1	0	0	0	0	0	0	0	0	0	1	1	2	Cochran Project	390000	Coquille	Tide gate		1	0		0.62786403329821	18.8768062591552	-124.29025272	43.13453179
+23ts1	0	0	0	0	0	0	0	0	0	1	1	2	Hamdock Creek	390000	Coquille	Tide gate		1	0			97.2955245971679	-124.33653612	43.13540226
+20ts1	0	0	0	0	0	0	0	0	0	0	1	1	 	390000	Coquille	Tide gate		1	0			37.1840133666992	-124.30493505	43.11263776
+31ts1	0	0	0	0	0	0	0	0	0	0	1	1	 	390000	Coquille	Tide gate		1	0			45.0781745910644	-124.34585852	43.15568759
+900ts1	0	0	0	0	0	0	0	0	0	0	1	1	Herman Ranch	390000	Coquille	Tide gate		1	0			88.3614273071289	-124.36213024	43.15825058
+039Ats1	0	0	0	0	0	0	0	0	0	0	0	0	Fat Elk	0	Coquille	Tide gate		0	0	landowner not in interested			-124.22910478	43.17654891
+039Bts1	0	0	0	0	0	0	0	0	0	0	0	0	Fat Elk	0	Coquille	Tide gate		0	0	landowner not in interested			-124.22904806	43.17656143
+039Cts1	0	0	0	0	0	0	0	0	0	0	0	0	Fat Elk	0	Coquille	Tide gate		0	0	landowner not in interested			-124.22899972	43.17658578
+039Dts1	0	0	0	0	0	0	0	0	0	0	0	0	Fat Elk	0	Coquille	Tide gate		0	0	landowner not in interested			-124.22893086	43.17660141
+039Ets1	0	0	0	0	0	0	0	0	0	0	0	0	Fat Elk	0	Coquille	Tide gate		1	0	landowner not in interested			-124.22888267	43.17662331
+100ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.22114685	43.18690963
+10145fs1	0	0	0	0	0	0	0	0	0	0	0	0	Alder Creek	75000	Coquille	Upstream	15ts1	0	0		1.04073223985124		-124.28652286	43.14035302
+101ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.22095381	43.18441245
+10245fs1	0	0	0	0	0	0	0	0	0	0	0	0	Sevenmile Creek	75000	Coquille	Upstream	3978fs1	0	0	Stream barrier other than culvert			-124.33608635	43.17698942
+102ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24036865	43.19279781
+103ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24022034	43.19158436
+104ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24040582	43.19082829
+10571fs1	0	0	0	0	0	0	0	0	0	0	0	0	Gray Creek	75000	Coquille	Upstream	3703fs1	0	0				-124.1562611	43.11440814
+105ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24047064	43.18779885
+106ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24030338	43.18777981
+107ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24054536	43.18638403
+11Ats1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.27709809	43.19199485
+11Bts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.27708143	43.19195628
+12Ats1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25959186	43.19541777
+12Bts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25958111	43.19535752
+12Dts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	815000	Coquille	Tide gate		1	0	Replaced and restored. Winter Lake	14.9761662226987	1796.52905273437	-124.26004247	43.19569185
+15637fs1	0	0	0	0	0	0	0	0	0	0	0	0	Foster Dairy	75000	Coquille	Upstream	10Ats1	0	0				-124.26048532	43.18084389
+15938fs1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	75000	Coquille	Upstream	12Dts1	0	0	Replaced and restored. Winter Lake	2.01576188990944		-124.23609485	43.20078768
+16092fs1	0	0	0	0	0	0	0	0	0	0	0	0	Seestrom Creek	75000	Coquille	Upstream	14ts1	0	0		0.0144558853314819		-124.2916764	43.14433693
+16385fs1	0	0	0	0	0	0	0	0	0	0	0	0	Beaver Slough	75000	Coquille	Upstream	61Bts1	0	0				-124.23005363	43.2406355
+17584fs1	0	0	0	0	0	0	0	0	0	0	0	0	Sevenmile Creek	75000	Coquille	Upstream	10245fs1	0	0				-124.34679663	43.19292248
+17ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.28599154	43.13226694
+21ts1	0	0	0	0	0	0	0	0	0	0	0	0	(Restored)	0	Coquille	Tide gate		1	0	Restored	0.257561458581474	79.1910858154296	-124.31740087	43.11463441
+23901fs1	0	0	0	0	0	0	0	0	0	0	0	0	Beaver Slough	75000	Coquille	Upstream	61Bts1	0	0				-124.21845872	43.22369573
+24ts1	0	0	0	0	0	0	0	0	0	0	0	0	 	390000	Coquille	Tide gate		1	0			21.1383762359619	-124.33868461	43.1364409
+26ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.34251366	43.14029479
+27ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.34200778	43.14688782
+28ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.34199013	43.148414
+29413fs1	0	0	0	0	0	0	0	0	0	0	0	0	Sevenmile Creek	75000	Coquille	Upstream	17584fs1	0	0				-124.34653615	43.19366002
+29ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.34199519	43.14945983
+30ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.34272414	43.15365479
+32ts1	0	0	0	0	0	0	0	0	0	0	0	0	Cedar Creek	390000	Coquille	Tide gate		1	0			13.0898036956787	-124.34852251	43.15896173
+33ts1	0	0	0	0	0	0	0	0	0	0	0	0	 	390000	Coquille	Tide gate		1	0			12.8727922439575	-124.35028098	43.16117722
+3641fs1	0	0	0	0	0	0	0	0	0	0	0	0	Beaver Slough	75000	Coquille	Upstream	61Bts1	0	0		0.999903148608267		-124.20636181	43.22989931
+3642fs1	0	0	0	0	0	0	0	0	0	0	0	0	Beaver Slough	75000	Coquille	Upstream	61Bts1	0	0				-124.21990799	43.23550477
+3703fs1	0	0	0	0	0	0	0	0	0	0	0	0	Gray Creek	75000	Coquille	Upstream	37ts1	0	0				-124.1615402	43.10956617
+38ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.31446039	43.11372733
+3978fs1	0	0	0	0	0	0	0	0	0	0	0	0	Sevenmile Creek	75000	Coquille	Upstream	35ts1	0	0	Stream barrier other than culvert			-124.348975	43.16810445
+40ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24313982	43.20683538
+41ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24506562	43.20268619
+42ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24499888	43.20279449
+43ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24498855	43.20268834
+44ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24989382	43.20270386
+4506fs1	0	0	0	0	0	0	0	0	0	0	0	0	Beaver Slough	75000	Coquille	Upstream	61Bts1	0	0				-124.20725789	43.2312376
+45ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24993395	43.20269894
+46Ats1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25960794	43.20264227
+46Bts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25959727	43.202691
+47ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25967341	43.20668352
+48ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25987126	43.20864952
+49ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25974475	43.2095891
+50ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25720361	43.20974229
+51ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24966576	43.20952562
+52ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24951881	43.20949736
+53ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24612269	43.20956855
+55Bts1	0	0	0	0	0	0	0	0	0	0	0	0	East Randolph Slough	390000	Coquille	Tide gate		1	0			6.90164709091186	-124.33888199	43.15868394
+56ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.29762964	43.14852284
+57ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25998702	43.19939885
+58ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25994966	43.20169481
+59ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25993835	43.20280636
+60ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.26441439	43.20735978
+62ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25593608	43.21299053
+63ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25554019	43.21298416
+64ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25434838	43.21306041
+65ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.2518894	43.20958371
+66ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24960189	43.20961468
+67ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24842124	43.2096485
+68ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24780709	43.2095599
+69ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24642802	43.20965594
+70ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24278102	43.20975619
+71ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24312981	43.21009071
+72ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.2429784	43.20682508
+73ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24341003	43.2058271
+74ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24358053	43.2057228
+75ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24970696	43.20616552
+76ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24980483	43.20617339
+77ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25339477	43.20258477
+78ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25002676	43.20255968
+7958fs1	0	0	0	0	0	0	0	0	0	0	0	0	Sevenmile Creek	75000	Coquille	Upstream	29413fs1	0	0	Stream barrier other than culvert			-124.34938871	43.20398022
+79ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24502065	43.20253684
+8057fs1	0	0	0	0	0	0	0	0	0	0	0	0	Hamdock Creek	75000	Coquille	Upstream	23ts1	0	0				-124.33141659	43.12883955
+80ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24308117	43.20253292
+81ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24187444	43.20252816
+82ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.23676344	43.19994613
+83ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25325167	43.1954246
+84ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.25311389	43.19531175
+85ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.2525584	43.19540932
+86ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24931188	43.19538192
+87ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.2472138	43.19536622
+88ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.24539813	43.19524822
+89ts1	0	0	0	0	0	0	0	0	0	0	0	0	Winter Lake	0	Coquille	Tide gate		0	0	Replaced and restored. Winter Lake			-124.23949902	43.19531944
+9040fs1	0	0	0	0	0	0	0	0	0	0	0	0	Gray Creek	75000	Coquille	Upstream	3703fs1	0	0				-124.15692787	43.11189678
+90ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.23894276	43.19518728
+91ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.23525591	43.19519443
+92ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.23257976	43.1952881
+93ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.23031792	43.19459351
+94ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.22852065	43.19322503
+95ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.22670092	43.19239806
+96ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.22656273	43.19239192
+97ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.22578858	43.19182651
+98ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.22472305	43.19113748
+99ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.2220298	43.18808191
+9ts1	0	0	0	0	0	0	0	0	0	0	0	0		0	Coquille	Tide gate		0	0				-124.27498867	43.17404453

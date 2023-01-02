@@ -1,0 +1,67 @@
+.header img {
+    float: left;
+    width: 150px;
+    padding-bottom: 25px;
+}
+
+.header h1 {
+    position: relative;
+    top: 0px;
+    left: 30px;
+    color: #225283;
+    font-family: Roboto, Arial, Helvetica, sans-serif;
+}
+
+p {
+    font-family: Roboto, Arial, Helvetica, sans-serif;
+    align-self: flex-start;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.header p {
+    position: relative;
+    left: 30px;
+    color: #225283;
+}
+
+.bk-root {
+    margin-top: 30px;
+}
+
+.bk h2 {
+    color: #225283;
+    font-family: Roboto, Arial, Helvetica, sans-serif;
+    font-size: 1.7em;
+    font-weight: 600;
+}
+
+.bk h3 {
+    color: #225283;
+    font-family: Roboto, Arial, Helvetica, sans-serif;
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-bottom: 0px;
+}
+
+.bk-root .bk-tabs-header .bk-tab.bk-active {
+    color: black;
+    background-color: #E6E6E6;
+}
+
+.grid-stack-item-content p {
+    align-self: center;
+    padding-left: 10px;
+    padding-top: 7px;
+    padding-bottom: 5px;
+}
+
+.grid-stack-item p {
+    color: black;
+}
+
+.tgo-button {
+    font-family: Roboto, Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    background-color: paleturquoise;
+}
