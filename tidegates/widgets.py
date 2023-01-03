@@ -80,29 +80,45 @@ class TGMap():
     def set_selection(self, lst):
         self.map.select({'tag': lst[0]})
 
-def make_targets():
-    targets = GridStack(
-        sizing_mode='fixed',
-        allow_resize=False,
-        allow_drag=True,
-        nrows=10,
-        ncols=2,
-        height=350,
-        margin=10,
-    )
+# def make_targets():
+#     targets = GridStack(
+#         sizing_mode='fixed',
+#         allow_resize=False,
+#         allow_drag=True,
+#         nrows=10,
+#         ncols=2,
+#         height=350,
+#         margin=10,
+#     )
 
-    targets[0,0] = pn.Pane('Fish habitat: Inundation',margin=2,background='white')
-    targets[1,0] = pn.Pane('Fish habitat: Coho streams',margin=2,background='white')
-    targets[2,0] = pn.Pane('Fish habitat: Chinook streams',margin=2,background='white')
-    targets[3,0] = pn.Pane('Fish habitat: Steelhead streams',margin=2,background='white')
-    targets[4,0] = pn.Pane('Fish habitat: Cutthroat streams',margin=2,background='white')
-    targets[5,0] = pn.Pane('Fish habitat: Chum streams',margin=2,background='white')
-    targets[6,0] = pn.Pane('Agriculture',margin=2,background='white')
-    targets[7,0] = pn.Pane('Roads & Railroads',margin=2,background='white')
-    targets[8,0] = pn.Pane('Buildings',margin=2,background='white')
-    targets[9,0] = pn.Pane('Public-Use Structures',margin=2,background='white')
+#     targets[0,0] = pn.Pane('Fish habitat: Inundation',margin=2,background='white')
+#     targets[1,0] = pn.Pane('Fish habitat: Coho streams',margin=2,background='white')
+#     targets[2,0] = pn.Pane('Fish habitat: Chinook streams',margin=2,background='white')
+#     targets[3,0] = pn.Pane('Fish habitat: Steelhead streams',margin=2,background='white')
+#     targets[4,0] = pn.Pane('Fish habitat: Cutthroat streams',margin=2,background='white')
+#     targets[5,0] = pn.Pane('Fish habitat: Chum streams',margin=2,background='white')
+#     targets[6,0] = pn.Pane('Agriculture',margin=2,background='white')
+#     targets[7,0] = pn.Pane('Roads & Railroads',margin=2,background='white')
+#     targets[8,0] = pn.Pane('Buildings',margin=2,background='white')
+#     targets[9,0] = pn.Pane('Public-Use Structures',margin=2,background='white')
 
-    return targets
+#     return targets
+
+# Restoration targets are displayed in a CheckBoxGroup.  This dictionary defines
+# the string to display and the internal code for each option.
+
+targets = {
+    'Fish habitat: Inundation': 'FI',
+    'Fish habitat: Coho streams': 'CO',
+    'Fish habitat: Chinook streams': 'CH',
+    'Fish habitat: Steelhead streams': 'ST',
+    'Fish habitat: Cutthroat streams': 'CT',
+    'Fish habitat: Chum streams': 'CU',
+    'Agriculture': 'AG',
+    'Roads & Railroads': 'RR',
+    'Buildings': 'BL',
+    'Public-Use Structures': 'PS',
+}
 
 welcome_text = '''
 <h2>Welcome</h2>
@@ -118,8 +134,7 @@ button_text = '''
 
 target_text = '''
 <p>
-   Drag one or more optimization critera to the right, ordering them from highest to lowest priority.
-   At least one target must be selected.
+   Select one or more restoration targets.
 </p>
 '''
 
@@ -165,7 +180,7 @@ class TideGates(param.Parameterized):
     climate_group = pn.widgets.RadioBoxGroup(name='Climate', options=['Current', 'Future'], inline=False)
     region_group = pn.widgets.CheckBoxGroup(name='Regions', options=['Umpqua', 'Coos', 'Coquille'], inline=False)
 
-    targets = make_targets()
+    target_boxes = pn.widgets.CheckBoxGroup(name='Targets', options=list(targets.keys()), inline=False)
 
     region_alert = pn.pane.Alert('**No geographic regions selected**', alert_type='danger')
     target_alert = pn.pane.Alert('**No optimizer targets selected**', alert_type='danger')
@@ -181,14 +196,12 @@ class TideGates(param.Parameterized):
             pn.Row(
                 pn.Pane(button_text,width=200),
                 pn.WidgetBox(self.region_group, width=150),
-                pn.WidgetBox(self.climate_group,width=100),
+                pn.WidgetBox(self.climate_group, width=100),
             ),
             pn.layout.VSpacer(),
-            pn.Row('<h3>Optimizer targets</h3>'),
+            pn.Row('<h3>Restoration targets</h3>'),
             pn.Pane(target_text, width=500),
-            pn.WidgetBox(
-                self.targets,
-            ),
+            pn.WidgetBox(self.target_boxes, width=500),
             pn.layout.VSpacer(),
             pn.Row('<h3>Budget</h3>'),
             pn.Pane(budget_text, width=500),
@@ -248,6 +261,7 @@ class TideGates(param.Parameterized):
     def make_table_tab(self, df, targets):
         formatters = { }
         alignment = {}
+        print(df.columns)
         for col in df.columns:
             if re.match(r'[\d\.]+', col):
                 formatters[col] = {'type': 'tickCross', 'crossElement': ''}
@@ -275,7 +289,7 @@ class TideGates(param.Parameterized):
         self.target_alert.visible = False
         if self.region_group.value == []:
             self.region_alert.visible = True
-        if self.targets.grid[:,1].sum() == 0:
+        if len(self.target_boxes.value) == 0:
             self.target_alert.visible = True
         return not (self.region_alert.visible or self.target_alert.visible)
 
