@@ -6,6 +6,7 @@
 #
 
 import pandas as pd
+import numpy as np
 
 class BF:
     '''
@@ -13,8 +14,11 @@ class BF:
     data used by the GUI and by OptiPass.
     '''
     data = None
-    regions = None
     map_info = None
+    regions = None
+    climates = ['Current', 'Future']
+    targets = { }
+    target_map = None
 
 # Read the data, save it as a Pandas data frame that will be
 # accessible to other functions in this module
@@ -25,8 +29,95 @@ def load_barriers(fn):
     data frame.
     '''
     BF.data = pd.read_csv(fn)
-    BF.regions = list(BF.data.groupby('region').mean().sort_values(by='lat',ascending=False).index)
-    BF.map_info = BF.data[['barid','region','barriertype','lat','lon']]
+    _make_map_info()
+    _make_region_list()
+    _make_targets()
+
+def _make_map_info():
+    '''
+    Make a dataframe with attributes needed to display gates on a map.
+    Map latitude and longitude columns in the input frame to Mercator
+    coordinates, and copy the ID, region and barrier types so they can
+    be displayed as tooltips.
+    '''
+    df = BF.data[['barid','region','barriertype']]
+    R = 6378137.0
+    BF.map_info = pd.concat([
+        df, 
+        np.radians(BF.data.lon)*R, 
+        np.log(np.tan(np.pi/4 + np.radians(BF.data.lat)/2)) * R
+    ], axis=1)
+    BF.map_info.columns = ['id', 'region', 'type', 'x', 'y']
+
+def _make_region_list():
+    '''
+    Make a list of unique region names, sorted by latitude, so regions
+    are displayed in order from north to south
+    '''
+    df = BF.data[['barid','region','lat']]
+    m = df.groupby('region').mean(numeric_only=True).sort_values(by='lat',ascending=False)
+    BF.regions = list(m.index)
+
+def _make_targets():
+    '''
+    Create dictionaries with target records for each climate scenario,
+    and a dictionary that maps long descriptions to target IDs
+    '''
+    BF.targets['Current'] = dict(fish_targets)
+    BF.targets['Current'] |= current_infrastructure_targets
+    BF.targets['Future'] = dict(fish_targets)
+    BF.targets['Future'] |= future_infrastructure_targets
+    BF.target_map = { BF.targets['Current'][x].long: x for x in BF.targets['Current'].keys()}
+
+####################
+#
+# Restoration targets
+#
+# A target is defined by a short description (used in output tables), a long
+# description (displayed in the GUI), and names of spreadsheet columns that
+# have the upstream habitat, current passability, and post-restoration passability.
+
+from collections import namedtuple
+
+Target = namedtuple('Target', ['long', 'short', 'habitat', 'prepass', 'postpass'])
+
+# Panel uses the long description in checkbox values; we need to map them to
+# target IDs.
+
+CO = 'Fish habitat: Coho streams'
+CH = 'Fish habitat: Chinook streams'
+ST = 'Fish habitat: Steelhead streams'
+CT = 'Fish habitat: Cutthroat streams'
+CU = 'Fish habitat: Chum streams'
+FI = 'Fish habitat: Inundation'
+AG = 'Agriculture'
+RR = 'Roads & Railroads'
+BL = 'Buildings'
+PS = 'Public-Use Structures'
+
+fish_targets = {
+    'CO':  Target(CO, 'Coho', 'sCO', 'PREPASS_CO', 'POSTPASS'),
+    'CH':  Target(CH, 'Chinook', 'sCH', 'PREPASS_CH', 'POSTPASS'),
+    'ST':  Target(ST, 'Steelhead', 'sST', 'PREPASS_ST', 'POSTPASS'),
+    'CT':  Target(CT, 'Cutthroat', 'sCT', 'PREPASS_CT', 'POSTPASS'),
+    'CU':  Target(CU, 'Chum', 'sCU', 'PREPASS_CU', 'POSTPASS'),
+}
+
+current_infrastructure_targets = {
+    'FI': Target(FI, 'Inund', 'sInundHab_Current', 'PREPASS_FISH', 'POSTPASS'),
+    'AG': Target(AG, 'Agric', 'sAgri_Current', 'PREPASS_AgrInf', 'POSTPASS'),
+    'RR': Target(RR, 'Roads', 'sRoadRail_Current', 'PREPASS_AgrInf', 'POSTPASS'),
+    'BL': Target(BL, 'Bldgs', 'sBuilding_Current', 'PREPASS_AgrInf', 'POSTPASS'),
+    'PS': Target(PS, 'Public', 'sPublicUse_Current', 'PREPASS_AgrInf', 'POSTPASS'),
+}
+
+future_infrastructure_targets = {
+    'FI': Target(FI, 'Inund', 'sInundHab_Future', 'PREPASS_FISH', 'POSTPASS'),
+    'AG': Target(AG, 'Agric', 'sAgri_Future', 'PREPASS_AgrInf', 'POSTPASS'),
+    'RR': Target(RR, 'Roads', 'sRoadRail_Future', 'PREPASS_AgrInf', 'POSTPASS'),
+    'BL': Target(BL, 'Bldgs', 'sBuilding_Future', 'PREPASS_AgrInf', 'POSTPASS'),
+    'PS': Target(PS, 'Public', 'sPublicUse_Future', 'PREPASS_AgrInf', 'POSTPASS'),
+}
 
 
 ####################
@@ -43,7 +134,8 @@ import pytest
 
 class TestBarriers:
 
-    def test_load(self):
+    @staticmethod
+    def test_load():
         '''
         Load the test data frame, expect to find 30 rows.
         '''
@@ -51,18 +143,41 @@ class TestBarriers:
         assert isinstance(BF.data, pd.DataFrame)
         assert len(BF.data) == 30
 
-    def test_regions(self):
+    @staticmethod
+    def test_regions():
         '''
         The list of region names should be sorted from north to south
         '''
         load_barriers('static/test_barriers.csv')
         assert BF.regions == ['Umpqua', 'Coos', 'Coquille']
 
-    def test_map_info(self):
+    @staticmethod
+    def test_map_info():
         '''
         The frame with map information should have 5 columns
         '''
         load_barriers('static/test_barriers.csv')
         assert isinstance(BF.map_info, pd.DataFrame)
         assert len(BF.map_info) == len(BF.data)
-        assert list(BF.map_info.columns) == ['barid','region','barriertype','lat','lon']
+        assert list(BF.map_info.columns) == ['id','region','type','x','y']
+
+    @staticmethod
+    def test_targets():
+        '''
+        There should be two sets of targets, each with 10 entries,
+        and one entry for each target in the map.
+        '''
+        load_barriers('static/test_barriers.csv')
+        assert len(BF.targets) == 2
+        assert len(BF.targets['Current']) == 10
+        assert len(BF.targets['Future']) == 10
+
+        t = BF.targets['Current']['CO']
+        assert t.short == 'Coho'
+        assert t.long == CO
+        assert t.habitat == 'sCO' 
+        assert t.prepass == 'PREPASS_CO'
+        assert t.postpass == 'POSTPASS'
+
+        assert len(BF.target_map) == 10
+        assert BF.target_map[CO] == 'CO'

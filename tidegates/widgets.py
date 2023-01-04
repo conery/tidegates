@@ -20,22 +20,17 @@ import subprocess
 import sys
 import time
 
+from barriers import load_barriers, BF
+
 pn.extension('gridstack', 'tabulator')
 
 class TGMap():
     def __init__(self):
-        self.df = pd.read_csv('static/source_data.csv')
-        self._add_gate_coordinates()
-        self.regions = self._create_regions()
+        load_barriers('static/source_data.csv')
         self.map, self.dots = self._create_map()
 
     def graphic(self):
         return self.map
-
-    def _add_gate_coordinates(self):
-        R = 6378137.0
-        self.df['x'] = np.radians(self.df.lon) * R
-        self.df['y'] = np.log(np.tan(np.pi/4 + np.radians(self.df.lat)/2)) * R
 
     def _create_map(self):
         tile_provider = get_provider(xyz.OpenStreetMap.Mapnik)
@@ -43,35 +38,29 @@ class TGMap():
             title='Oregon Coast', 
             height=800,
             width=400,
-            x_range=(self.df.x.min(),self.df.x.max()), 
-            y_range=(self.df.y.min()*0.997,self.df.y.max()*1.003),
+            x_range=(BF.map_info.x.min(),BF.map_info.x.max()), 
+            y_range=(BF.map_info.y.min()*0.997,BF.map_info.y.max()*1.003),
             x_axis_type='mercator',
             y_axis_type='mercator',
             toolbar_location='below',
             tools=['pan','wheel_zoom','hover','reset'],
             tooltips = [
-                ("ID", "@barid"),
+                ("ID", "@id"),
                 ("Region", "@region"),
-                ("Type", "@barriertype"),
-                # ("Name", "@name"),
+                ("Type", "@type"),
             ]
         )
         p.add_tile(tile_provider)
         p.toolbar.autohide = True
         dots = { }
-        for r, df in self.regions.items():
-            c = p.circle('x', 'y', size=5, color='darkslategray', source=df, tags=list(df.barid))
+        for r in BF.regions:
+            df = BF.map_info[BF.map_info.region == r]
+            c = p.circle('x', 'y', size=5, color='darkslategray', source=df, tags=list(df.id))
             c.nonselection_glyph = Circle(size=5, fill_color='darkslategray')
             c.selection_glyph = Circle(size=8, fill_color='blue')
             dots[r] = c
             c.visible = False
         return p, dots
-
-    def _create_regions(self):
-        dct = { }
-        for r in self.df.region.unique():
-            dct[r] = self.df[self.df.region == r]
-        return dct
 
     def display_regions(self, lst):
         for r, dots in self.dots.items():
@@ -79,46 +68,6 @@ class TGMap():
 
     def set_selection(self, lst):
         self.map.select({'tag': lst[0]})
-
-# def make_targets():
-#     targets = GridStack(
-#         sizing_mode='fixed',
-#         allow_resize=False,
-#         allow_drag=True,
-#         nrows=10,
-#         ncols=2,
-#         height=350,
-#         margin=10,
-#     )
-
-#     targets[0,0] = pn.Pane('Fish habitat: Inundation',margin=2,background='white')
-#     targets[1,0] = pn.Pane('Fish habitat: Coho streams',margin=2,background='white')
-#     targets[2,0] = pn.Pane('Fish habitat: Chinook streams',margin=2,background='white')
-#     targets[3,0] = pn.Pane('Fish habitat: Steelhead streams',margin=2,background='white')
-#     targets[4,0] = pn.Pane('Fish habitat: Cutthroat streams',margin=2,background='white')
-#     targets[5,0] = pn.Pane('Fish habitat: Chum streams',margin=2,background='white')
-#     targets[6,0] = pn.Pane('Agriculture',margin=2,background='white')
-#     targets[7,0] = pn.Pane('Roads & Railroads',margin=2,background='white')
-#     targets[8,0] = pn.Pane('Buildings',margin=2,background='white')
-#     targets[9,0] = pn.Pane('Public-Use Structures',margin=2,background='white')
-
-#     return targets
-
-# Restoration targets are displayed in a CheckBoxGroup.  This dictionary defines
-# the string to display and the internal code for each option.
-
-targets = {
-    'Fish habitat: Inundation': 'FI',
-    'Fish habitat: Coho streams': 'CO',
-    'Fish habitat: Chinook streams': 'CH',
-    'Fish habitat: Steelhead streams': 'ST',
-    'Fish habitat: Cutthroat streams': 'CT',
-    'Fish habitat: Chum streams': 'CU',
-    'Agriculture': 'AG',
-    'Roads & Railroads': 'RR',
-    'Buildings': 'BL',
-    'Public-Use Structures': 'PS',
-}
 
 welcome_text = '''
 <h2>Welcome</h2>
@@ -166,9 +115,6 @@ results_failed_text = '''
 
 
 class TideGates(param.Parameterized):
-    # map_pane = pn.Pane(get_map(), height=650, width=250)
-    # groups = make_feature_groups()
-
     map = TGMap()
     map_pane = pn.Pane(map.graphic())
 
@@ -177,10 +123,10 @@ class TideGates(param.Parameterized):
     save_button = pn.widgets.Button(name='Save',height=40,width=60)
     reset_button = pn.widgets.Button(name='Reset',height=40,width=60)
 
-    climate_group = pn.widgets.RadioBoxGroup(name='Climate', options=['Current', 'Future'], inline=False)
-    region_group = pn.widgets.CheckBoxGroup(name='Regions', options=['Umpqua', 'Coos', 'Coquille'], inline=False)
+    climate_group = pn.widgets.RadioBoxGroup(name='Climate', options=BF.climates, inline=False)
+    region_group = pn.widgets.CheckBoxGroup(name='Regions', options=BF.regions, inline=False)
 
-    target_boxes = pn.widgets.CheckBoxGroup(name='Targets', options=list(targets.keys()), inline=False)
+    target_boxes = pn.widgets.CheckBoxGroup(name='Targets', options=list(BF.target_map.keys()), inline=False)
 
     region_alert = pn.pane.Alert('**No geographic regions selected**', alert_type='danger')
     target_alert = pn.pane.Alert('**No optimizer targets selected**', alert_type='danger')
@@ -190,28 +136,28 @@ class TideGates(param.Parameterized):
         super(TideGates, self).__init__(**params)
 
         start_tab = pn.Column(
-            # pn.Row(self.load_button, self.save_button, pn.Spacer(width=350), self.reset_button),
-            # pn.Row(button_text),
             pn.Row('<h3>Geographic region and climate scenario</h3>'),
             pn.Row(
                 pn.Pane(button_text,width=200),
                 pn.WidgetBox(self.region_group, width=150),
                 pn.WidgetBox(self.climate_group, width=100),
             ),
+
             pn.layout.VSpacer(),
             pn.Row('<h3>Restoration targets</h3>'),
             pn.Pane(target_text, width=500),
             pn.WidgetBox(self.target_boxes, width=500),
+
             pn.layout.VSpacer(),
             pn.Row('<h3>Budget</h3>'),
             pn.Pane(budget_text, width=500),
             pn.WidgetBox(
                 BudgetBox()
             ),
+
             pn.Row(self.success_alert),
             pn.Row(self.region_alert),
             pn.Row(self.target_alert),
-            # pn.layout.VSpacer(height=20),
             pn.Row(pn.layout.Spacer(width=200), self.optimize_button, width=500),
         )
 
@@ -232,7 +178,6 @@ class TideGates(param.Parameterized):
         self.map.display_regions(events[0].new)
 
     def run_optimizer(self, _):
-        # self.main[2] = ('Results', pn.Pane(results_pending_text, width=500))
         if not self.check_selections():
             return
         self.success_alert.visible = False
