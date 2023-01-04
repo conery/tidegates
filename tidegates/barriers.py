@@ -40,12 +40,12 @@ def _make_map_info():
     coordinates, and copy the ID, region and barrier types so they can
     be displayed as tooltips.
     '''
-    df = BF.data[['barid','region','barriertype']]
+    df = BF.data[['BARID','BARID','BarrierType']]
     R = 6378137.0
     BF.map_info = pd.concat([
         df, 
-        np.radians(BF.data.lon)*R, 
-        np.log(np.tan(np.pi/4 + np.radians(BF.data.lat)/2)) * R
+        np.radians(BF.data.POINT_X)*R, 
+        np.log(np.tan(np.pi/4 + np.radians(BF.data.POINT_Y)/2)) * R
     ], axis=1)
     BF.map_info.columns = ['id', 'region', 'type', 'x', 'y']
 
@@ -54,8 +54,8 @@ def _make_region_list():
     Make a list of unique region names, sorted by latitude, so regions
     are displayed in order from north to south
     '''
-    df = BF.data[['barid','region','lat']]
-    m = df.groupby('region').mean(numeric_only=True).sort_values(by='lat',ascending=False)
+    df = BF.data[['BARID','REGION','POINT_Y']]
+    m = df.groupby('REGION').mean(numeric_only=True).sort_values(by='POINT_Y',ascending=False)
     BF.regions = list(m.index)
 
 def _make_targets():
@@ -181,3 +181,16 @@ class TestBarriers:
 
         assert len(BF.target_map) == 10
         assert BF.target_map[CO] == 'CO'
+
+    @staticmethod
+    def test_colnames():
+        '''
+        Make sure the column names in the Target objects exist in the
+        data frame.
+        '''
+        load_barriers('static/test_barriers.csv')
+        for c in ['Current', 'Future']:
+            for t in BF.targets[c].values():
+                assert t.habitat in BF.data.columns
+                assert t.prepass in BF.data.columns
+                assert t.postpass in BF.data.columns
