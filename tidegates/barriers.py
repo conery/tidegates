@@ -14,7 +14,7 @@ class BF:
     '''
     data = None
     regions = None
-    coords = None
+    map_info = None
 
 # Read the data, save it as a Pandas data frame that will be
 # accessible to other functions in this module
@@ -25,6 +25,9 @@ def load_barriers(fn):
     data frame.
     '''
     BF.data = pd.read_csv(fn)
+    BF.regions = list(BF.data.groupby('region').mean().sort_values(by='lat',ascending=False).index)
+    BF.map_info = BF.data[['barid','region','barriertype','lat','lon']]
+
 
 ####################
 #
@@ -47,3 +50,19 @@ class TestBarriers:
         load_barriers('static/test_barriers.csv')
         assert isinstance(BF.data, pd.DataFrame)
         assert len(BF.data) == 30
+
+    def test_regions(self):
+        '''
+        The list of region names should be sorted from north to south
+        '''
+        load_barriers('static/test_barriers.csv')
+        assert BF.regions == ['Umpqua', 'Coos', 'Coquille']
+
+    def test_map_info(self):
+        '''
+        The frame with map information should have 5 columns
+        '''
+        load_barriers('static/test_barriers.csv')
+        assert isinstance(BF.map_info, pd.DataFrame)
+        assert len(BF.map_info) == len(BF.data)
+        assert list(BF.map_info.columns) == ['barid','region','barriertype','lat','lon']
