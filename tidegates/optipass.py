@@ -16,16 +16,39 @@ import os
 
 import pandas as pd
 
+from barriers import load_barriers, BF
+
 ####################
 #
 # API used by web app
 #
 
-def generate_barrier_file(**kwargs):
+def generate_barrier_file(
+    regions: list[str],
+    targets: list[str],
+    climate: str = 'Current',
+) -> pd.DataFrame:
     '''
-    Create a barrier file that will be read by OptiPass.
+    Create a barrier file that will be read by OptiPass.  Assumes the
+    BF struct in the barriers module has been initialized.
     '''
-    pass
+    structs = BF.targets[climate]
+    filtered = BF.data[BF.data.REGION.isin(regions)]
+    of = filtered[['BARID','REGION','DSID']]
+    header = ['ID', 'REG', 'DS']
+    for t in targets:
+        of = pd.concat([of, filtered[structs[t].habitat]], axis=1)
+        header.append('HAB_'+t)
+    for t in targets:
+        of = pd.concat([of, filtered[structs[t].prepass]], axis=1)
+        header.append('PRE_'+t)
+    of = pd.concat([of, filtered['NPROJ'], filtered['COST']], axis=1)
+    header += ['NPROJ','COST']
+    for t in targets:
+        of = pd.concat([of, filtered[structs[t].postpass]], axis=1)
+        header.append('POST_'+t)
+    of.columns = header
+    return of
 
 def run(**kwargs):
     '''
@@ -39,6 +62,38 @@ def parse_results(**kwargs):
     in a Pandas dataframe.
     '''
     pass
+
+####################
+#
+# Tests
+#
+
+import pytest
+import tempfile
+
+class TestOP:
+
+    @staticmethod
+    def test_generate_file():
+        '''
+        Write a barrier file, test its structure
+        '''
+
+        # Create barrier descriptions from the test data
+        load_barriers('static/test_barriers.csv')
+        bf = generate_barrier_file(climate='Current', regions=['Coos'], targets=['CO', 'CH'])
+
+        # Write the frame to a CSV file
+        _, path = tempfile.mkstemp(suffix='.txt',text=True)
+        bf.to_csv(path, index=False, sep='\t', na_rep='NA')
+
+        # Read the file, test its expected structure      
+        tf = pd.read_csv(path, sep='\t')
+
+        assert len(tf) == 10
+        assert list(tf.columns) == ['ID','REG', 'DS', 'HAB_CO', 'HAB_CH', 'PRE_CO', 'PRE_CH', 'NPROJ', 'COST', 'POST_CO', 'POST_CH']
+        assert tf.COST.sum() == 985000
+        assert round(tf.HAB_CO.sum(), 3) ==  0.298
 
 ####################
 #
@@ -60,8 +115,8 @@ def init_api():
     parser.add_argument('--data', metavar='F', default='static/test_barriers.csv', help='CSV file with barrier data')
     parser.add_argument('--run', action='store_true', help='run OptiPass after creating barrier file')
     parser.add_argument('--climate', metavar='X', choices=['current','future'], default='current', help='climate scenario')
-    parser.add_argument('--region', metavar='R', required=True, nargs='+', help='one or more region names')
-    parser.add_argument('--target', metavar='T', required=True, nargs='+', help='one or more restoration target IDs')
+    parser.add_argument('--regions', metavar='R', required=True, nargs='+', help='one or more region names')
+    parser.add_argument('--targets', metavar='T', required=True, nargs='+', help='one or more restoration target IDs')
     parser.add_argument('--budget', metavar='N', nargs=2, default=(1000000, 10), help='maximum budget and number of increments')
     
     if len(sys.argv) == 1 or (len(sys.argv) == 2 and sys.argv[1] == 'help'):
@@ -72,4 +127,14 @@ def init_api():
 
 if __name__ == '__main__':
     args = init_api()
-    print('run optipass', args)
+    load_barriers(args.data)
+    bf = generate_barrier_file(regions=args.regions, targets=args.targets)
+    if args.run:
+        if getattr(os, 'uname', None) is None:
+            print('run Optipass')
+        else:
+            _, path = tempfile.mkstemp(suffix='.txt',text=True)
+            bf.to_csv(path, index=False, sep='\t', na_rep='NA')
+            print('barrier file written to', path)
+    else:
+        print(bf)
