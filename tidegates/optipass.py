@@ -13,6 +13,7 @@
 import argparse
 import sys
 import os
+import subprocess
 
 import pandas as pd
 
@@ -22,6 +23,9 @@ from barriers import load_barriers, BF
 #
 # API used by web app
 #
+
+# Create a Pandas frame that has a subset of the columns from the main
+# data frame that will be written to the barrier file.
 
 def generate_barrier_file(
     regions: list[str],
@@ -50,11 +54,37 @@ def generate_barrier_file(
     of.columns = header
     return of
 
-def run(**kwargs):
+# OptiPass is a Windows-only app.  On macOS/Linux just print the name of the
+# barrier file and commands that run OP (useful for debugging).  To see if
+# we're running on Windows look for the uname attribute in the os module.
+
+def run(
+    barrier_file: str, 
+    budget_max: int, 
+    budget_delta: int
+) -> list[str]:
     '''
     Generate and execute the shell commands that run OptiPass.
     '''
-    pass
+    template = r'.\bin\OptiPassMain.exe -f {bf} -o {of} -b {bl}'
+    on_windows = getattr(os, 'uname', None) is None
+    if not on_windows:
+        print('barrier file written to', path)
+    outputs = []
+    for i in range(budget_max // budget_delta):
+        outfile = f'optipass_{i+1}.txt'
+        cmnd = template.format(
+            bf = barrier_file,
+            of = outfile,
+            bl = budget_delta * (i+1)
+        )
+        if on_windows:
+            res = subprocess.run(cmnd, shell=True, capture_output=True)
+            if res.returncode == 0:
+                outputs.append(outfile)
+        else:
+            print(cmnd)
+    return outputs
 
 def parse_results(**kwargs):
     '''
@@ -130,11 +160,10 @@ if __name__ == '__main__':
     load_barriers(args.data)
     bf = generate_barrier_file(regions=args.regions, targets=args.targets)
     if args.run:
-        if getattr(os, 'uname', None) is None:
-            print('run Optipass')
-        else:
-            _, path = tempfile.mkstemp(suffix='.txt',text=True)
-            bf.to_csv(path, index=False, sep='\t', na_rep='NA')
-            print('barrier file written to', path)
+        _, path = tempfile.mkstemp(suffix='.txt',text=True)
+        bf.to_csv(path, index=False, sep='\t', na_rep='NA')
+        bmax = args.budget[0]
+        bdelt = bmax // args.budget[1]
+        run(path, bmax, bdelt)
     else:
         print(bf)
