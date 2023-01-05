@@ -69,7 +69,7 @@ def run(
     template = r'.\bin\OptiPassMain.exe -f {bf} -o {of} -b {bl}'
     on_windows = getattr(os, 'uname', None) is None
     if not on_windows:
-        print('barrier file written to', path)
+        print('barrier file written to', barrier_file)
     outputs = []
     for i in range(budget_max // budget_delta):
         outfile = f'optipass_{i+1}.txt'
@@ -79,6 +79,7 @@ def run(
             bl = budget_delta * (i+1)
         )
         if on_windows:
+            print(cmnd)
             res = subprocess.run(cmnd, shell=True, capture_output=True)
             if res.returncode == 0:
                 outputs.append(outfile)

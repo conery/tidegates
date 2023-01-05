@@ -6,6 +6,7 @@ from panel.layout.gridstack import GridStack
 # import folium as fm
 import numpy as np
 import pandas as pd
+import tempfile
 
 import bokeh.plotting as bk
 import bokeh.layouts as layouts
@@ -21,12 +22,13 @@ import sys
 import time
 
 from barriers import load_barriers, BF
+from optipass import generate_barrier_file, run, parse_results
 
 pn.extension('gridstack', 'tabulator')
 
 class TGMap():
     def __init__(self):
-        load_barriers('static/source_data.csv')
+        load_barriers('static/workbook.csv')
         self.map, self.dots = self._create_map()
 
     def graphic(self):
@@ -68,6 +70,25 @@ class TGMap():
 
     def set_selection(self, lst):
         self.map.select({'tag': lst[0]})
+
+
+class BudgetBox(pn.Row):
+    def __init__(self):
+        super(BudgetBox, self).__init__()
+        self.budget = pn.widgets.IntSlider(name='Maximum', start=0, end=5000000, step=100000, value=0, tooltips=False, format='$0,000', width=400)
+        self.increment = pn.widgets.RadioBoxGroup(options=['$50,000', '$100,000', '$250,000', '$500,000'], width=100)
+        self.increment.param.watch(self.increment_cb, ['value'])
+        self.append(self.budget)
+        self.append(pn.Spacer(width=50))
+        self.append(self.increment)
+
+    def increment_cb(self, *events):
+        amt = events[0].new.replace(',', '')
+        self.budget.step = int(amt[1:])
+
+    def values(self):
+        return self.budget.value, int(self.increment.value.replace('$','').replace(',',''))
+
 
 welcome_text = '''
 <h2>Welcome</h2>
@@ -127,6 +148,7 @@ class TideGates(param.Parameterized):
     region_group = pn.widgets.CheckBoxGroup(name='Regions', options=BF.regions, inline=False)
 
     target_boxes = pn.widgets.CheckBoxGroup(name='Targets', options=list(BF.target_map.keys()), inline=False)
+    budget_box = BudgetBox()
 
     region_alert = pn.pane.Alert('**No geographic regions selected**', alert_type='danger')
     target_alert = pn.pane.Alert('**No optimizer targets selected**', alert_type='danger')
@@ -151,9 +173,7 @@ class TideGates(param.Parameterized):
             pn.layout.VSpacer(),
             pn.Row('<h3>Budget</h3>'),
             pn.Pane(budget_text, width=500),
-            pn.WidgetBox(
-                BudgetBox()
-            ),
+            pn.WidgetBox(self.budget_box),
 
             pn.Row(self.success_alert),
             pn.Row(self.region_alert),
@@ -182,23 +202,15 @@ class TideGates(param.Parameterized):
             return
         self.success_alert.visible = False
         self.main[1].loading = True
-        time.sleep(1)
-        cmnd = f'python3 bin/parse_optipass_results.py static/CoquilleInundCoho_run_results.txt'
-        result = subprocess.run(cmnd, shell=True, capture_output=True)
-        p = OptiPassOutput()
-        if result.returncode == 0:
-            p.parse_output(result.stdout.decode())
-            col = pn.Column(
-                pn.Pane(p.roi_curves(), width=500, height=800),
-                # pn.widgets.IntSlider(name='', start=0, end=len(p.x), step=1, value=0, tooltips=False)
-            )
-            self.main.append(('Plots',col))
-            self.main.append(('Table', self.make_table_tab(p.as_df(), p.targets)))
-        else:
-            self.main.append(('Output',pn.Pane(results_failed_text, width=500)))
+
+        tlist = [BF.target_map[t] for t in self.target_boxes.value]
+        bf = generate_barrier_file(regions=self.region_group.value, targets=tlist)
+        _, path = tempfile.mkstemp(suffix='.txt',text=True)
+        bf.to_csv(path, index=False, sep='\t', na_rep='NA')
+
+        run(path, *self.budget_box.values())
         self.main[1].loading = False
         self.success_alert.visible = True
-        self.map.set_selection(['039Ats1'])
 
     def table_click_cb(self, *events):
         print('table cb', len(events), events[0])
@@ -237,20 +249,6 @@ class TideGates(param.Parameterized):
         if len(self.target_boxes.value) == 0:
             self.target_alert.visible = True
         return not (self.region_alert.visible or self.target_alert.visible)
-
-class BudgetBox(pn.Row):
-    def __init__(self):
-        super(BudgetBox, self).__init__()
-        self.budget = pn.widgets.IntSlider(name='Maximum', start=0, end=5000000, step=100000, value=0, tooltips=False, format='$0,000', width=400)
-        self.increment = pn.widgets.RadioBoxGroup(options=['$50,000', '$100,000', '$250,000', '$500,000'], width=100)
-        self.increment.param.watch(self.increment_cb, ['value'])
-        self.append(self.budget)
-        self.append(pn.Spacer(width=50))
-        self.append(self.increment)
-
-    def increment_cb(self, *events):
-        amt = events[0].new.replace(',', '')
-        self.budget.step = int(amt[1:])
 
 class OptiPassOutput:
     def __init__(self):
