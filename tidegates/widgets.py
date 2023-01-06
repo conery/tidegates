@@ -17,9 +17,6 @@ import xyzservices.providers as xyz
 
 import os
 import re
-import subprocess
-import sys
-import time
 
 from barriers import load_barriers, BF
 from optipass import generate_barrier_file, run, parse_results
@@ -28,8 +25,11 @@ pn.extension('gridstack', 'tabulator')
 
 class TGMap():
     def __init__(self):
+        print('initializing...')
         load_barriers('static/workbook.csv')
+        print('...barriers')
         self.map, self.dots = self._create_map()
+        print('...map')
 
     def graphic(self):
         return self.map
@@ -75,7 +75,7 @@ class TGMap():
 class BudgetBox(pn.Row):
     def __init__(self):
         super(BudgetBox, self).__init__()
-        self.budget = pn.widgets.IntSlider(name='Maximum', start=0, end=5000000, step=100000, value=0, tooltips=False, format='$0,000', width=400)
+        self.budget = pn.widgets.IntSlider(name='Maximum', start=50000, end=5000000, step=100000, value=50000, tooltips=False, format='$0,000', width=400)
         self.increment = pn.widgets.RadioBoxGroup(options=['$50,000', '$100,000', '$250,000', '$500,000'], width=100)
         self.increment.param.watch(self.increment_cb, ['value'])
         self.append(self.budget)
@@ -85,6 +85,8 @@ class BudgetBox(pn.Row):
     def increment_cb(self, *events):
         amt = events[0].new.replace(',', '')
         self.budget.step = int(amt[1:])
+        self.budget.start = self.budget.step
+        self.budget.value = self.budget.step
 
     def values(self):
         return self.budget.value, int(self.increment.value.replace('$','').replace(',',''))
@@ -114,25 +116,25 @@ budget_text = '''
 </p>
 '''
 
-results_empty_text = '''
-<h2>Optimizer Output</h2>
+# results_empty_text = '''
+# <h2>Optimizer Output</h2>
 
-<p>The output from OptiPass will be displayed here.</p>
+# <p>The output from OptiPass will be displayed here.</p>
 
-<p>To run OptiPass enter optimization parameters in the Start panel, then click the <b>Optimize</b> button.
-'''
+# <p>To run OptiPass enter optimization parameters in the Start panel, then click the <b>Optimize</b> button.
+# '''
 
-results_pending_text = '''
-<h2>⏳ Optimizer Output</h2>
+# results_pending_text = '''
+# <h2>⏳ Optimizer Output</h2>
 
-<p>Waiting for OptiPass to finish...</p>
-'''
+# <p>Waiting for OptiPass to finish...</p>
+# '''
 
-results_failed_text = '''
-<h2>💣 Optimizer Failed</h2>
+# results_failed_text = '''
+# <h2>💣 Optimizer Failed</h2>
 
-<p>Something went wrong when running OptiPass or parsing its outputs.</p>
-'''
+# <p>Something went wrong when running OptiPass or parsing its outputs.</p>
+# '''
 
 
 class TideGates(param.Parameterized):
@@ -153,10 +155,10 @@ class TideGates(param.Parameterized):
     region_alert = pn.pane.Alert('**No geographic regions selected**', alert_type='danger')
     target_alert = pn.pane.Alert('**No optimizer targets selected**', alert_type='danger')
     success_alert = pn.pane.Alert('**Optimization complete.**  <br/>Click on "Plots" or "Table" at the top of this window to view the results.', alert_type='success')
-
+    fail_alert = pn.pane.Alert('**Optimization failed.**  <br/>One or more calls to OptiPass did not succeed (see log for explanation).', alert_type='danger')
+    
     def __init__(self, **params):
         super(TideGates, self).__init__(**params)
-
         start_tab = pn.Column(
             pn.Row('<h3>Geographic region and climate scenario</h3>'),
             pn.Row(
@@ -176,6 +178,7 @@ class TideGates(param.Parameterized):
             pn.WidgetBox(self.budget_box),
 
             pn.Row(self.success_alert),
+            pn.Row(self.fail_alert),
             pn.Row(self.region_alert),
             pn.Row(self.target_alert),
             pn.Row(pn.layout.Spacer(width=200), self.optimize_button, width=500),
@@ -189,15 +192,24 @@ class TideGates(param.Parameterized):
         )
 
         self.success_alert.visible = False
+        self.fail_alert.visible = False
         self.region_alert.visible = False
         self.target_alert.visible = False
         self.region_group.param.watch(self.region_cb, ['value'])
         self.optimize_button.on_click(self.run_optimizer)
+        self.optimizer_clicks = set()
 
     def region_cb(self, *events):
         self.map.display_regions(events[0].new)
 
     def run_optimizer(self, _):
+        print('running optimizer')
+
+        # kludge to deal with phantom callback invocations 
+        if self.optimize_button.clicks in self.optimizer_clicks:
+            print('callback ignored for click', self.optimize_button.clicks)
+        self.optimizer_clicks.add(self.optimize_button.clicks)
+
         if not self.check_selections():
             return
         self.success_alert.visible = False
@@ -205,12 +217,17 @@ class TideGates(param.Parameterized):
 
         tlist = [BF.target_map[t] for t in self.target_boxes.value]
         bf = generate_barrier_file(regions=self.region_group.value, targets=tlist)
-        _, path = tempfile.mkstemp(suffix='.txt',text=True)
-        bf.to_csv(path, index=False, sep='\t', na_rep='NA')
+        _, path = tempfile.mkstemp(suffix='.txt', dir='./tmp', text=True)
+        bf.to_csv(path, index=False, sep='\t', lineterminator=os.linesep, na_rep='NA')
 
-        run(path, *self.budget_box.values())
+        res = run(path, len(tlist), *self.budget_box.values())
         self.main[1].loading = False
-        self.success_alert.visible = True
+
+        if len(res) == len(tlist):
+            self.success_alert.visible = True
+        else:
+            self.fail_alert.visible = True
+        print('done')
 
     def table_click_cb(self, *events):
         print('table cb', len(events), events[0])

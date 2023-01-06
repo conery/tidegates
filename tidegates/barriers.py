@@ -40,7 +40,7 @@ def _make_map_info():
     coordinates, and copy the ID, region and barrier types so they can
     be displayed as tooltips.
     '''
-    df = BF.data[['BARID','BARID','BarrierType']]
+    df = BF.data[['BARID','REGION','BarrierType']]
     R = 6378137.0
     BF.map_info = pd.concat([
         df, 

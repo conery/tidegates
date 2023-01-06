@@ -14,8 +14,10 @@ import argparse
 import sys
 import os
 import subprocess
+from time import sleep
 
 import pandas as pd
+import numpy as np
 
 from barriers import load_barriers, BF
 
@@ -35,22 +37,45 @@ def generate_barrier_file(
     '''
     Create a barrier file that will be read by OptiPass.  Assumes the
     BF struct in the barriers module has been initialized.
+
+    The frame has a new column named FOCUS, set to 1 in every row.  This
+    code uses the POSTPASS column as the source of 1s.
     '''
     structs = BF.targets[climate]
+
     filtered = BF.data[BF.data.REGION.isin(regions)]
-    of = filtered[['BARID','REGION','DSID']]
-    header = ['ID', 'REG', 'DS']
+    filtered.index = list(range(len(filtered)))
+
+    of = filtered[['BARID','REGION']]
+    header = ['ID','REG']
+
+    of = pd.concat([of, pd.Series(np.ones(len(filtered)), name='FOCUS', dtype=int)], axis=1)
+    header.append('FOCUS')
+
+    of = pd.concat([of, filtered['DSID']], axis=1)
+    header.append('DSID')
+
     for t in targets:
-        of = pd.concat([of, filtered[structs[t].habitat]], axis=1)
+        of = pd.concat([of, filtered[structs[t].habitat]], axis=1, ignore_index=True)
         header.append('HAB_'+t)
+
     for t in targets:
-        of = pd.concat([of, filtered[structs[t].prepass]], axis=1)
+        of = pd.concat([of, filtered[structs[t].prepass]], axis=1, ignore_index=True)
         header.append('PRE_'+t)
-    of = pd.concat([of, filtered['NPROJ'], filtered['COST']], axis=1)
-    header += ['NPROJ','COST']
+
+    of = pd.concat([of, filtered['NPROJ']], axis=1, ignore_index=True)
+    header.append('NPROJ')
+
+    of = pd.concat([of, pd.Series(np.zeros(len(filtered)), name='ACTION', dtype=int)], axis=1)
+    header.append('ACTION')
+
+    of = pd.concat([of, filtered['COST']], axis=1, ignore_index=True)
+    header += ['COST']
+
     for t in targets:
-        of = pd.concat([of, filtered[structs[t].postpass]], axis=1)
+        of = pd.concat([of, filtered[structs[t].postpass]], axis=1, ignore_index=True)
         header.append('POST_'+t)
+
     of.columns = header
     return of
 
@@ -60,6 +85,7 @@ def generate_barrier_file(
 
 def run(
     barrier_file: str, 
+    num_targets: int,
     budget_max: int, 
     budget_delta: int
 ) -> list[str]:
@@ -71,20 +97,28 @@ def run(
     if not on_windows:
         print('barrier file written to', barrier_file)
     outputs = []
+    root, _ = os.path.splitext(barrier_file)
     for i in range(budget_max // budget_delta):
-        outfile = f'optipass_{i+1}.txt'
+        outfile = f'{root}_{i+1}.txt'
         cmnd = template.format(
             bf = barrier_file,
             of = outfile,
             bl = budget_delta * (i+1)
         )
+        if num_targets > 1:
+            cmnd += ' -t {}'.format(num_targets)
         if on_windows:
             print(cmnd)
             res = subprocess.run(cmnd, shell=True, capture_output=True)
             if res.returncode == 0:
                 outputs.append(outfile)
+            else:
+                print('OptiPass failed:')
+                print(res.stderr)
         else:
-            print(cmnd)
+            print('macOS...', outfile)
+            outputs.append(cmnd)
+            sleep(1)
     return outputs
 
 def parse_results(**kwargs):
@@ -115,14 +149,14 @@ class TestOP:
         bf = generate_barrier_file(climate='Current', regions=['Coos'], targets=['CO', 'CH'])
 
         # Write the frame to a CSV file
-        _, path = tempfile.mkstemp(suffix='.txt',text=True)
-        bf.to_csv(path, index=False, sep='\t', na_rep='NA')
+        _, path = tempfile.mkstemp(suffix='.txt', dir='./tmp', text=True)
+        bf.to_csv(path, index=False, sep='\t', lineterminator=os.linesep, na_rep='NA')
 
         # Read the file, test its expected structure      
         tf = pd.read_csv(path, sep='\t')
 
         assert len(tf) == 10
-        assert list(tf.columns) == ['ID','REG', 'DS', 'HAB_CO', 'HAB_CH', 'PRE_CO', 'PRE_CH', 'NPROJ', 'COST', 'POST_CO', 'POST_CH']
+        assert list(tf.columns) == ['ID','REG', 'FOCUS', 'DSID', 'HAB_CO', 'HAB_CH', 'PRE_CO', 'PRE_CH', 'NPROJ', 'ACTION', 'COST', 'POST_CO', 'POST_CH']
         assert tf.COST.sum() == 985000
         assert round(tf.HAB_CO.sum(), 3) ==  0.298
 
@@ -161,10 +195,10 @@ if __name__ == '__main__':
     load_barriers(args.data)
     bf = generate_barrier_file(regions=args.regions, targets=args.targets)
     if args.run:
-        _, path = tempfile.mkstemp(suffix='.txt',text=True)
-        bf.to_csv(path, index=False, sep='\t', na_rep='NA')
+        _, path = tempfile.mkstemp(suffix='.txt', dir='./tmp', text=True)
+        bf.to_csv(path, index=False, sep='\t', lineterminator=os.linesep, na_rep='NA')
         bmax = args.budget[0]
         bdelt = bmax // args.budget[1]
-        run(path, bmax, bdelt)
+        run(path, len(args.regions), bmax, bdelt)
     else:
         print(bf)
