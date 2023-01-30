@@ -95,7 +95,7 @@ def run(
     template = r'.\bin\OptiPassMain.exe -f {bf} -o {of} -b {bl}'
     on_windows = getattr(os, 'uname', None) is None
     if not on_windows:
-        print('barrier file written to', barrier_file)
+        pn.state.log('barrier file written to', barrier_file)
     outputs = []
     root, _ = os.path.splitext(barrier_file)
     for i in range(budget_max // budget_delta):
@@ -108,15 +108,15 @@ def run(
         if num_targets > 1:
             cmnd += ' -t {}'.format(num_targets)
         if on_windows:
-            print(cmnd)
+            pn.state.log(cmnd)
             res = subprocess.run(cmnd, shell=True, capture_output=True)
             if res.returncode == 0:
                 outputs.append(outfile)
             else:
-                print('OptiPass failed:')
-                print(res.stderr)
+                pn.state.log('OptiPass failed:')
+                pn.state.log(res.stderr)
         else:
-            print('macOS...', outfile)
+            pn.state.log('macOS...', outfile)
             outputs.append(cmnd)
             sleep(1)
     return outputs

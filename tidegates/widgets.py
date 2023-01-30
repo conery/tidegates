@@ -25,11 +25,11 @@ pn.extension('gridstack', 'tabulator')
 
 class TGMap():
     def __init__(self):
-        print('initializing...')
+        pn.state.log('initializing...')
         load_barriers('static/workbook.csv')
-        print('...barriers')
+        pn.state.log('...barriers')
         self.map, self.dots = self._create_map()
-        print('...map')
+        pn.state.log('...map')
 
     def graphic(self):
         return self.map
@@ -138,28 +138,35 @@ budget_text = '''
 
 
 class TideGates(param.Parameterized):
-    map = TGMap()
-    map_pane = pn.Pane(map.graphic())
 
-    optimize_button = pn.widgets.Button(name='Optimize', height=40, width=60, background='#b2d2dd')
-    load_button = pn.widgets.Button(name='Load',height=40,width=60)
-    save_button = pn.widgets.Button(name='Save',height=40,width=60)
-    reset_button = pn.widgets.Button(name='Reset',height=40,width=60)
 
-    climate_group = pn.widgets.RadioBoxGroup(name='Climate', options=BF.climates, inline=False)
-    region_group = pn.widgets.CheckBoxGroup(name='Regions', options=BF.regions, inline=False)
-
-    target_boxes = pn.widgets.CheckBoxGroup(name='Targets', options=list(BF.target_map.keys()), inline=False)
-    budget_box = BudgetBox()
-
-    region_alert = pn.pane.Alert('**No geographic regions selected**', alert_type='danger')
-    target_alert = pn.pane.Alert('**No optimizer targets selected**', alert_type='danger')
-    success_alert = pn.pane.Alert('**Optimization complete.**  <br/>Click on "Plots" or "Table" at the top of this window to view the results.', alert_type='success')
-    fail_alert = pn.pane.Alert('**Optimization failed.**  <br/>One or more calls to OptiPass did not succeed (see log for explanation).', alert_type='danger')
-    
     def __init__(self, **params):
         super(TideGates, self).__init__(**params)
+
+        self.map = TGMap()
+        self.map_pane = pn.Pane(self.map.graphic())
+
+        self.optimize_button = pn.widgets.Button(name='Optimize', height=40, width=60, background='#b2d2dd')
+        self.load_button = pn.widgets.Button(name='Load',height=40,width=60)
+        self.save_button = pn.widgets.Button(name='Save',height=40,width=60)
+        self.reset_button = pn.widgets.Button(name='Reset',height=40,width=60)
+
+        self.climate_group = pn.widgets.RadioBoxGroup(name='Climate', options=BF.climates, inline=False)
+        self.region_group = pn.widgets.CheckBoxGroup(name='Regions', options=BF.regions, inline=False)
+
+        self.target_boxes = pn.widgets.CheckBoxGroup(name='Targets', options=list(BF.target_map.keys()), inline=False)
+        self.budget_box = BudgetBox()
+
+        self.region_alert = pn.pane.Alert('**No geographic regions selected**', alert_type='danger')
+        self.target_alert = pn.pane.Alert('**No optimizer targets selected**', alert_type='danger')
+        self.success_alert = pn.pane.Alert('**Optimization complete.**  <br/>Click on "Plots" or "Table" at the top of this window to view the results.', alert_type='success')
+        self.fail_alert = pn.pane.Alert('**Optimization failed.**  <br/>One or more calls to OptiPass did not succeed (see log for explanation).', alert_type='danger')
+        
+        self.info = pn.widgets.StaticText(value='')
+
         start_tab = pn.Column(
+            pn.Row(self.info),
+            pn.layout.VSpacer(),
             pn.Row('<h3>Geographic region and climate scenario</h3>'),
             pn.Row(
                 pn.Pane(button_text,width=200),
@@ -203,12 +210,7 @@ class TideGates(param.Parameterized):
         self.map.display_regions(events[0].new)
 
     def run_optimizer(self, _):
-        print('running optimizer')
-
-        # kludge to deal with phantom callback invocations 
-        if self.optimize_button.clicks in self.optimizer_clicks:
-            print('callback ignored for click', self.optimize_button.clicks)
-        self.optimizer_clicks.add(self.optimize_button.clicks)
+        pn.state.log('running optimizer')
 
         if not self.check_selections():
             return
@@ -227,21 +229,21 @@ class TideGates(param.Parameterized):
             self.success_alert.visible = True
         else:
             self.fail_alert.visible = True
-        print('done')
+        pn.state.log('done')
 
     def table_click_cb(self, *events):
-        print('table cb', len(events), events[0])
+        pn.state.log('table cb', len(events), events[0])
 
     def make_table_tab(self, df, targets):
         formatters = { }
         alignment = {}
-        print(df.columns)
+        pn.state.log(df.columns)
         for col in df.columns:
             if re.match(r'[\d\.]+', col):
                 formatters[col] = {'type': 'tickCross', 'crossElement': ''}
                 alignment[col] = 'center'
             elif col in targets:
-                # print('target', col, 'max', df[col].max())
+                # pn.state.log('target', col, 'max', df[col].max())
                 formatters[col] = {'type': 'progress', 'max': df[col].max(), 'color': '#3c76af'}
             elif col == 'Cost':
                 formatters[col] = {'type': 'money', 'symbol': '$', 'precision': 0}
