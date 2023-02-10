@@ -18,6 +18,7 @@ from time import sleep
 
 import pandas as pd
 import numpy as np
+import panel as pn
 
 from barriers import load_barriers, BF
 
@@ -79,11 +80,10 @@ def generate_barrier_file(
     of.columns = header
     return of
 
-# OptiPass is a Windows-only app.  On macOS/Linux just print the name of the
-# barrier file and commands that run OP (useful for debugging).  To see if
-# we're running on Windows look for the uname attribute in the os module.
+# This version assumes the web app is running on a host that has wine installed
+# to run OptiPass (a Windows .exe file).
 
-def run(
+def run_OP(
     barrier_file: str, 
     num_targets: int,
     budget_max: int, 
@@ -92,10 +92,7 @@ def run(
     '''
     Generate and execute the shell commands that run OptiPass.
     '''
-    template = r'.\bin\OptiPassMain.exe -f {bf} -o {of} -b {bl}'
-    on_windows = getattr(os, 'uname', None) is None
-    if not on_windows:
-        pn.state.log('barrier file written to', barrier_file)
+    template = r'wine bin/OptiPassMain.exe -f {bf} -o {of} -b {bl}'
     outputs = []
     root, _ = os.path.splitext(barrier_file)
     for i in range(budget_max // budget_delta):
@@ -107,18 +104,13 @@ def run(
         )
         if num_targets > 1:
             cmnd += ' -t {}'.format(num_targets)
-        if on_windows:
-            pn.state.log(cmnd)
-            res = subprocess.run(cmnd, shell=True, capture_output=True)
-            if res.returncode == 0:
-                outputs.append(outfile)
-            else:
-                pn.state.log('OptiPass failed:')
-                pn.state.log(res.stderr)
+        pn.state.log(cmnd)
+        res = subprocess.run(cmnd, shell=True, capture_output=True)
+        if res.returncode == 0:
+            outputs.append(outfile)
         else:
-            pn.state.log('macOS...', outfile)
-            outputs.append(cmnd)
-            sleep(1)
+            pn.state.log('OptiPass failed:')
+            pn.state.log(res.stderr)
     return outputs
 
 def parse_results(**kwargs):

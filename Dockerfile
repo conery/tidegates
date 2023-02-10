@@ -30,9 +30,8 @@ RUN wget -nc https://dl.winehq.org/wine-builds/winehq.key
 RUN apt-key add winehq.key
 RUN apt-add-repository 'deb https://dl.winehq.org/wine-builds/ubuntu/ jammy main'
 RUN apt-get install -y --install-recommends winehq-stable winbind
-ENV WINEDEBUG=fixme-all
 
-# Setup a Wine prefix
+ENV WINEDEBUG=fixme-all
 ENV WINEARCH=win64
 RUN winecfg
 
@@ -61,10 +60,10 @@ ENV PYTHONUNBUFFERED=1
 COPY requirements.txt .
 RUN python3 -m pip install -r requirements.txt
 
-COPY . /home/$USERNAME
-RUN chown -R $USERNAME /home/$USERNAME
+# COPY . /home/$USERNAME
+# RUN chown -R $USERNAME /home/$USERNAME
 
 USER $USERNAME
-WORKDIR /home/$USERNAME
+WORKDIR /home/$USERNAME/tidegates
 
 CMD ["python3", "tidegates/main.py"]
