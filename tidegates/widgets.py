@@ -20,16 +20,17 @@ import re
 
 from barriers import load_barriers, BF
 from optipass import generate_barrier_file, run_OP, parse_results
+from messages import Logging
 
 pn.extension('gridstack', 'tabulator')
 
 class TGMap():
     def __init__(self):
-        pn.state.log('initializing...')
+        Logging.log('initializing...')
         load_barriers('static/workbook.csv')
-        pn.state.log('...barriers')
+        Logging.log('...barriers')
         self.map, self.dots = self._create_map()
-        pn.state.log('...map')
+        Logging.log('...map')
 
     def graphic(self):
         return self.map
@@ -210,7 +211,7 @@ class TideGates(param.Parameterized):
         self.map.display_regions(events[0].new)
 
     def run_optimizer(self, _):
-        pn.state.log('running optimizer')
+        Logging.log('running optimizer')
 
         if not self.check_selections():
             return
@@ -231,21 +232,21 @@ class TideGates(param.Parameterized):
             self.success_alert.visible = True
         else:
             self.fail_alert.visible = True
-        pn.state.log('done')
+        Logging.log('done')
 
     def table_click_cb(self, *events):
-        pn.state.log('table cb', len(events), events[0])
+        Logging.log('table cb', len(events), events[0])
 
     def make_table_tab(self, df, targets):
         formatters = { }
         alignment = {}
-        pn.state.log(df.columns)
+        Logging.log(df.columns)
         for col in df.columns:
             if re.match(r'[\d\.]+', col):
                 formatters[col] = {'type': 'tickCross', 'crossElement': ''}
                 alignment[col] = 'center'
             elif col in targets:
-                # pn.state.log('target', col, 'max', df[col].max())
+                # Logging.log('target', col, 'max', df[col].max())
                 formatters[col] = {'type': 'progress', 'max': df[col].max(), 'color': '#3c76af'}
             elif col == 'Cost':
                 formatters[col] = {'type': 'money', 'symbol': '$', 'precision': 0}
