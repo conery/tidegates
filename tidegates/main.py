@@ -1,9 +1,11 @@
 import argparse
 import panel as pn
+import subprocess
 import sys
 
 from widgets import TideGates
 from barriers import load_barriers, BF
+from optipass import run_OP
 from messages import Logging
 
 desc = '''
@@ -25,7 +27,7 @@ separated by spaces.  If it's not specified all regions are used.
 
 Example:
 
-    $ python3 tidegates/main.py --action run --region coos coquille --target CO CH --budget 250 5
+    $ python3 tidegates/main.py --action run --region coos coquille --target CO CH --budget 250 50
     
         Uses barriers in the Coos and Coquille regions, targets CO (coho salmon) and 
         CH (chinook salmon), and five budget values from $50K to $250K.
@@ -44,12 +46,21 @@ def init_cli():
 
     parser.add_argument('--action', metavar='A', choices=['run','parse','test'], help='operation to perform (run, parse, test)')
     parser.add_argument('--barriers', metavar='F', default='static/workbook.csv', help='CSV file with barrier data')
-    parser.add_argument('--region', metavar='R', default='all', nargs='+', help='one or more region names')
-    parser.add_argument('--target', metavar='T', nargs='+', default=['CH','CO'], help='one or more restoration targets')
-    parser.add_argument('--budget', metavar='N', nargs=2, default=[5000,1000], help='max budget, number of budgets')
+    parser.add_argument('--regions', metavar='R', default='all', nargs='+', help='one or more region names')
+    parser.add_argument('--targets', metavar='T', nargs='+', default=['CH','CO'], help='one or more restoration targets')
+    parser.add_argument('--budget', metavar='N', nargs=2, default=[5000,1000], help='max budget, budget delta')
     parser.add_argument('--climate', metavar='C', choices=['current','future'], default='current', help='climate scenario')
 
     return parser.parse_args()
+
+def check_environment():
+    '''
+    We can't run OptiPass unless wine is installed
+    '''
+    res = subprocess.run(['which','wine'], capture_output=True)
+    if len(res.stdout) == 0:
+        print('wine needed to run OptiPass.exe')
+        exit(1)
 
 def make_app():
     template = pn.template.BootstrapTemplate(title='Tide Gate Optimization')
@@ -72,15 +83,17 @@ def validate_options(name, given, expected):
         print(f'unknown {name} not in {expected}')
         exit(1)
 
-def parse_budget(bmax, bcount):
+def parse_budget(budgets):
     try:
-        bmax = int(bmax)
-        bcount = int(bcount)
+        if len(budgets) != 2:
+            raise ValueError('--budget requires two arguments')
+        bmax = int(budgets[0])
+        bdelta = int(budgets[1])
     except Exception as err:
-        print('budget max and count must be integers')
+        print('budget max and delta must be integers')
         print(err)
         exit(1)
-    return list(range(bcount, bmax+bcount, bcount))
+    return [bmax,bdelta]
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
@@ -88,16 +101,13 @@ if __name__ == '__main__':
         start_app()
     else:
         args = init_cli()
+        check_environment()
         Logging.setup('api')
         load_barriers(args.barriers)
-        if args.region == 'all':
-            args.region = BF.regions
-        else:
-            validate_options('region', args.region, BF.regions)
-        validate_options('target', args.target, list(BF.target_map.values()))
-        args.budget = parse_budget(*args.budget)
-        Logging.log('region', args.region)
-        Logging.log('target', args.target)
-        Logging.log('budget', args.budget)
-        Logging.log('climate', args.climate)
-
+        regions = BF.regions if args.regions == 'all' else args.regions
+        targets = args.targets
+        climate = args.climate.capitalize()
+        budgets = parse_budget(args.budget)
+        validate_options('region', regions, BF.regions)
+        validate_options('target', targets, list(BF.target_map.values()))
+        run_OP(regions, targets, climate, budgets, preview=(args.action=='test'))

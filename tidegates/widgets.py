@@ -19,7 +19,7 @@ import os
 import re
 
 from barriers import load_barriers, BF
-from optipass import generate_barrier_file, run_OP, parse_results
+from optipass import generate_barrier_frame, run_OP, parse_results
 from messages import Logging
 
 pn.extension('gridstack', 'tabulator')
@@ -215,23 +215,26 @@ class TideGates(param.Parameterized):
 
         if not self.check_selections():
             return
+
         self.success_alert.visible = False
         self.main[1].loading = True
 
         tlist = [BF.target_map[t] for t in self.target_boxes.value]
-        bf = generate_barrier_file(regions=self.region_group.value, targets=tlist)
-        _, path = tempfile.mkstemp(suffix='.txt', dir='./tmp', text=True)
-        print('barrier file:', path)
-        print(os.path.exists(path))
-        bf.to_csv(path, index=False, sep='\t', lineterminator=os.linesep, na_rep='NA')
 
-        res = run_OP(path, len(tlist), *self.budget_box.values())
+        res = run_OP(
+            regions=self.region_group.value,
+            targets=tlist,
+            climate=self.climate_group.value,
+            budgets=self.budget_box.values()
+        )
+
         self.main[1].loading = False
 
         if len(res) == len(tlist):
             self.success_alert.visible = True
         else:
             self.fail_alert.visible = True
+            
         Logging.log('done')
 
     def table_click_cb(self, *events):

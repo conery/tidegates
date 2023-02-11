@@ -10,17 +10,14 @@
 # run on a Windows system it can also run OptiPass.
 #
 
-import argparse
-import sys
 import os
 import subprocess
-from time import sleep
 
 import pandas as pd
 import numpy as np
-import panel as pn
 
 from barriers import load_barriers, BF
+from messages import Logging
 
 ####################
 #
@@ -30,7 +27,7 @@ from barriers import load_barriers, BF
 # Create a Pandas frame that has a subset of the columns from the main
 # data frame that will be written to the barrier file.
 
-def generate_barrier_file(
+def generate_barrier_frame(
     regions: list[str],
     targets: list[str],
     climate: str = 'Current',
@@ -84,33 +81,36 @@ def generate_barrier_file(
 # to run OptiPass (a Windows .exe file).
 
 def run_OP(
-    barrier_file: str, 
-    num_targets: int,
-    budget_max: int, 
-    budget_delta: int
+    regions: list[str],
+    targets: list[str],
+    climate: str,
+    budgets: list[int],
+    preview: bool = False,
 ) -> list[str]:
     '''
     Generate and execute the shell commands that run OptiPass.
     '''
-    template = r'wine bin/OptiPassMain.exe -f {bf} -o {of} -b {bl}'
+    bf = generate_barrier_frame(regions=regions, targets=targets, climate=climate)
+    _, barrier_file = tempfile.mkstemp(suffix='.txt', dir='./tmp', text=True)
+    bf.to_csv(barrier_file, index=False, sep='\t', lineterminator=os.linesep, na_rep='NA')
+
+    budget_max, budget_delta = budgets
     outputs = []
     root, _ = os.path.splitext(barrier_file)
     for i in range(budget_max // budget_delta):
         outfile = f'{root}_{i+1}.txt'
-        cmnd = template.format(
-            bf = barrier_file,
-            of = outfile,
-            bl = budget_delta * (i+1)
-        )
-        if num_targets > 1:
+        budget = budget_delta * (i+1)
+        cmnd = f'wine bin/OptiPassMain.exe -f {barrier_file} -o {outfile} -b {budget}'
+        if num_targets := len(targets):
             cmnd += ' -t {}'.format(num_targets)
-        pn.state.log(cmnd)
-        res = subprocess.run(cmnd, shell=True, capture_output=True)
-        if res.returncode == 0:
+        Logging.log(cmnd)
+        if not preview:
+            res = subprocess.run(cmnd, shell=True, capture_output=True)
+        if preview or (res.returncode == 0):
             outputs.append(outfile)
         else:
-            pn.state.log('OptiPass failed:')
-            pn.state.log(res.stderr)
+            Logging.log('OptiPass failed:')
+            Logging.log(res.stderr)
     return outputs
 
 def parse_results(**kwargs):
@@ -138,7 +138,7 @@ class TestOP:
 
         # Create barrier descriptions from the test data
         load_barriers('static/test_barriers.csv')
-        bf = generate_barrier_file(climate='Current', regions=['Coos'], targets=['CO', 'CH'])
+        bf = generate_barrier_frame(climate='Current', regions=['Coos'], targets=['CO', 'CH'])
 
         # Write the frame to a CSV file
         _, path = tempfile.mkstemp(suffix='.txt', dir='./tmp', text=True)
@@ -151,46 +151,3 @@ class TestOP:
         assert list(tf.columns) == ['ID','REG', 'FOCUS', 'DSID', 'HAB_CO', 'HAB_CH', 'PRE_CO', 'PRE_CH', 'NPROJ', 'ACTION', 'COST', 'POST_CO', 'POST_CH']
         assert tf.COST.sum() == 985000
         assert round(tf.HAB_CO.sum(), 3) ==  0.298
-
-####################
-#
-# Command line API
-#
-
-desc = '''
-Script to test and run OptiPass.
-'''
-
-epi = '''
-Examples:
-
-  $ python optipass.py ...
-'''
-
-def init_api():
-    parser = argparse.ArgumentParser(description = desc, epilog=epi)
-    parser.add_argument('--data', metavar='F', default='static/test_barriers.csv', help='CSV file with barrier data')
-    parser.add_argument('--run', action='store_true', help='run OptiPass after creating barrier file')
-    parser.add_argument('--climate', metavar='X', choices=['current','future'], default='current', help='climate scenario')
-    parser.add_argument('--regions', metavar='R', required=True, nargs='+', help='one or more region names')
-    parser.add_argument('--targets', metavar='T', required=True, nargs='+', help='one or more restoration target IDs')
-    parser.add_argument('--budget', metavar='N', nargs=2, default=(1000000, 10), help='maximum budget and number of increments')
-    
-    if len(sys.argv) == 1 or (len(sys.argv) == 2 and sys.argv[1] == 'help'):
-        print(parser.print_help())
-        exit(0)
-
-    return parser.parse_args()
-
-if __name__ == '__main__':
-    args = init_api()
-    load_barriers(args.data)
-    bf = generate_barrier_file(regions=args.regions, targets=args.targets)
-    if args.run:
-        _, path = tempfile.mkstemp(suffix='.txt', dir='./tmp', text=True)
-        bf.to_csv(path, index=False, sep='\t', lineterminator=os.linesep, na_rep='NA')
-        bmax = args.budget[0]
-        bdelt = bmax // args.budget[1]
-        run(path, len(args.regions), bmax, bdelt)
-    else:
-        print(bf)
