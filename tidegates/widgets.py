@@ -234,7 +234,7 @@ class TideGates(param.Parameterized):
             self.success_alert.visible = True
         else:
             self.fail_alert.visible = True
-            
+
         Logging.log('done')
 
     def table_click_cb(self, *events):

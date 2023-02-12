@@ -95,11 +95,12 @@ def run_OP(
     bf.to_csv(barrier_file, index=False, sep='\t', lineterminator=os.linesep, na_rep='NA')
 
     budget_max, budget_delta = budgets
+    num_budgets = budget_max // budget_delta
     outputs = []
     root, _ = os.path.splitext(barrier_file)
-    for i in range(budget_max // budget_delta):
+    for i in range(num_budgets + 1):
         outfile = f'{root}_{i+1}.txt'
-        budget = budget_delta * (i+1)
+        budget = budget_delta * i
         cmnd = f'wine bin/OptiPassMain.exe -f {barrier_file} -o {outfile} -b {budget}'
         if num_targets := len(targets):
             cmnd += ' -t {}'.format(num_targets)
