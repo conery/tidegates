@@ -103,6 +103,7 @@ def run_OP(
         cmnd = f'wine bin/OptiPassMain.exe -f {barrier_file} -o {outfile} -b {budget}'
         if num_targets := len(targets):
             cmnd += ' -t {}'.format(num_targets)
+            cmnd += ' -w' + ' 1.0' * num_targets
         Logging.log(cmnd)
         if not preview:
             res = subprocess.run(cmnd, shell=True, capture_output=True)

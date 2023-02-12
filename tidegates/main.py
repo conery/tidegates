@@ -47,7 +47,7 @@ def init_cli():
     parser.add_argument('--action', metavar='A', choices=['run','parse','test'], help='operation to perform (run, parse, test)')
     parser.add_argument('--barriers', metavar='F', default='static/workbook.csv', help='CSV file with barrier data')
     parser.add_argument('--regions', metavar='R', default='all', nargs='+', help='one or more region names')
-    parser.add_argument('--targets', metavar='T', nargs='+', default=['CH','CO'], help='one or more restoration targets')
+    parser.add_argument('--targets', metavar='T', nargs='+', default=['CO','FI'], help='one or more restoration targets')
     parser.add_argument('--budget', metavar='N', nargs=2, default=[5000,1000], help='max budget, budget delta')
     parser.add_argument('--climate', metavar='C', choices=['current','future'], default='current', help='climate scenario')
 
