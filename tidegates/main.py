@@ -25,6 +25,9 @@ epi = '''
 The --region argument is optional.  If used, specify one or more reqion names 
 separated by spaces.  If it's not specified all regions are used.
 
+If no name is specified with --output a random base name will be generated for
+each run.  
+
 Example:
 
     $ python3 tidegates/main.py --action run --region coos coquille --target CO CH --budget 250 50
@@ -50,6 +53,7 @@ def init_cli():
     parser.add_argument('--targets', metavar='T', nargs='+', default=['CO','FI'], help='one or more restoration targets')
     parser.add_argument('--budget', metavar='N', nargs=2, default=[5000,1000], help='max budget, budget delta')
     parser.add_argument('--climate', metavar='C', choices=['current','future'], default='current', help='climate scenario')
+    parser.add_argument('--output', metavar='F', help='base name of output files (optional)')
 
     return parser.parse_args()
 
