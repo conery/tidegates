@@ -12,7 +12,7 @@
 
 import os
 import subprocess
-import glob
+from glob import glob
 
 import pandas as pd
 import numpy as np
@@ -223,12 +223,42 @@ class TestOP:
         assert round(tf.HAB_CO.sum(), 3) ==  0.298
 
     @staticmethod
+    def test_example_1():
+        '''
+        Test the OPResults class by collecting results for Example 1 from the 
+        OptiPass User Manual
+        '''
+        obj = OPResults('static/Example_1/Example1.txt', sorted(glob('static/Example_1/example_*.txt')))
+        assert obj.targets == ['T1']
+        assert len(obj.weights) == 1 and round(obj.weights[0]) == 1
+
+        assert type(obj.summary) == pd.DataFrame
+        assert len(obj.summary) == 6
+        assert round(obj.summary.budget.sum()) == 1500
+        assert round(obj.summary.habitat.sum(),2) == 23.30
+
+    @staticmethod
+    def test_example_4():
+        '''
+        Same as above, but using Example 4, which has two restoration targets.
+        '''
+        obj = OPResults('static/Example_4/Example4.txt', sorted(glob('static/Example_4/example_*.txt')))
+        assert obj.targets == ['T1', 'T2']
+        assert len(obj.weights) == 2 and round(sum(obj.weights)) == 4
+
+        assert type(obj.summary) == pd.DataFrame
+        assert len(obj.summary) == 6
+        assert round(obj.summary.budget.sum()) == 1500
+        assert round(obj.summary.habitat.sum(),2) == 197.62
+
+
+    @staticmethod
     def test_collect_results():
         '''
         Test the function that collects results from individual runs into a single
         data frame.  Expects to find 6 files in ./static/Example1 (named for the 
         example data in the OptiPass User Manual)
         '''
-        files = glob.glob('static/Example_1/example_*.txt')
+        files = glob('static/Example_1/example_*.txt')
         assert len(files) == 6
     
