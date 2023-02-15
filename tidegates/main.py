@@ -114,4 +114,5 @@ if __name__ == '__main__':
         budgets = parse_budget(args.budget)
         validate_options('region', regions, BF.regions)
         validate_options('target', targets, list(BF.target_map.values()))
-        run_OP(regions, targets, climate, budgets, preview=(args.action=='test'))
+        res = run_OP(regions, targets, climate, budgets, preview=(args.action=='test'))
+        print(res)

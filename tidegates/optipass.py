@@ -12,6 +12,7 @@
 
 import os
 import subprocess
+import glob
 
 import pandas as pd
 import numpy as np
@@ -102,7 +103,7 @@ def run_OP(
         outfile = f'{root}_{i+1}.txt'
         budget = budget_delta * i
         cmnd = f'wine bin/OptiPassMain.exe -f {barrier_file} -o {outfile} -b {budget}'
-        if num_targets := len(targets):
+        if (num_targets := len(targets)) > 1:
             cmnd += ' -t {}'.format(num_targets)
             cmnd += ' -w' + ' 1.0' * num_targets
         Logging.log(cmnd)
@@ -113,14 +114,81 @@ def run_OP(
         else:
             Logging.log('OptiPass failed:')
             Logging.log(res.stderr)
-    return outputs
+    return barrier_file, outputs
 
-def parse_results(**kwargs):
+def collect_results(files):
     '''
     Parse the output files produced by OptiPass, collect results 
-    in a Pandas dataframe.
+    in an OPResults object.
     '''
     pass
+
+class OPResults:
+    '''
+    Collected results of a series of optimizations at diffent budget levels.
+    '''
+
+    def __init__(self, input, outputs):
+        '''
+        Pass the constructor the name of the input file ("barrier file") passed
+        to OptiPass and the list of names of files it generated as outputs.
+        '''
+        self.barriers = pd.read_csv(input, sep='\t', index_col='BARID')
+        self.targets = [col[4:] for col in self.barriers.columns if col.startswith('HAB_')]
+        cols = { x: [] for x in ['budget', 'weights', 'habitat', 'gates']}
+        for fn in outputs:
+            self.parse_op_output(fn, cols)
+        self.weights = cols['weights'][0]           # should all be the same
+        del cols['weights']
+        self.summary = pd.DataFrame(cols)
+            
+    def parse_op_output(self, fn, dct):
+        '''
+        Parse an output file, appending results to the lists.  We need to handle
+        two different format, depending on whether there was one target or more
+        than one.
+
+        This version ignores the STATUS and OPTGAP lines.
+        '''
+
+        def parse_header_line(line, tag):
+            print(line.strip())
+            tokens = line.strip().split()
+            if not tokens[0].startswith(tag):
+                return None
+            return tokens[1]
+
+        with open(fn) as f:
+            amount = parse_header_line(f.readline(), 'BUDGET')
+            dct['budget'].append(float(amount))
+            f.readline()                        # skip STATUS
+            f.readline()                        # skip OPTGAP
+            line = f.readline()
+            if line.startswith('PTNL'):
+                dct['weights'].append([1.0])
+                hab = parse_header_line(line, 'PTNL_HABITAT')
+                dct['habitat'].append(float(hab))
+                f.readline()                    # skip NETGAIN
+            else:
+                lst = []
+                while w := parse_header_line(f.readline(), 'TARGET'):
+                    lst.append(float(w))
+                dct['weights'].append(lst)
+                while line := f.readline():      # skip the individual habitat lines
+                    if line.startswith('WT_PTNL_HAB'):
+                        break
+                hab = parse_header_line(line, 'WT_PTNL_HAB')
+                dct['habitat'] = float(hab)
+                f.readline()                    # skip WT_NETGAIN
+            f.readline()                        # skip blank line
+            f.readline()                        # skip header
+            lst = []
+            while line := f.readline():
+                name, action = line.strip().split()
+                if action == '1':
+                    lst.append(name)
+            dct['gates'].append(lst)
+
 
 ####################
 #
@@ -153,3 +221,14 @@ class TestOP:
         assert list(tf.columns) == ['ID','REG', 'FOCUS', 'DSID', 'HAB_CO', 'HAB_CH', 'PRE_CO', 'PRE_CH', 'NPROJ', 'ACTION', 'COST', 'POST_CO', 'POST_CH']
         assert tf.COST.sum() == 985000
         assert round(tf.HAB_CO.sum(), 3) ==  0.298
+
+    @staticmethod
+    def test_collect_results():
+        '''
+        Test the function that collects results from individual runs into a single
+        data frame.  Expects to find 6 files in ./static/Example1 (named for the 
+        example data in the OptiPass User Manual)
+        '''
+        files = glob.glob('static/Example_1/example_*.txt')
+        assert len(files) == 6
+    

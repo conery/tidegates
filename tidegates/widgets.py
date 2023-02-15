@@ -19,7 +19,7 @@ import os
 import re
 
 from barriers import load_barriers, BF
-from optipass import generate_barrier_frame, run_OP, parse_results
+from optipass import run_OP, collect_results
 from messages import Logging
 
 pn.extension('gridstack', 'tabulator')
@@ -230,6 +230,8 @@ class TideGates(param.Parameterized):
 
         self.main[1].loading = False
 
+        # FIXME
+        #   res is a list of files to parse, len should be one plus the number of budget levels
         if len(res) == len(tlist):
             self.success_alert.visible = True
         else:
