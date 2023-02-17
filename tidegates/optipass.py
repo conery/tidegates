@@ -16,6 +16,7 @@ from glob import glob
 
 import pandas as pd
 import numpy as np
+import networkx as nx
 
 from barriers import load_barriers, BF
 from messages import Logging
@@ -133,16 +134,35 @@ class OPResults:
         Pass the constructor the name of the input file ("barrier file") passed
         to OptiPass and the list of names of files it generated as outputs.
         '''
-        self.barriers = pd.read_csv(input, sep='\t', index_col='BARID')
+
+        df = pd.read_csv(input, sep='\t')
+
+        G = nx.from_pandas_edgelist(
+            df[df.DSID.notnull()], 
+            source='BARID', 
+            target='DSID', 
+            create_using=nx.DiGraph
+        )
+
+        self.barriers = df.set_index('BARID')
+        self.paths = { n: [n] + list(nx.descendants(G,n)) for n in G.nodes }
         self.targets = [col[4:] for col in self.barriers.columns if col.startswith('HAB_')]
+        
         cols = { x: [] for x in ['budget', 'weights', 'habitat', 'gates']}
         for fn in outputs:
-            self.parse_op_output(fn, cols)
+            self._parse_op_output(fn, cols)
         self.weights = cols['weights'][0]           # should all be the same
+
         del cols['weights']
         self.summary = pd.DataFrame(cols)
-            
-    def parse_op_output(self, fn, dct):
+        
+        dct = {}
+        for i in range(len(self.summary)):
+            b = int(self.summary.budget[i])
+            dct[b] = [ 1 if g in self.summary.gates[i] else 0 for g in self.barriers.index]
+        self.matrix = pd.DataFrame(dct, index=self.barriers.index)
+
+    def _parse_op_output(self, fn, dct):
         '''
         Parse an output file, appending results to the lists.  We need to handle
         two different format, depending on whether there was one target or more
@@ -152,7 +172,6 @@ class OPResults:
         '''
 
         def parse_header_line(line, tag):
-            print(line.strip())
             tokens = line.strip().split()
             if not tokens[0].startswith(tag):
                 return None
@@ -237,6 +256,15 @@ class TestOP:
         assert round(obj.summary.budget.sum()) == 1500
         assert round(obj.summary.habitat.sum(),2) == 23.30
 
+        assert list(obj.matrix.columns) == list(obj.summary.budget)
+        # these comprehensions make lists of budgets where a specified gate was selected
+        assert [b for b in obj.matrix.columns if obj.matrix.loc['A',b]] == [400,500]
+        assert [b for b in obj.matrix.columns if obj.matrix.loc['D',b]] == [ ]
+        assert [b for b in obj.matrix.columns if obj.matrix.loc['E',b]] == [100,300]
+
+        assert obj.paths['E'] == ['E','D','A']
+        assert obj.paths['A'] == ['A']
+
     @staticmethod
     def test_example_4():
         '''
@@ -251,6 +279,10 @@ class TestOP:
         assert round(obj.summary.budget.sum()) == 1500
         assert round(obj.summary.habitat.sum(),2) == 197.62
 
+        # using two targets does not change the gate selections
+        assert [b for b in obj.matrix.columns if obj.matrix.loc['A',b]] == [400,500]
+        assert [b for b in obj.matrix.columns if obj.matrix.loc['D',b]] == [ ]
+        assert [b for b in obj.matrix.columns if obj.matrix.loc['E',b]] == [100,300]
 
     @staticmethod
     def test_collect_results():
