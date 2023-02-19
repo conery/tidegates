@@ -145,7 +145,7 @@ class OPResults:
         )
 
         self.barriers = df.set_index('BARID')
-        self.paths = { n: [n] + list(nx.descendants(G,n)) for n in G.nodes }
+        self.paths = { n: self._path_from(n,G) for n in G.nodes }
         self.targets = [col[4:] for col in self.barriers.columns if col.startswith('HAB_')]
         
         cols = { x: [] for x in ['budget', 'weights', 'habitat', 'gates']}
@@ -161,6 +161,13 @@ class OPResults:
             b = int(self.summary.budget[i])
             dct[b] = [ 1 if g in self.summary.gates[i] else 0 for g in self.barriers.index]
         self.matrix = pd.DataFrame(dct, index=self.barriers.index)
+
+    def _path_from(self, x, graph):
+        '''
+        Return a list of nodes in the path from `x` to a downstream barrier that
+        has no descendants.
+        '''
+        return [x] + [child for _, child in nx.dfs_edges(graph,x)]
 
     def _parse_op_output(self, fn, dct):
         '''
@@ -208,6 +215,33 @@ class OPResults:
                     lst.append(name)
             dct['gates'].append(lst)
 
+    def potential_habitat(self, hf):
+        '''
+        Compute the potential habitat available after restoration using
+        values found by the optimizer.  The argument hf ("habitat frame")
+        has one column of habitat values for each restoration target.  The
+        method adds columns of computed potential habitats to the summary
+        matrix.
+        '''
+        wph = np.zeros(len(hf))
+        for i in range(len(hf.columns)):
+            t = self.targets[i]
+            cp = self._cp(t, hf.iloc[:,i])
+            wph += (self.weights[i] * cp)
+            col = pd.DataFrame({t: cp})
+            self.summary = pd.concat([self.summary, col], axis = 1)
+        self.summary = pd.concat([self.summary, pd.DataFrame({'wph': wph})], axis = 1)
+        return self.summary
+
+    def _cp(self, target, habitats):
+        res = np.zeros(len(habitats))
+        m = self.matrix
+        for i in range(len(self.summary.budget)):
+            post = self.barriers[m.iloc[:,i]==1][f'POST_{target}']
+            pre = self.barriers[m.iloc[:,i]==0][f'PRE_{target}']
+            pvec = pd.concat([post, pre])
+            res[i] = sum([pvec[self.paths[b]].prod() * habitats[b] for b in self.matrix.index])
+        return res
 
 ####################
 #
@@ -268,7 +302,7 @@ class TestOP:
     @staticmethod
     def test_example_4():
         '''
-        Same as above, but using Example 4, which has two restoration targets.
+        Same as test_example_1, but using Example 4, which has two restoration targets.
         '''
         obj = OPResults('static/Example_4/Example4.txt', sorted(glob('static/Example_4/example_*.txt')))
         assert obj.targets == ['T1', 'T2']
@@ -294,3 +328,27 @@ class TestOP:
         files = glob('static/Example_1/example_*.txt')
         assert len(files) == 6
     
+    @staticmethod
+    def test_potential_habitat_1():
+        '''
+        Test the method that computes potential habitat, using the results 
+        genearated for Example 1 in the OptiPass manual.
+        '''
+        obj = OPResults('static/Example_1/Example1.txt', sorted(glob('static/Example_1/example_*.txt')))
+        m = obj.potential_habitat(obj.barriers[['HAB_T1']])
+        assert len(m) == 6
+        assert 'T1' in m.columns and 'wph' in m.columns
+        assert round(m.wph[0],3) == 1.238
+        assert round(m.wph[5],3) == 8.520
+
+    @staticmethod
+    def test_potential_habitat_4():
+        '''
+        Same as test_potential_habitat_1, but using Example 4, with two restoration targets
+        '''
+        obj = OPResults('static/Example_4/Example4.txt', sorted(glob('static/Example_4/example_*.txt')))
+        m = obj.potential_habitat(obj.barriers[['HAB_T1','HAB_T2']])
+        assert len(m) == 6
+        assert 'T1' in m.columns and 'T2' in m.columns and 'wph' in m.columns
+        assert round(m.wph[0],3) == 5.491
+        assert round(m.wph[4],3) == 21.084    # the value shown in the OP manual
