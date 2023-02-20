@@ -79,7 +79,7 @@ def _make_targets():
 
 from collections import namedtuple
 
-Target = namedtuple('Target', ['long', 'short', 'habitat', 'prepass', 'postpass'])
+Target = namedtuple('Target', ['long', 'short', 'habitat', 'prepass', 'postpass', 'unscaled'])
 
 # Panel uses the long description in checkbox values; we need to map them to
 # target IDs.
@@ -96,27 +96,27 @@ BL = 'Buildings'
 PS = 'Public-Use Structures'
 
 fish_targets = {
-    'CO':  Target(CO, 'Coho', 'sCO', 'PREPASS_CO', 'POSTPASS'),
-    'CH':  Target(CH, 'Chinook', 'sCH', 'PREPASS_CH', 'POSTPASS'),
-    'ST':  Target(ST, 'Steelhead', 'sST', 'PREPASS_ST', 'POSTPASS'),
-    'CT':  Target(CT, 'Cutthroat', 'sCT', 'PREPASS_CT', 'POSTPASS'),
-    'CU':  Target(CU, 'Chum', 'sCU', 'PREPASS_CU', 'POSTPASS'),
+    'CO':  Target(CO, 'Coho', 'sCO', 'PREPASS_CO', 'POSTPASS', 'Coho_salmon'),
+    'CH':  Target(CH, 'Chinook', 'sCH', 'PREPASS_CH', 'POSTPASS', 'Chinook_salmon'),
+    'ST':  Target(ST, 'Steelhead', 'sST', 'PREPASS_ST', 'POSTPASS', 'Steelhead'),
+    'CT':  Target(CT, 'Cutthroat', 'sCT', 'PREPASS_CT', 'POSTPASS', 'Cutthroat_Trout'),
+    'CU':  Target(CU, 'Chum', 'sCU', 'PREPASS_CU', 'POSTPASS', 'Chum'),
 }
 
 current_infrastructure_targets = {
-    'FI': Target(FI, 'Inund', 'sInundHab_Current', 'PREPASS_FISH', 'POSTPASS'),
-    'AG': Target(AG, 'Agric', 'sAgri_Current', 'PREPASS_AgrInf', 'POSTPASS'),
-    'RR': Target(RR, 'Roads', 'sRoadRail_Current', 'PREPASS_AgrInf', 'POSTPASS'),
-    'BL': Target(BL, 'Bldgs', 'sBuilding_Current', 'PREPASS_AgrInf', 'POSTPASS'),
-    'PS': Target(PS, 'Public', 'sPublicUse_Current', 'PREPASS_AgrInf', 'POSTPASS'),
+    'FI': Target(FI, 'Inund', 'sInundHab_Current', 'PREPASS_FISH', 'POSTPASS', 'InundHab_Current'),
+    'AG': Target(AG, 'Agric', 'sAgri_Current', 'PREPASS_AgrInf', 'POSTPASS', 'Agri_Current'),
+    'RR': Target(RR, 'Roads', 'sRoadRail_Current', 'PREPASS_AgrInf', 'POSTPASS', 'RoadRail_Current'),
+    'BL': Target(BL, 'Bldgs', 'sBuilding_Current', 'PREPASS_AgrInf', 'POSTPASS', 'Building_Current'),
+    'PS': Target(PS, 'Public', 'sPublicUse_Current', 'PREPASS_AgrInf', 'POSTPASS', 'PublicUse_Current'),
 }
 
 future_infrastructure_targets = {
-    'FI': Target(FI, 'Inund', 'sInundHab_Future', 'PREPASS_FISH', 'POSTPASS'),
-    'AG': Target(AG, 'Agric', 'sAgri_Future', 'PREPASS_AgrInf', 'POSTPASS'),
-    'RR': Target(RR, 'Roads', 'sRoadRail_Future', 'PREPASS_AgrInf', 'POSTPASS'),
-    'BL': Target(BL, 'Bldgs', 'sBuilding_Future', 'PREPASS_AgrInf', 'POSTPASS'),
-    'PS': Target(PS, 'Public', 'sPublicUse_Future', 'PREPASS_AgrInf', 'POSTPASS'),
+    'FI': Target(FI, 'Inund', 'sInundHab_Future', 'PREPASS_FISH', 'POSTPASS', 'InundHab_Future'),
+    'AG': Target(AG, 'Agric', 'sAgri_Future', 'PREPASS_AgrInf', 'POSTPASS', 'Agri_Future'),
+    'RR': Target(RR, 'Roads', 'sRoadRail_Future', 'PREPASS_AgrInf', 'POSTPASS', 'RoadRail_Future'),
+    'BL': Target(BL, 'Bldgs', 'sBuilding_Future', 'PREPASS_AgrInf', 'POSTPASS', 'Building_Future'),
+    'PS': Target(PS, 'Public', 'sPublicUse_Future', 'PREPASS_AgrInf', 'POSTPASS', 'PublicUse_Future'),
 }
 
 
@@ -160,6 +160,20 @@ class TestBarriers:
         assert isinstance(BF.map_info, pd.DataFrame)
         assert len(BF.map_info) == len(BF.data)
         assert list(BF.map_info.columns) == ['id','region','type','x','y']
+
+    @staticmethod
+    def test_target_columns():
+        '''
+        Make sure the column names in the Target objects are the same as
+        the column names in the data file
+        '''
+        load_barriers('static/test_barriers.csv')
+        for s in ['Current', 'Future']:
+            for t in BF.targets[s].values():
+                assert t.habitat in BF.data.columns
+                assert t.prepass in BF.data.columns
+                assert t.postpass in BF.data.columns
+                assert t.unscaled in BF.data.columns
 
     @staticmethod
     def test_targets():
