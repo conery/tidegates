@@ -139,12 +139,12 @@ class OPResults:
 
         G = nx.from_pandas_edgelist(
             df[df.DSID.notnull()], 
-            source='BARID', 
+            source='ID', 
             target='DSID', 
             create_using=nx.DiGraph
         )
 
-        self.barriers = df.set_index('BARID')
+        self.barriers = df.set_index('ID')
         self.paths = { n: self._path_from(n,G) for n in G.nodes }
         self.targets = [col[4:] for col in self.barriers.columns if col.startswith('HAB_')]
         
