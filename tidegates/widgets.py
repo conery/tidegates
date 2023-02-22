@@ -18,8 +18,8 @@ import xyzservices.providers as xyz
 import os
 import re
 
-from barriers import load_barriers, BF
-from optipass import run_OP, collect_results
+# from barriers import load_barriers, BF
+# from optipass import run_OP, collect_results
 from messages import Logging
 
 pn.extension('gridstack', 'tabulator')

@@ -1,13 +1,28 @@
 #
-# Interface to OptiPass (command line version)
+# Interface to OptiPass.exe (command line version of OptiPass)
 #
-# This module has functions that create the input file read by OptiPass
-# (a "barrier file"), run OptiPass, and collect the outputs from OptiPass
-# into a Pandas dataframe.
+# An instance of the OP class encapsulates all the information
+# related to a single optimization run.  The constructor, called
+# from the GUI, is passed the options selected by the user (budget
+# levels, restoration targets, etc).  Methods of the class set up
+# and run an optimization based on these options:
 #
-# The module also has its own command line API.  When run on macOS / Linux
-# it can be used to test the function that creates the barrier file.  When
-# run on a Windows system it can also run OptiPass.
+#   OP.generate_input_frame
+#       collect the columns from the main data file, save them in
+#       a frame that has all the informtion that will be needed by OP
+#
+#   OP.run
+#       runs the optimizer for each budget level requested by the
+#       user, records the names of the data files generated
+#
+#   OP.collect_results
+#       parse the output files, collect the relevant data in a frame
+#       that is passed back to the calling function
+#
+# An OP object can also be instantiated by the command line API in
+# main.py.  When run on macOS or Linux it can be used to test the 
+# functions that creates the OP input file and parse the results.  
+# When run on a Windows system it can also run OptiPass.
 #
 
 import os
@@ -18,111 +33,111 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 
-from barriers import load_barriers, BF
 from messages import Logging
+from barriers import Barriers
 
-####################
-#
-# API used by web app
-#
+class OP:
 
-# Create a Pandas frame that has a subset of the columns from the main
-# data frame that will be written to the barrier file.
+    def __init__(self, barriers: Barriers, regions: list[str], targets: list[str], climate: str):
+        '''
+        Instatiate a new OP object.
+        * barriers is a Barriers object containing barrier data
+        * regions is a list of unique names from the barrier file
+        * targets is a list of 2-letter target IDs
+        * climate is either 'Current' or 'Future'
+        '''
+        self.barriers = barriers
+        self.regions = regions
+        structs = self.barriers.targets[climate]
+        self.targets = [structs[t] for t in targets]
+        self.climate = climate
+        self.input_frame = None
+        self.barrier_file = None
+        self.outputs = None
 
-def generate_barrier_frame(
-    regions: list[str],
-    targets: list[str],
-    climate: str = 'Current',
-) -> pd.DataFrame:
-    '''
-    Create a barrier file that will be read by OptiPass.  Assumes the
-    BF struct in the barriers module has been initialized.
+    def generate_input_frame(self):
+        '''
+        Create a data frame that will be written in the format of a "barrier
+        file" that will be read by OptiPass.  Save the frame as the
+        input_frame attribute of the object.
+        '''
 
-    The frame has a new column named FOCUS, set to 1 in every row.  This
-    code uses the POSTPASS column as the source of 1s.
-    '''
-    structs = BF.targets[climate]
+        filtered = self.barriers.data[self.barriers.data.REGION.isin(self.regions)]
+        filtered.index = list(range(len(filtered)))
 
-    filtered = BF.data[BF.data.REGION.isin(regions)]
-    filtered.index = list(range(len(filtered)))
+        df = filtered[['BARID','REGION']]
+        header = ['ID','REG']
 
-    of = filtered[['BARID','REGION']]
-    header = ['ID','REG']
+        df = pd.concat([df, pd.Series(np.ones(len(filtered)), name='FOCUS', dtype=int)], axis=1)
+        header.append('FOCUS')
 
-    of = pd.concat([of, pd.Series(np.ones(len(filtered)), name='FOCUS', dtype=int)], axis=1)
-    header.append('FOCUS')
+        df = pd.concat([df, filtered['DSID']], axis=1)
+        header.append('DSID')
 
-    of = pd.concat([of, filtered['DSID']], axis=1)
-    header.append('DSID')
+        for t in self.targets:
+            df = pd.concat([df, filtered[t.habitat]], axis=1, ignore_index=True)
+            header.append('HAB_'+t.abbrev)
 
-    for t in targets:
-        of = pd.concat([of, filtered[structs[t].habitat]], axis=1, ignore_index=True)
-        header.append('HAB_'+t)
+        for t in self.targets:
+            df = pd.concat([df, filtered[t.prepass]], axis=1, ignore_index=True)
+            header.append('PRE_'+t.abbrev)
 
-    for t in targets:
-        of = pd.concat([of, filtered[structs[t].prepass]], axis=1, ignore_index=True)
-        header.append('PRE_'+t)
+        df = pd.concat([df, filtered['NPROJ']], axis=1, ignore_index=True)
+        header.append('NPROJ')
 
-    of = pd.concat([of, filtered['NPROJ']], axis=1, ignore_index=True)
-    header.append('NPROJ')
+        df = pd.concat([df, pd.Series(np.zeros(len(filtered)), name='ACTION', dtype=int)], axis=1)
+        header.append('ACTION')
 
-    of = pd.concat([of, pd.Series(np.zeros(len(filtered)), name='ACTION', dtype=int)], axis=1)
-    header.append('ACTION')
+        df = pd.concat([df, filtered['COST']], axis=1, ignore_index=True)
+        header += ['COST']
 
-    of = pd.concat([of, filtered['COST']], axis=1, ignore_index=True)
-    header += ['COST']
+        for t in self.targets:
+            df = pd.concat([df, filtered[t.postpass]], axis=1, ignore_index=True)
+            header.append('POST_'+t.abbrev)
 
-    for t in targets:
-        of = pd.concat([of, filtered[structs[t].postpass]], axis=1, ignore_index=True)
-        header.append('POST_'+t)
+        df.columns = header
+        self.input_frame = df
+        return df
 
-    of.columns = header
-    return of
+    # This version assumes the web app is running on a host that has wine installed
+    # to run OptiPass (a Windows .exe file).
 
-# This version assumes the web app is running on a host that has wine installed
-# to run OptiPass (a Windows .exe file).
+    def run(self, budgets: list[int], preview: bool = False):
+        '''
+        Generate and execute the shell commands that run OptiPass.
+        '''
+        df = self.generate_input_frame()
+        _, barrier_file = tempfile.mkstemp(suffix='.txt', dir='./tmp', text=True)
+        df.to_csv(barrier_file, index=False, sep='\t', lineterminator=os.linesep, na_rep='NA')
 
-def run_OP(
-    regions: list[str],
-    targets: list[str],
-    climate: str,
-    budgets: list[int],
-    preview: bool = False,
-) -> list[str]:
-    '''
-    Generate and execute the shell commands that run OptiPass.
-    '''
-    bf = generate_barrier_frame(regions=regions, targets=targets, climate=climate)
-    _, barrier_file = tempfile.mkstemp(suffix='.txt', dir='./tmp', text=True)
-    bf.to_csv(barrier_file, index=False, sep='\t', lineterminator=os.linesep, na_rep='NA')
+        budget_max, budget_delta = budgets
+        num_budgets = budget_max // budget_delta
+        outputs = []
+        root, _ = os.path.splitext(barrier_file)
+        for i in range(num_budgets + 1):
+            outfile = f'{root}_{i+1}.txt'
+            budget = budget_delta * i
+            cmnd = f'wine bin/OptiPassMain.exe -f {barrier_file} -o {outfile} -b {budget}'
+            if (num_targets := len(self.targets)) > 1:
+                cmnd += ' -t {}'.format(num_targets)
+                cmnd += ' -w' + ' 1.0' * num_targets
+            Logging.log(cmnd)
+            if not preview:
+                res = subprocess.run(cmnd, shell=True, capture_output=True)
+            if preview or (res.returncode == 0):
+                outputs.append(outfile)
+            else:
+                Logging.log('OptiPass failed:')
+                Logging.log(res.stderr)
+        self.barrier_file = barrier_file
+        self.outputs = outputs
 
-    budget_max, budget_delta = budgets
-    num_budgets = budget_max // budget_delta
-    outputs = []
-    root, _ = os.path.splitext(barrier_file)
-    for i in range(num_budgets + 1):
-        outfile = f'{root}_{i+1}.txt'
-        budget = budget_delta * i
-        cmnd = f'wine bin/OptiPassMain.exe -f {barrier_file} -o {outfile} -b {budget}'
-        if (num_targets := len(targets)) > 1:
-            cmnd += ' -t {}'.format(num_targets)
-            cmnd += ' -w' + ' 1.0' * num_targets
-        Logging.log(cmnd)
-        if not preview:
-            res = subprocess.run(cmnd, shell=True, capture_output=True)
-        if preview or (res.returncode == 0):
-            outputs.append(outfile)
-        else:
-            Logging.log('OptiPass failed:')
-            Logging.log(res.stderr)
-    return barrier_file, outputs
-
-def collect_results(files):
-    '''
-    Parse the output files produced by OptiPass, collect results 
-    in an OPResults object.
-    '''
-    pass
+    def collect_results(self, base=None):
+        '''
+        Parse the output files produced by OptiPass, collect results 
+        in an OPResults object.
+        '''
+        pass
 
 class OPResults:
     '''
@@ -254,6 +269,14 @@ import tempfile
 class TestOP:
 
     @staticmethod
+    def test_instantiate_object():
+        '''
+        Test the OP constructor.
+        '''
+        load_barriers('static/test_barriers.csv')
+
+
+    @staticmethod
     def test_generate_file():
         '''
         Write a barrier file, test its structure
@@ -261,7 +284,7 @@ class TestOP:
 
         # Create barrier descriptions from the test data
         load_barriers('static/test_barriers.csv')
-        bf = generate_barrier_frame(climate='Current', regions=['Coos'], targets=['CO', 'CH'])
+        bf = generate_input_frame(climate='Current', regions=['Coos'], targets=['CO', 'CH'])
 
         # Write the frame to a CSV file
         _, path = tempfile.mkstemp(suffix='.txt', dir='./tmp', text=True)
