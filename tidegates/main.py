@@ -1,10 +1,13 @@
 import argparse
+from glob import glob
 import panel as pn
+import re
 import subprocess
 import sys
 
 from widgets import TideGates
-from barriers import Barriers
+from targets import DataSet
+from project import Project
 from optipass import OP
 from messages import Logging
 
@@ -48,12 +51,13 @@ def init_cli():
     # web app
 
     parser.add_argument('--action', metavar='A', choices=['generate', 'preview', 'run','parse','all'], help='operation to perform')
-    parser.add_argument('--barriers', metavar='F', default='static/workbook.csv', help='CSV file with barrier data')
+    parser.add_argument('--project', metavar='F', default='static/workbook.csv', help='CSV file with barrier data')
     parser.add_argument('--regions', metavar='R', default='all', nargs='+', help='one or more region names')
     parser.add_argument('--targets', metavar='T', nargs='+', default=['CO','FI'], help='one or more restoration targets')
     parser.add_argument('--budget', metavar='N', nargs=2, default=[5000,1000], help='max budget, budget delta')
     parser.add_argument('--climate', metavar='C', choices=['current','future'], default='current', help='climate scenario')
     parser.add_argument('--output', metavar='F', help='base name of output files (optional)')
+    parser.add_argument('--scaled', action='store_true', help='compute benefit using scaled amounts')
 
     return parser.parse_args()
 
@@ -100,6 +104,14 @@ def parse_budget(budgets):
         exit(1)
     return [bmax,bdelta]
 
+def output_files(pattern):
+
+    def number_part(fn):
+        return int(re.search(r'_(\d+)\.txt$', fn).group(1))
+
+    outputs = glob(f'tmp/{args.output}_*.txt')
+    return sorted(outputs, key=number_part)
+
 if __name__ == '__main__':
     if len(sys.argv) == 1:
         Logging.setup('panel')
@@ -108,16 +120,16 @@ if __name__ == '__main__':
         args = init_cli()
         Logging.setup('api')
 
-        bf = Barriers(args.barriers)
-        regions = bf.regions if args.regions == 'all' else args.regions
-        validate_options('region', regions, bf.regions)
+        p = Project(args.project, DataSet.TNC_OR)
+        regions = p.regions if args.regions == 'all' else args.regions
+        validate_options('region', regions, p.regions)
 
         targets = args.targets
-        validate_options('target', targets, list(bf.target_map.values()))
+        validate_options('target', targets, list(p.target_map.values()))
 
         climate = args.climate.capitalize()
         budgets = parse_budget(args.budget)
-        op = OP(bf,regions,targets,climate)
+        op = OP(p,regions,targets,climate)
 
         match args.action:
             case 'generate':
@@ -130,6 +142,12 @@ if __name__ == '__main__':
                 if not args.output:
                     print('--output required with --action parse')
                     exit(1)
-                print('parse')
+                op.input_frame = op.generate_input_frame()
+                op.outputs = output_files(args.output)
+                op.collect_results(args.scaled)
+                print(op.summary)
             case 'all':
-                print('do it all')
+                op.generate_input_frame()
+                op.run(budgets, args.action=='preview')
+                op.collect_results(args.scaled)
+                print(op.summary)

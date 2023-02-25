@@ -18,31 +18,30 @@ import xyzservices.providers as xyz
 import os
 import re
 
-# from barriers import load_barriers, BF
-# from optipass import run_OP, collect_results
+from project import Project
+from optipass import OP
 from messages import Logging
 
 pn.extension('gridstack', 'tabulator')
 
 class TGMap():
-    def __init__(self):
+    def __init__(self, bf):
         Logging.log('initializing...')
-        load_barriers('static/workbook.csv')
-        Logging.log('...barriers')
-        self.map, self.dots = self._create_map()
+        Logging.log('...project')
+        self.map, self.dots = self._create_map(bf)
         Logging.log('...map')
 
     def graphic(self):
         return self.map
 
-    def _create_map(self):
+    def _create_map(self, bf):
         tile_provider = get_provider(xyz.OpenStreetMap.Mapnik)
         p = bk.figure(
             title='Oregon Coast', 
             height=800,
             width=400,
-            x_range=(BF.map_info.x.min(),BF.map_info.x.max()), 
-            y_range=(BF.map_info.y.min()*0.997,BF.map_info.y.max()*1.003),
+            x_range=(bf.map_info.x.min(),bf.map_info.x.max()), 
+            y_range=(bf.map_info.y.min()*0.997,bf.map_info.y.max()*1.003),
             x_axis_type='mercator',
             y_axis_type='mercator',
             toolbar_location='below',
@@ -56,8 +55,8 @@ class TGMap():
         p.add_tile(tile_provider)
         p.toolbar.autohide = True
         dots = { }
-        for r in BF.regions:
-            df = BF.map_info[BF.map_info.region == r]
+        for r in bf.regions:
+            df = bf.map_info[bf.map_info.region == r]
             c = p.circle('x', 'y', size=5, color='darkslategray', source=df, tags=list(df.id))
             c.nonselection_glyph = Circle(size=5, fill_color='darkslategray')
             c.selection_glyph = Circle(size=8, fill_color='blue')
@@ -144,7 +143,9 @@ class TideGates(param.Parameterized):
     def __init__(self, **params):
         super(TideGates, self).__init__(**params)
 
-        self.map = TGMap()
+        self.bf = Project('static/workbook.csv')
+
+        self.map = TGMap(self.bf)
         self.map_pane = pn.Pane(self.map.graphic())
 
         self.optimize_button = pn.widgets.Button(name='Optimize', height=40, width=60, background='#b2d2dd')
@@ -152,10 +153,10 @@ class TideGates(param.Parameterized):
         self.save_button = pn.widgets.Button(name='Save',height=40,width=60)
         self.reset_button = pn.widgets.Button(name='Reset',height=40,width=60)
 
-        self.climate_group = pn.widgets.RadioBoxGroup(name='Climate', options=BF.climates, inline=False)
-        self.region_group = pn.widgets.CheckBoxGroup(name='Regions', options=BF.regions, inline=False)
+        self.climate_group = pn.widgets.RadioBoxGroup(name='Climate', options=self.bf.climates, inline=False)
+        self.region_group = pn.widgets.CheckBoxGroup(name='Regions', options=self.bf.regions, inline=False)
 
-        self.target_boxes = pn.widgets.CheckBoxGroup(name='Targets', options=list(BF.target_map.keys()), inline=False)
+        self.target_boxes = pn.widgets.CheckBoxGroup(name='Targets', options=list(self.bf.target_map.keys()), inline=False)
         self.budget_box = BudgetBox()
 
         self.region_alert = pn.pane.Alert('**No geographic regions selected**', alert_type='danger')
@@ -219,23 +220,32 @@ class TideGates(param.Parameterized):
         self.success_alert.visible = False
         self.main[1].loading = True
 
-        tlist = [BF.target_map[t] for t in self.target_boxes.value]
+        # tlist = [self.bf.target_map[t] for t in self.target_boxes.value]
 
-        res = run_OP(
-            regions=self.region_group.value,
-            targets=tlist,
-            climate=self.climate_group.value,
-            budgets=self.budget_box.values()
+        # res = run_OP(
+        #     regions=self.region_group.value,
+        #     targets=tlist,
+        #     climate=self.climate_group.value,
+        #     budgets=self.budget_box.values()
+        # )
+
+        self.op = OP(
+            self.bf, 
+            self.region_group.value,
+            [self.bf.target_map[t] for t in self.target_boxes.value],
+            self.climate_group.value,
         )
+        self.op.generate_input_frame()
+        self.op.run(self.budget_box.values())
 
         self.main[1].loading = False
 
         # FIXME
         #   res is a list of files to parse, len should be one plus the number of budget levels
-        if len(res) == len(tlist):
-            self.success_alert.visible = True
-        else:
-            self.fail_alert.visible = True
+        # if len(res) == len(tlist):
+        #     self.success_alert.visible = True
+        # else:
+        #     self.fail_alert.visible = True
 
         Logging.log('done')
 

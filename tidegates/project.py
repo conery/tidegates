@@ -1,7 +1,7 @@
 # 
-# Barriers
+# Project
 #
-# A Barriers object has all the information used by the GUI to display
+# A Project object has all the information used by the GUI to display
 # a set of tide gates.  The constructor is passed the name of a CSV file
 # that has a list of all the barriers and uses it to define attributes:
 #
@@ -22,25 +22,23 @@
 import pandas as pd
 import numpy as np
 
-from targets import make_targets
+from targets import make_targets, DataSet
 
-class Barriers:
+class Project:
 
-    def __init__(self, fn):
+    def __init__(self, fn, ds):
         '''
-        Instantiate a Barriers object and initialize its attributes using
+        Instantiate a Project object and initialize its attributes using
         data in a CSV file
         '''
         self.data = pd.read_csv(fn)
-        self.map_info = self._make_map_info()
-        self.regions = self._make_region_list()
-        self.climates = ['Current', 'Future']
-        self.targets = make_targets()
-
-        # The target names are the same in each scenario, we can use either
-        # one to build this map
-        dct = self.targets['Current']
-        self.target_map = { dct[x].long: x for x in dct.keys()}
+        self.targets = make_targets(ds)
+        if ds == DataSet.TNC_OR:
+            self.map_info = self._make_map_info()
+            self.regions = self._make_region_list()
+            self.climates = ['Current', 'Future']
+            dct = self.targets['Current']
+            self.target_map = { dct[x].long: x for x in dct.keys()}
 
     def _make_map_info(self):
         '''
@@ -76,51 +74,39 @@ class Barriers:
 # Run the tests from the main project directory so pytest finds
 # the test data:
 #
-#   $ pytest tidegates/barriers.py
+#   $ pytest tidegates/project.py
 #
 
-class TestBarriers:
+class TestProject:
 
     @staticmethod
     def test_load():
         '''
-        Load the test data frame, expect to find 30 rows.
+        Load the test data frame, expect to find 6 rows, with single letter
+        barrier IDs
         '''
-        bf = Barriers('static/test_barriers.csv')
-        assert isinstance(bf.data, pd.DataFrame)
-        assert len(bf.data) == 30
+        p = Project('static/test_wb.csv', DataSet.OPM)
+        assert isinstance(p.data, pd.DataFrame)
+        assert len(p.data) == 6
+        assert list(p.data.BARID) == list('ABCDEF')
 
     @staticmethod
     def test_regions():
         '''
         The list of region names should be sorted from north to south
         '''
-        bf = Barriers('static/test_barriers.csv')
-        assert bf.regions == ['Umpqua', 'Coos', 'Coquille']
+        p = Project('static/workbook.csv', DataSet.TNC_OR)
+        assert p.regions == ['Umpqua', 'Coos', 'Coquille']
 
     @staticmethod
     def test_map_info():
         '''
         The frame with map information should have 5 columns
         '''
-        bf = Barriers('static/test_barriers.csv')
-        assert isinstance(bf.map_info, pd.DataFrame)
-        assert len(bf.map_info) == len(bf.data)
-        assert list(bf.map_info.columns) == ['id','region','type','x','y']
-
-    @staticmethod
-    def test_target_columns():
-        '''
-        Make sure the column names in the Target objects are the same as
-        the column names in the data file
-        '''
-        bf = Barriers('static/test_barriers.csv')
-        for s in ['Current', 'Future']:
-            for t in bf.targets[s].values():
-                assert t.habitat in bf.data.columns
-                assert t.prepass in bf.data.columns
-                assert t.postpass in bf.data.columns
-                assert t.unscaled in bf.data.columns
+        p = Project('static/workbook.csv', DataSet.TNC_OR)
+        assert isinstance(p.map_info, pd.DataFrame)
+        assert len(p.map_info) == len(p.data)
+        assert list(p.map_info.columns) == ['id','region','type','x','y']
 
     @staticmethod
     def test_targets():
@@ -128,17 +114,18 @@ class TestBarriers:
         There should be two sets of targets, each with 10 entries,
         and one entry for each target in the map.
         '''
-        bf = Barriers('static/test_barriers.csv')
-        assert len(bf.targets) == 2
-        assert len(bf.targets['Current']) == 10
-        assert len(bf.targets['Future']) == 10
+        p = Project('static/workbook.csv', DataSet.TNC_OR)
 
-        t = bf.targets['Current']['CO']
+        assert len(p.targets) == 2
+        assert len(p.targets['Current']) == 10
+        assert len(p.targets['Future']) == 10
+
+        t = p.targets['Current']['CO']
         assert t.short == 'Coho'
         assert t.long == 'Fish habitat: Coho streams'
         assert t.habitat == 'sCO' 
         assert t.prepass == 'PREPASS_CO'
         assert t.postpass == 'POSTPASS'
 
-        assert len(bf.target_map) == 10
-        assert bf.target_map['Fish habitat: Coho streams'] == 'CO'
+        assert len(p.target_map) == 10
+        assert p.target_map['Fish habitat: Coho streams'] == 'CO'

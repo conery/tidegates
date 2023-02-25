@@ -32,27 +32,28 @@ from glob import glob
 import pandas as pd
 import numpy as np
 import networkx as nx
+import tempfile
 
 from messages import Logging
-from barriers import Barriers
+from project import Project
+from targets import DataSet
 
 class OP:
 
-    def __init__(self, barriers: Barriers, regions: list[str], targets: list[str], climate: str):
+    def __init__(self, project: Project, regions: list[str], targets: list[str], climate: str):
         '''
         Instatiate a new OP object.
-        * barriers is a Barriers object containing barrier data
+        * project is a Project object containing barrier data
         * regions is a list of unique names from the barrier file
         * targets is a list of 2-letter target IDs
         * climate is either 'Current' or 'Future'
         '''
-        self.barriers = barriers
+        self.project = project
         self.regions = regions
-        structs = self.barriers.targets[climate]
-        self.targets = [structs[t] for t in targets]
         self.climate = climate
+        structs = self.project.targets[climate] if climate else self.project.targets
+        self.targets = [structs[t] for t in targets]
         self.input_frame = None
-        self.barrier_file = None
         self.outputs = None
 
     def generate_input_frame(self):
@@ -62,7 +63,7 @@ class OP:
         input_frame attribute of the object.
         '''
 
-        filtered = self.barriers.data[self.barriers.data.REGION.isin(self.regions)]
+        filtered = self.project.data[self.project.data.REGION.isin(self.regions)]
         filtered.index = list(range(len(filtered)))
 
         df = filtered[['BARID','REGION']]
@@ -129,42 +130,25 @@ class OP:
             else:
                 Logging.log('OptiPass failed:')
                 Logging.log(res.stderr)
-        self.barrier_file = barrier_file
         self.outputs = outputs
 
-    def collect_results(self, base=None):
+    def collect_results(self, scaled=False):
         '''
-        Parse the output files produced by OptiPass, collect results 
-        in an OPResults object.
+        Parse the output files produced by OptiPass
         '''
-        pass
-
-class OPResults:
-    '''
-    Collected results of a series of optimizations at diffent budget levels.
-    '''
-
-    def __init__(self, input, outputs):
-        '''
-        Pass the constructor the name of the input file ("barrier file") passed
-        to OptiPass and the list of names of files it generated as outputs.
-        '''
-
-        df = pd.read_csv(input, sep='\t')
-
+        df = self.input_frame
         G = nx.from_pandas_edgelist(
             df[df.DSID.notnull()], 
             source='ID', 
             target='DSID', 
             create_using=nx.DiGraph
         )
-
-        self.barriers = df.set_index('ID')
+        for x in df[df.DSID.isnull()].ID:
+            G.add_node(x)
         self.paths = { n: self._path_from(n,G) for n in G.nodes }
-        self.targets = [col[4:] for col in self.barriers.columns if col.startswith('HAB_')]
-        
+
         cols = { x: [] for x in ['budget', 'weights', 'habitat', 'gates']}
-        for fn in outputs:
+        for fn in self.outputs:
             self._parse_op_output(fn, cols)
         self.weights = cols['weights'][0]           # should all be the same
 
@@ -174,8 +158,10 @@ class OPResults:
         dct = {}
         for i in range(len(self.summary)):
             b = int(self.summary.budget[i])
-            dct[b] = [ 1 if g in self.summary.gates[i] else 0 for g in self.barriers.index]
-        self.matrix = pd.DataFrame(dct, index=self.barriers.index)
+            dct[b] = [ 1 if g in self.summary.gates[i] else 0 for g in self.input_frame.ID]
+        self.matrix = pd.DataFrame(dct, index=self.input_frame.ID)
+
+        self.potential_habitat(self.targets, scaled)
 
     def _path_from(self, x, graph):
         '''
@@ -219,7 +205,7 @@ class OPResults:
                     if line.startswith('WT_PTNL_HAB'):
                         break
                 hab = parse_header_line(line, 'WT_PTNL_HAB')
-                dct['habitat'] = float(hab)
+                dct['habitat'].append(float(hab))
                 f.readline()                    # skip WT_NETGAIN
             f.readline()                        # skip blank line
             f.readline()                        # skip header
@@ -230,32 +216,33 @@ class OPResults:
                     lst.append(name)
             dct['gates'].append(lst)
 
-    def potential_habitat(self, hf):
+    def potential_habitat(self, tlist, scaled):
         '''
-        Compute the potential habitat available after restoration using
-        values found by the optimizer.  The argument hf ("habitat frame")
-        has one column of habitat values for each restoration target.  The
-        method adds columns of computed potential habitats to the summary
-        matrix.
+        Compute the potential habitat available after restoration, using
+        the original unscaled habitat values.
         '''
-        wph = np.zeros(len(hf))
-        for i in range(len(hf.columns)):
+        filtered = self.project.data[self.project.data.REGION.isin(self.regions)].fillna(0)
+        filtered.index = filtered.BARID
+        wph = np.zeros(len(self.summary))
+        for i in range(len(tlist)):
             t = self.targets[i]
-            cp = self._cp(t, hf.iloc[:,i])
+            cp = self._cp(t, filtered, scaled)
             wph += (self.weights[i] * cp)
-            col = pd.DataFrame({t: cp})
+            col = pd.DataFrame({t.abbrev: cp})
             self.summary = pd.concat([self.summary, col], axis = 1)
         self.summary = pd.concat([self.summary, pd.DataFrame({'wph': wph})], axis = 1)
         return self.summary
 
-    def _cp(self, target, habitats):
-        res = np.zeros(len(habitats))
+    def _cp(self, target, data, scaled):
+        budgets = self.summary.budget
         m = self.matrix
-        for i in range(len(self.summary.budget)):
-            post = self.barriers[m.iloc[:,i]==1][f'POST_{target}']
-            pre = self.barriers[m.iloc[:,i]==0][f'PRE_{target}']
+        res = np.zeros(len(budgets))
+        for i in range(len(res)):
+            post = data[m.iloc[:,i]==1][target.postpass]
+            pre = data[m.iloc[:,i]==0][target.prepass]
             pvec = pd.concat([post, pre])
-            res[i] = sum([pvec[self.paths[b]].prod() * habitats[b] for b in self.matrix.index])
+            habitat = data[target.habitat if scaled else target.unscaled]
+            res[i] = sum([pvec[self.paths[b]].prod() * habitat[b] for b in m.index])
         return res
 
 ####################
@@ -264,7 +251,6 @@ class OPResults:
 #
 
 import pytest
-import tempfile
 
 class TestOP:
 
@@ -273,92 +259,99 @@ class TestOP:
         '''
         Test the OP constructor.
         '''
-        load_barriers('static/test_barriers.csv')
-
+        p = Project('static/workbook.csv', DataSet.TNC_OR)
+        op = OP(p, ['Coos'], ['CO','CH'], 'Current')
+        assert op.project == p
+        assert op.regions == ['Coos']
+        assert op.climate == 'Current'
+        assert len(op.targets) == 2
+        t = op.targets[0]
+        assert t.abbrev == 'CO'
+        assert t.short == 'Coho'
+        assert t.long == 'Fish habitat: Coho streams'
 
     @staticmethod
-    def test_generate_file():
+    def test_generate_frame():
         '''
-        Write a barrier file, test its structure
+        Test the structure of a frame that will be printed as a
+        'barrier file' for input to OptiPass
         '''
 
-        # Create barrier descriptions from the test data
-        load_barriers('static/test_barriers.csv')
-        bf = generate_input_frame(climate='Current', regions=['Coos'], targets=['CO', 'CH'])
+        p = Project('static/workbook.csv', DataSet.TNC_OR)
+        op = OP(p, ['Coos'], ['CO','CH'], 'Current')
+        op.generate_input_frame()
+        tf = op.input_frame
 
-        # Write the frame to a CSV file
-        _, path = tempfile.mkstemp(suffix='.txt', dir='./tmp', text=True)
-        bf.to_csv(path, index=False, sep='\t', lineterminator=os.linesep, na_rep='NA')
-
-        # Read the file, test its expected structure      
-        tf = pd.read_csv(path, sep='\t')
-
-        assert len(tf) == 10
         assert list(tf.columns) == ['ID','REG', 'FOCUS', 'DSID', 'HAB_CO', 'HAB_CH', 'PRE_CO', 'PRE_CH', 'NPROJ', 'ACTION', 'COST', 'POST_CO', 'POST_CH']
-        assert tf.COST.sum() == 985000
-        assert round(tf.HAB_CO.sum(), 3) ==  0.298
+
+    # NOTE:  the OPM project does not have habitat in unscaled ("target") unita
+    # so the calls to collect_results in these tests need to specify scaled = True
 
     @staticmethod
     def test_example_1():
         '''
         Test the OPResults class by collecting results for Example 1 from the 
-        OptiPass User Manual
+        OptiPass User Manual.
         '''
-        obj = OPResults('static/Example_1/Example1.txt', sorted(glob('static/Example_1/example_*.txt')))
-        assert obj.targets == ['T1']
-        assert len(obj.weights) == 1 and round(obj.weights[0]) == 1
+        op = OP(Project('static/test_wb.csv', DataSet.OPM), ['OPM'], ['T1'], None)
+        op.input_frame = pd.read_csv('static/Example_1/Example1.txt', sep='\t')
+        op.outputs = sorted(glob('static/Example_1/example_*.txt'))
+        op.collect_results(scaled=True)
 
-        assert type(obj.summary) == pd.DataFrame
-        assert len(obj.summary) == 6
-        assert round(obj.summary.budget.sum()) == 1500
-        assert round(obj.summary.habitat.sum(),2) == 23.30
+        assert len(op.targets) == 1
+        assert op.targets[0].abbrev == 'T1'
+        assert len(op.weights) == 1 and round(op.weights[0]) == 1
 
-        assert list(obj.matrix.columns) == list(obj.summary.budget)
+        assert type(op.summary) == pd.DataFrame
+        assert len(op.summary) == 6
+        assert round(op.summary.budget.sum()) == 1500
+        assert round(op.summary.habitat.sum(),2) == 23.30
+
+        assert list(op.matrix.columns) == list(op.summary.budget)
         # these comprehensions make lists of budgets where a specified gate was selected
-        assert [b for b in obj.matrix.columns if obj.matrix.loc['A',b]] == [400,500]
-        assert [b for b in obj.matrix.columns if obj.matrix.loc['D',b]] == [ ]
-        assert [b for b in obj.matrix.columns if obj.matrix.loc['E',b]] == [100,300]
+        assert [b for b in op.matrix.columns if op.matrix.loc['A',b]] == [400,500]
+        assert [b for b in op.matrix.columns if op.matrix.loc['D',b]] == [ ]
+        assert [b for b in op.matrix.columns if op.matrix.loc['E',b]] == [100,300]
 
-        assert obj.paths['E'] == ['E','D','A']
-        assert obj.paths['A'] == ['A']
+        assert op.paths['E'] == ['E','D','A']
+        assert op.paths['A'] == ['A']
 
     @staticmethod
     def test_example_4():
         '''
         Same as test_example_1, but using Example 4, which has two restoration targets.
         '''
-        obj = OPResults('static/Example_4/Example4.txt', sorted(glob('static/Example_4/example_*.txt')))
-        assert obj.targets == ['T1', 'T2']
-        assert len(obj.weights) == 2 and round(sum(obj.weights)) == 4
+        op = OP(Project('static/test_wb.csv', DataSet.OPM), ['OPM'], ['T1','T2'], None)
+        op.input_frame = pd.read_csv('static/Example_4/Example4.txt', sep='\t')
+        op.outputs = sorted(glob('static/Example_4/example_*.txt'))
+        op.collect_results(scaled=True)
 
-        assert type(obj.summary) == pd.DataFrame
-        assert len(obj.summary) == 6
-        assert round(obj.summary.budget.sum()) == 1500
-        assert round(obj.summary.habitat.sum(),2) == 197.62
+        assert len(op.targets) == 2
+        assert op.targets[0].abbrev == 'T1' and op.targets[1].abbrev == 'T2'
+        assert len(op.weights) == 2 and round(sum(op.weights)) == 4
+
+        assert type(op.summary) == pd.DataFrame
+        assert len(op.summary) == 6
+        assert round(op.summary.budget.sum()) == 1500
+        assert round(op.summary.habitat.sum(),2) == 95.21
 
         # using two targets does not change the gate selections
-        assert [b for b in obj.matrix.columns if obj.matrix.loc['A',b]] == [400,500]
-        assert [b for b in obj.matrix.columns if obj.matrix.loc['D',b]] == [ ]
-        assert [b for b in obj.matrix.columns if obj.matrix.loc['E',b]] == [100,300]
+        assert [b for b in op.matrix.columns if op.matrix.loc['A',b]] == [400,500]
+        assert [b for b in op.matrix.columns if op.matrix.loc['D',b]] == [ ]
+        assert [b for b in op.matrix.columns if op.matrix.loc['E',b]] == [100,300]
 
-    @staticmethod
-    def test_collect_results():
-        '''
-        Test the function that collects results from individual runs into a single
-        data frame.  Expects to find 6 files in ./static/Example1 (named for the 
-        example data in the OptiPass User Manual)
-        '''
-        files = glob('static/Example_1/example_*.txt')
-        assert len(files) == 6
-    
     @staticmethod
     def test_potential_habitat_1():
         '''
         Test the method that computes potential habitat, using the results 
         genearated for Example 1 in the OptiPass manual.
         '''
-        obj = OPResults('static/Example_1/Example1.txt', sorted(glob('static/Example_1/example_*.txt')))
-        m = obj.potential_habitat(obj.barriers[['HAB_T1']])
+        op = OP(Project('static/test_wb.csv', DataSet.OPM), ['OPM'], ['T1'], None)
+        op.input_frame = pd.read_csv('static/Example_1/Example1.txt', sep='\t')
+        op.outputs = sorted(glob('static/Example_1/example_*.txt'))
+        op.collect_results(scaled=True)
+
+        m = op.summary
         assert len(m) == 6
         assert 'T1' in m.columns and 'wph' in m.columns
         assert round(m.wph[0],3) == 1.238
@@ -369,8 +362,12 @@ class TestOP:
         '''
         Same as test_potential_habitat_1, but using Example 4, with two restoration targets
         '''
-        obj = OPResults('static/Example_4/Example4.txt', sorted(glob('static/Example_4/example_*.txt')))
-        m = obj.potential_habitat(obj.barriers[['HAB_T1','HAB_T2']])
+        op = OP(Project('static/test_wb.csv', DataSet.OPM), ['OPM'], ['T1','T2'], None)
+        op.input_frame = pd.read_csv('static/Example_4/Example4.txt', sep='\t')
+        op.outputs = sorted(glob('static/Example_4/example_*.txt'))
+        op.collect_results(scaled=True)
+
+        m = op.summary
         assert len(m) == 6
         assert 'T1' in m.columns and 'T2' in m.columns and 'wph' in m.columns
         assert round(m.wph[0],3) == 5.491
