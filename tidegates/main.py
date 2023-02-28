@@ -142,12 +142,14 @@ if __name__ == '__main__':
                 if not args.output:
                     print('--output required with --action parse')
                     exit(1)
+                op.budget_max, op.budget_delta = budgets
                 op.input_frame = op.generate_input_frame()
                 op.outputs = output_files(args.output)
                 op.collect_results(args.scaled)
-                print(op.summary)
+                print(op.table_view())
             case 'all':
                 op.generate_input_frame()
                 op.run(budgets, args.action=='preview')
                 op.collect_results(args.scaled)
-                print(op.summary)
+                print('Summary\n', op.summary)
+                print('Matrix\n', op.matrix[op.matrix['count'] > 1])

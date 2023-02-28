@@ -111,13 +111,13 @@ class OP:
         _, barrier_file = tempfile.mkstemp(suffix='.txt', dir='./tmp', text=True)
         df.to_csv(barrier_file, index=False, sep='\t', lineterminator=os.linesep, na_rep='NA')
 
-        budget_max, budget_delta = budgets
-        num_budgets = budget_max // budget_delta
+        self.budget_max, self.budget_delta = budgets
+        num_budgets = self.budget_max // self.budget_delta
         outputs = []
         root, _ = os.path.splitext(barrier_file)
         for i in range(num_budgets + 1):
             outfile = f'{root}_{i+1}.txt'
-            budget = budget_delta * i
+            budget = self.budget_delta * i
             cmnd = f'wine bin/OptiPassMain.exe -f {barrier_file} -o {outfile} -b {budget}'
             if (num_targets := len(self.targets)) > 1:
                 cmnd += ' -t {}'.format(num_targets)
@@ -160,8 +160,9 @@ class OP:
             b = int(self.summary.budget[i])
             dct[b] = [ 1 if g in self.summary.gates[i] else 0 for g in self.input_frame.ID]
         self.matrix = pd.DataFrame(dct, index=self.input_frame.ID)
-
+        self.matrix['count'] = self.matrix.sum(axis=1)
         self.potential_habitat(self.targets, scaled)
+
 
     def _path_from(self, x, graph):
         '''
@@ -218,7 +219,7 @@ class OP:
 
     def potential_habitat(self, tlist, scaled):
         '''
-        Compute the potential habitat available after restoration, using
+        Compute the potential habitat available before and after restoration, using
         the original unscaled habitat values.
         '''
         filtered = self.project.data[self.project.data.REGION.isin(self.regions)].fillna(0)
@@ -229,8 +230,15 @@ class OP:
             cp = self._cp(t, filtered, scaled)
             wph += (self.weights[i] * cp)
             col = pd.DataFrame({t.abbrev: cp})
-            self.summary = pd.concat([self.summary, col], axis = 1)
-        self.summary = pd.concat([self.summary, pd.DataFrame({'wph': wph})], axis = 1)
+            self.summary = pd.concat([self.summary, col], axis=1)
+            if not scaled:
+                gain = self._gain(t, filtered)
+                self.matrix = pd.concat([self.matrix, filtered[t.unscaled], gain], axis=1)
+
+        # If scaled is True add the wph column so we can compare with OP values
+        if scaled:
+            self.summary = pd.concat([self.summary, pd.DataFrame({'wph': wph})], axis = 1)
+        self.summary['netgain'] = self.summary.habitat - self.summary.habitat[0]
         return self.summary
 
     def _cp(self, target, data, scaled):
@@ -244,6 +252,65 @@ class OP:
             habitat = data[target.habitat if scaled else target.unscaled]
             res[i] = sum([pvec[self.paths[b]].prod() * habitat[b] for b in m.index])
         return res
+    
+    def _gain(self, target, data):
+        col = (data[target.postpass] - data[target.prepass]) * data[target.unscaled]
+        return col.to_frame(name=f'GAIN_{target.abbrev}')
+    
+    def table_view(self):
+        '''
+        Create a table that will be displayed by the GUI
+        '''
+        filtered = self.project.data[self.project.data.REGION.isin(self.regions)]
+        filtered = filtered.set_index('BARID')
+
+        info_cols = {
+            'REGION': ('Barrier', 'Region'),
+            'BarrierType': ('Barrier', 'Type'),
+            'DSID': ('Barrier', 'Downstream'),
+            'COST': ('Barrier', 'Cost'),
+        }
+
+        other_cols = {
+            'PrimaryTG': ('Info', 'Primary'),
+            'DominantTG': ('Info', 'Dominant'),
+            'POINT_X': ('Info', 'Longitude'),
+            'POINT_Y': ('Info', 'Latitude'),
+        }
+
+        budget_cols = self._format_budgets([c for c in self.matrix.columns if isinstance(c,int) and c > 0])
+
+        df = pd.concat([
+            filtered[info_cols.keys()].rename(columns=info_cols),
+            self.matrix.rename(columns=budget_cols),
+            filtered[other_cols.keys()].rename(columns=other_cols),
+        ], axis=1)
+
+        benefit_cols = { t.unscaled: t for t in self.targets}
+        for i, col in enumerate(range(len(df.columns))):
+            if col in benefit_cols:
+                t.columns
+
+        dct = { t.unscaled: (t.short,'habitat') for t in self.targets }
+        dct |= { f'GAIN_{t.abbrev}': (t.short,'gain') for t in self.targets }
+        df = df.rename(columns=dct)
+
+        del df[0]
+        df = df[df['count'] > 0].sort_values(by='count', ascending=False).fillna('-')
+        df = df.rename(columns={'count': ('Barrier','Count')})
+
+        df.columns = pd.MultiIndex.from_tuples(df.columns)
+        return df
+    
+    def _format_budgets(self, cols):
+        if self.budget_max > 1000000:
+            suffix = 'M'
+            divisor = 1000000
+        else:
+            suffix = 'K'
+            divisor = 1000
+        return {n: ('Budget', f'${n//divisor}{suffix}') for n in cols}
+
 
 ####################
 #
@@ -307,11 +374,13 @@ class TestOP:
         assert round(op.summary.budget.sum()) == 1500
         assert round(op.summary.habitat.sum(),2) == 23.30
 
-        assert list(op.matrix.columns) == list(op.summary.budget)
+        budget_cols = [col for col in op.matrix.columns if isinstance(col,int)]
+        assert budget_cols == list(op.summary.budget)
+
         # these comprehensions make lists of budgets where a specified gate was selected
-        assert [b for b in op.matrix.columns if op.matrix.loc['A',b]] == [400,500]
-        assert [b for b in op.matrix.columns if op.matrix.loc['D',b]] == [ ]
-        assert [b for b in op.matrix.columns if op.matrix.loc['E',b]] == [100,300]
+        assert [b for b in op.matrix.columns if b != 'count' and op.matrix.loc['A',b]] == [400,500]
+        assert [b for b in op.matrix.columns if b != 'count' and op.matrix.loc['D',b]] == [ ]
+        assert [b for b in op.matrix.columns if b != 'count' and op.matrix.loc['E',b]] == [100,300]
 
         assert op.paths['E'] == ['E','D','A']
         assert op.paths['A'] == ['A']
@@ -336,9 +405,9 @@ class TestOP:
         assert round(op.summary.habitat.sum(),2) == 95.21
 
         # using two targets does not change the gate selections
-        assert [b for b in op.matrix.columns if op.matrix.loc['A',b]] == [400,500]
-        assert [b for b in op.matrix.columns if op.matrix.loc['D',b]] == [ ]
-        assert [b for b in op.matrix.columns if op.matrix.loc['E',b]] == [100,300]
+        assert [b for b in op.matrix.columns if b != 'count' and op.matrix.loc['A',b]] == [400,500]
+        assert [b for b in op.matrix.columns if b != 'count' and op.matrix.loc['D',b]] == [ ]
+        assert [b for b in op.matrix.columns if b != 'count' and op.matrix.loc['E',b]] == [100,300]
 
     @staticmethod
     def test_potential_habitat_1():

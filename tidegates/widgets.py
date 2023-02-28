@@ -15,9 +15,11 @@ from bokeh.models.widgets.tables import BooleanFormatter
 from bokeh.tile_providers import get_provider
 import xyzservices.providers as xyz
 
+from glob import glob
 import os
 import re
 
+from targets import DataSet
 from project import Project
 from optipass import OP
 from messages import Logging
@@ -75,8 +77,8 @@ class TGMap():
 class BudgetBox(pn.Row):
     def __init__(self):
         super(BudgetBox, self).__init__()
-        self.budget = pn.widgets.IntSlider(name='Maximum', start=50000, end=5000000, step=100000, value=50000, tooltips=False, format='$0,000', width=400)
-        self.increment = pn.widgets.RadioBoxGroup(options=['$50,000', '$100,000', '$250,000', '$500,000'], width=100)
+        self.budget = pn.widgets.IntSlider(name='Maximum', start=50000, end=10000000, step=100000, value=50000, tooltips=False, format='$0,000', width=400)
+        self.increment = pn.widgets.RadioBoxGroup(options=['$50,000', '$100,000', '$250,000', '$500,000', '$1,000,000'], width=100)
         self.increment.param.watch(self.increment_cb, ['value'])
         self.append(self.budget)
         self.append(pn.Spacer(width=50))
@@ -143,7 +145,7 @@ class TideGates(param.Parameterized):
     def __init__(self, **params):
         super(TideGates, self).__init__(**params)
 
-        self.bf = Project('static/workbook.csv')
+        self.bf = Project('static/workbook.csv', DataSet.TNC_OR)
 
         self.map = TGMap(self.bf)
         self.map_pane = pn.Pane(self.map.graphic())
@@ -220,15 +222,6 @@ class TideGates(param.Parameterized):
         self.success_alert.visible = False
         self.main[1].loading = True
 
-        # tlist = [self.bf.target_map[t] for t in self.target_boxes.value]
-
-        # res = run_OP(
-        #     regions=self.region_group.value,
-        #     targets=tlist,
-        #     climate=self.climate_group.value,
-        #     budgets=self.budget_box.values()
-        # )
-
         self.op = OP(
             self.bf, 
             self.region_group.value,
@@ -236,26 +229,51 @@ class TideGates(param.Parameterized):
             self.climate_group.value,
         )
         self.op.generate_input_frame()
-        self.op.run(self.budget_box.values())
+        if base := os.environ.get('OP_OUTPUT'):
+            self._find_output_files(base)
+        else:
+            self.op.run(self.budget_box.values())
+        self.op.collect_results()
 
         self.main[1].loading = False
 
-        # FIXME
-        #   res is a list of files to parse, len should be one plus the number of budget levels
-        # if len(res) == len(tlist):
-        #     self.success_alert.visible = True
-        # else:
-        #     self.fail_alert.visible = True
+        budget_max, budget_delta = self.budget_box.values()
+        num_budgets = budget_max // budget_delta
 
-        Logging.log('done')
+        # Expect to find one file for each budget level plus one more
+        # for the $0 budget
+
+        if len(self.op.outputs) == num_budgets+1:
+            Logging.log('Output files:' + ','.join(self.op.outputs))
+            self.add_output_pane()
+            self.add_graphic_pane()
+            self.success_alert.visible = True
+        else:
+            self.fail_alert.visible = True
+
+
+    # When debugging outside of a container define an environment variable
+    # named OP_OUTPUT, setting it to the base name of a set of existing output 
+    # files.  This helper function collects the file names so they can be
+    # used in the display
+
+    def _find_output_files(self, pattern):
+        def number_part(fn):
+            return int(re.search(r'_(\d+)\.txt$', fn).group(1))
+
+        outputs = glob(f'tmp/{pattern}_*.txt')
+        self.op.outputs = sorted(outputs, key=number_part)
 
     def table_click_cb(self, *events):
         Logging.log('table cb', len(events), events[0])
 
-    def make_table_tab(self, df, targets):
+    # After running OptiPass call these two methods to add tabs to the main
+    # panel to show the results.
+
+    def add_output_pane(self):
         formatters = { }
         alignment = {}
-        Logging.log(df.columns)
+        df = self.op.matrix
         for col in df.columns:
             if re.match(r'[\d\.]+', col):
                 formatters[col] = {'type': 'tickCross', 'crossElement': ''}
@@ -271,12 +289,15 @@ class TideGates(param.Parameterized):
             formatters=formatters,
             text_align=alignment,
             # configuration={'columnDefaults': {'headerSort': False}},
-            frozen_columns=['BARID'],
+            # frozen_columns=['BARID'],
             # sorters = [ {'field': col, 'dir': 'asc'} for col in targets ],
         )
         table.on_click(self.table_click_cb)
         table.disabled = True
-        return pn.Pane(table, min_width=500, height=800)
+        self.main.append(('Table', pn.Pane(table, min_width=500, height=800)))
+
+    def add_graphic_pane(self):
+        pass
 
     def check_selections(self):
         self.region_alert.visible = False
