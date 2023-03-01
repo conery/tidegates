@@ -34,6 +34,10 @@ import numpy as np
 import networkx as nx
 import tempfile
 
+from bokeh.plotting import figure, show
+from bokeh.layouts import row, Spacer
+from bokeh.models import NumeralTickFormatter
+
 from messages import Logging
 from project import Project
 from targets import DataSet
@@ -257,26 +261,29 @@ class OP:
         col = (data[target.postpass] - data[target.prepass]) * data[target.unscaled]
         return col.to_frame(name=f'GAIN_{target.abbrev}')
     
-    def table_view(self):
+    def table_view(self, test=False):
         '''
         Create a table that will be displayed by the GUI
         '''
         filtered = self.project.data[self.project.data.REGION.isin(self.regions)]
         filtered = filtered.set_index('BARID')
 
-        info_cols = {
-            'REGION': ('Barrier', 'Region'),
-            'BarrierType': ('Barrier', 'Type'),
-            'DSID': ('Barrier', 'Downstream'),
-            'COST': ('Barrier', 'Cost'),
-        }
+        if test:
+            info_cols = other_cols = { }
+        else:
+            info_cols = {
+                'REGION': 'Region',
+                'BarrierType': 'Type',
+                'DSID': 'DSID',
+                'COST': 'Cost',
+            }
 
-        other_cols = {
-            'PrimaryTG': ('Info', 'Primary'),
-            'DominantTG': ('Info', 'Dominant'),
-            'POINT_X': ('Info', 'Longitude'),
-            'POINT_Y': ('Info', 'Latitude'),
-        }
+            other_cols = {
+                'PrimaryTG': 'Primary',
+                'DominantTG': 'Dominant',
+                'POINT_X': 'Longitude',
+                'POINT_Y': 'Latitude',
+            }
 
         budget_cols = self._format_budgets([c for c in self.matrix.columns if isinstance(c,int) and c > 0])
 
@@ -286,20 +293,16 @@ class OP:
             filtered[other_cols.keys()].rename(columns=other_cols),
         ], axis=1)
 
-        benefit_cols = { t.unscaled: t for t in self.targets}
-        for i, col in enumerate(range(len(df.columns))):
-            if col in benefit_cols:
-                t.columns
-
-        dct = { t.unscaled: (t.short,'habitat') for t in self.targets }
-        dct |= { f'GAIN_{t.abbrev}': (t.short,'gain') for t in self.targets }
+        dct = { t.unscaled: t.short+'_hab' for t in self.targets }
+        dct |= { f'GAIN_{t.abbrev}': t.short+'_gain' for t in self.targets }
         df = df.rename(columns=dct)
 
         del df[0]
         df = df[df['count'] > 0].sort_values(by='count', ascending=False).fillna('-')
-        df = df.rename(columns={'count': ('Barrier','Count')})
+        df = df.rename(columns={'count': 'Count'})
+        df = df.reset_index(names=['ID'])
 
-        df.columns = pd.MultiIndex.from_tuples(df.columns)
+        # df.columns = pd.MultiIndex.from_tuples(df.columns)
         return df
     
     def _format_budgets(self, cols):
@@ -309,8 +312,41 @@ class OP:
         else:
             suffix = 'K'
             divisor = 1000
-        return {n: ('Budget', f'${n//divisor}{suffix}') for n in cols}
-
+        return {n: f'${n//divisor}{suffix}' for n in cols}
+    
+    def roi_curves(self):
+        H = 400
+        W = 400
+        LW = 2
+        D = 10
+        figures = []
+        for t in self.targets:
+            f = figure(
+                title=t.long, 
+                x_axis_label='Budget', 
+                y_axis_label='Post-Restoration Habitat',
+                width=W,
+                height=H,                
+                )
+            f.line(self.summary.budget, self.summary[t.abbrev], line_width=LW)
+            f.circle(self.summary.budget, self.summary[t.abbrev], fill_color='white', size=D)
+            f.xaxis.formatter = NumeralTickFormatter(format='$0a')
+            f.toolbar_location = None
+            figures.append(f)
+            figures.append(Spacer(width=50))
+        f = figure(
+            title='Weighted Potential Habitat', 
+            x_axis_label='Budget', 
+            y_axis_label='Net Gain',
+            width=W,
+            height=H,
+            )
+        f.line(self.summary.budget, self.summary.netgain, line_width=LW)
+        f.circle(self.summary.budget, self.summary.netgain, fill_color='white', size=D)
+        f.xaxis.formatter = NumeralTickFormatter(format='$0a')
+        f.toolbar_location = None
+        figures.append(f)
+        return row(*figures)
 
 ####################
 #

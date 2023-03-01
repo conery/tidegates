@@ -5,6 +5,8 @@ import re
 import subprocess
 import sys
 
+from bokeh.plotting import show
+
 from widgets import TideGates
 from targets import DataSet
 from project import Project
@@ -147,9 +149,10 @@ if __name__ == '__main__':
                 op.outputs = output_files(args.output)
                 op.collect_results(args.scaled)
                 print(op.table_view())
+                show(op.roi_curves())
             case 'all':
                 op.generate_input_frame()
                 op.run(budgets, args.action=='preview')
                 op.collect_results(args.scaled)
-                print('Summary\n', op.summary)
-                print('Matrix\n', op.matrix[op.matrix['count'] > 1])
+                print(op.table_view())
+                show(op.roi_curves())

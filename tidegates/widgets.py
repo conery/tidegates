@@ -11,7 +11,7 @@ import tempfile
 import bokeh.plotting as bk
 import bokeh.layouts as layouts
 from bokeh.models import NumeralTickFormatter, Circle
-from bokeh.models.widgets.tables import BooleanFormatter
+from bokeh.models.widgets.tables import NumberFormatter
 from bokeh.tile_providers import get_provider
 import xyzservices.providers as xyz
 
@@ -118,27 +118,6 @@ budget_text = '''
 </p>
 '''
 
-# results_empty_text = '''
-# <h2>Optimizer Output</h2>
-
-# <p>The output from OptiPass will be displayed here.</p>
-
-# <p>To run OptiPass enter optimization parameters in the Start panel, then click the <b>Optimize</b> button.
-# '''
-
-# results_pending_text = '''
-# <h2>⏳ Optimizer Output</h2>
-
-# <p>Waiting for OptiPass to finish...</p>
-# '''
-
-# results_failed_text = '''
-# <h2>💣 Optimizer Failed</h2>
-
-# <p>Something went wrong when running OptiPass or parsing its outputs.</p>
-# '''
-
-
 class TideGates(param.Parameterized):
 
 
@@ -163,14 +142,13 @@ class TideGates(param.Parameterized):
 
         self.region_alert = pn.pane.Alert('**No geographic regions selected**', alert_type='danger')
         self.target_alert = pn.pane.Alert('**No optimizer targets selected**', alert_type='danger')
-        self.success_alert = pn.pane.Alert('**Optimization complete.**  <br/>Click on "Plots" or "Table" at the top of this window to view the results.', alert_type='success')
+        self.success_alert = pn.pane.Alert('**Optimization complete.**  <br/>Click the "Output" tab at the top of this window to view the results.', alert_type='success')
         self.fail_alert = pn.pane.Alert('**Optimization failed.**  <br/>One or more calls to OptiPass did not succeed (see log for explanation).', alert_type='danger')
         
         self.info = pn.widgets.StaticText(value='')
 
         start_tab = pn.Column(
-            pn.Row(self.info),
-            pn.layout.VSpacer(),
+            # pn.Row(self.info),
             pn.Row('<h3>Geographic region and climate scenario</h3>'),
             pn.Row(
                 pn.Pane(button_text,width=200),
@@ -222,6 +200,9 @@ class TideGates(param.Parameterized):
         self.success_alert.visible = False
         self.main[1].loading = True
 
+        budget_max, budget_delta = self.budget_box.values()
+        num_budgets = budget_max // budget_delta
+
         self.op = OP(
             self.bf, 
             self.region_group.value,
@@ -231,14 +212,13 @@ class TideGates(param.Parameterized):
         self.op.generate_input_frame()
         if base := os.environ.get('OP_OUTPUT'):
             self._find_output_files(base)
+            self.op.budget_delta = budget_delta
+            self.op.budget_max = budget_max
         else:
             self.op.run(self.budget_box.values())
         self.op.collect_results()
 
         self.main[1].loading = False
-
-        budget_max, budget_delta = self.budget_box.values()
-        num_budgets = budget_max // budget_delta
 
         # Expect to find one file for each budget level plus one more
         # for the $0 budget
@@ -246,7 +226,6 @@ class TideGates(param.Parameterized):
         if len(self.op.outputs) == num_budgets+1:
             Logging.log('Output files:' + ','.join(self.op.outputs))
             self.add_output_pane()
-            self.add_graphic_pane()
             self.success_alert.visible = True
         else:
             self.fail_alert.visible = True
@@ -272,32 +251,40 @@ class TideGates(param.Parameterized):
 
     def add_output_pane(self):
         formatters = { }
-        alignment = {}
-        df = self.op.matrix
+        alignment = { }
+        df = self.op.table_view()
         for col in df.columns:
-            if re.match(r'[\d\.]+', col):
+            if col.startswith('$') or col in ['Primary','Dominant']:
                 formatters[col] = {'type': 'tickCross', 'crossElement': ''}
                 alignment[col] = 'center'
-            elif col in targets:
-                # Logging.log('target', col, 'max', df[col].max())
-                formatters[col] = {'type': 'progress', 'max': df[col].max(), 'color': '#3c76af'}
+            # elif col in targets:
+            #     # Logging.log('target', col, 'max', df[col].max())
+            #     formatters[col] = {'type': 'progress', 'max': df[col].max(), 'color': '#3c76af'}
+            elif col.endswith(('hab','gain','tude')):
+                formatters[col] = NumberFormatter(format='0.00')
+                alignment[col] = 'right'
             elif col == 'Cost':
                 formatters[col] = {'type': 'money', 'symbol': '$', 'precision': 0}
         table = pn.widgets.Tabulator(
             df, 
             show_index=False, 
+            frozen_columns=['ID'],
             formatters=formatters,
             text_align=alignment,
-            # configuration={'columnDefaults': {'headerSort': False}},
-            # frozen_columns=['BARID'],
-            # sorters = [ {'field': col, 'dir': 'asc'} for col in targets ],
+            configuration={'columnDefaults': {'headerSort': False}},
+            sorters = [ ],
         )
         table.on_click(self.table_click_cb)
         table.disabled = True
-        self.main.append(('Table', pn.Pane(table, min_width=500, height=800)))
 
-    def add_graphic_pane(self):
-        pass
+        output = pn.Column(
+            pn.layout.VSpacer(height=20),
+            self.op.roi_curves(), 
+            pn.layout.VSpacer(height=30),
+           table
+        )
+
+        self.main.append(('Output', pn.Pane(output, min_width=500, height=800)))
 
     def check_selections(self):
         self.region_alert.visible = False
@@ -307,86 +294,3 @@ class TideGates(param.Parameterized):
         if len(self.target_boxes.value) == 0:
             self.target_alert.visible = True
         return not (self.region_alert.visible or self.target_alert.visible)
-
-class OptiPassOutput:
-    def __init__(self):
-        self.x = [ ]
-        self.y = { }
-        self.header = [ ]
-        self.table = { }
-        self.targets = [ ]
-        
-    def parse_output(self, s):
-        
-        def infer_type(s):
-            if len(s) == 0:
-                return 0
-            if re.fullmatch(r'\d+',s):
-                return int(s)
-            if re.fullmatch(r'[+-]?\d+\.\d+',s):
-                return float(s)
-            return s
- 
-        for line in s.split('\n'):
-            tokens = line.split(',')
-            match tokens[0]:
-                case 'x':
-                    self.x = [float(x) for x in tokens[1:]]
-                case 'y':
-                    self.targets.append(tokens[1])
-                    self.y[tokens[1]] = [float(x) for x in tokens[2:]]
-                case 'h':
-                    self.header = tokens[1:]
-                    self.table = { s: [] for s in self.header }
-                case 't':
-                    for i in range(0, len(tokens)-1):
-                        col = self.header[i]
-                        self.table[col].append(infer_type(tokens[i+1]))
-                    
-    def as_df(self):
-        df = pd.DataFrame(self.table)
-        in_solution = df[df.InSoln > 0]
-        cols = [
-            'BARID',
-            # '0.0',
-            '1.0',
-            '2.0',
-            '3.0',
-            '4.0',
-            '5.0',
-            '6.0',
-            '7.0',
-            '8.0',
-            '9.0',
-            '10.0',
-            'InSoln',
-            'Name',
-            'Cost',
-            'Region',
-            'BarrierType',
-            'Coho_salmon',          # <=== TODO: get these column names from selected targets
-            'InundHab_Current',     # <===
-            # 'POINT_X', 
-            # 'POINT_Y',
-        ]
-        # table = pn.widgets.Tabulator(in_solution.loc[:,cols], show_index=False)
-        # table.disabled = True
-        # return table
-        return in_solution.loc[:,cols]
-
-    def roi_curves(self):
-        n = len(self.y)
-        figs = [layouts.Spacer(height=20)]
-        for i, k in enumerate(self.y):
-            f = bk.figure(width=600,height=300,title=k)
-            # f.line(self.x, self.y[k], line_width=2)
-            # f.square(self.x, self.y[k], size=5, fill_color='black')
-            f.vbar(x=self.x, top=self.y[k], width=0.6)
-            f.xaxis.axis_label = 'budget (millions)'
-            f.xaxis.formatter = NumeralTickFormatter(format="$0")
-            f.yaxis.axis_label = 'potential benefit (target units)'
-            f.tools = []
-            figs.append(f)
-            figs.append(layouts.Spacer(height=20))
-        return layouts.column(*figs)
-
