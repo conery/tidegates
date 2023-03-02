@@ -109,8 +109,14 @@ class OP:
 
     def run(self, budgets: list[int], preview: bool = False):
         '''
-        Generate and execute the shell commands that run OptiPass.
+        Generate and execute the shell commands that run OptiPass.  If the shell
+        environment includes a variable named WINEARCH it means the script is
+        running on Linux, and we need to use Wine, otherwise build a command that
+        will run on Windows.
         '''
+        app = 'wine bin/OptiPassMain.exe' if os.environ.get('WINEARCH') else 'bin\\OptiPassMain.exe'
+        template = app + ' -f {bf} -o {of} -b {n}'
+
         df = self.generate_input_frame()
         _, barrier_file = tempfile.mkstemp(suffix='.txt', dir='./tmp', text=True)
         df.to_csv(barrier_file, index=False, sep='\t', lineterminator=os.linesep, na_rep='NA')
@@ -122,7 +128,8 @@ class OP:
         for i in range(num_budgets + 1):
             outfile = f'{root}_{i+1}.txt'
             budget = self.budget_delta * i
-            cmnd = f'wine bin/OptiPassMain.exe -f {barrier_file} -o {outfile} -b {budget}'
+            # cmnd = f'wine bin/OptiPassMain.exe -f {barrier_file} -o {outfile} -b {budget}'
+            cmnd = template.format(bf=barrier_file, of=outfile, n=budget)
             if (num_targets := len(self.targets)) > 1:
                 cmnd += ' -t {}'.format(num_targets)
                 cmnd += ' -w' + ' 1.0' * num_targets
@@ -285,7 +292,7 @@ class OP:
                 'POINT_Y': 'Latitude',
             }
 
-        budget_cols = self._format_budgets([c for c in self.matrix.columns if isinstance(c,int) and c > 0])
+        budget_cols = OP.format_budgets([c for c in self.matrix.columns if isinstance(c,int) and c > 0])
 
         df = pd.concat([
             filtered[info_cols.keys()].rename(columns=info_cols),
@@ -304,15 +311,21 @@ class OP:
 
         # df.columns = pd.MultiIndex.from_tuples(df.columns)
         return df
-    
-    def _format_budgets(self, cols):
-        if self.budget_max > 1000000:
-            suffix = 'M'
-            divisor = 1000000
-        else:
-            suffix = 'K'
-            divisor = 1000
-        return {n: f'${n//divisor}{suffix}' for n in cols}
+
+    @staticmethod
+    def format_budgets(cols):
+        fmt = {
+            'thou':  (1000, 'K'),
+            'mil':   (1000000, 'M'),
+        }
+        res = []
+        for n in cols:
+            divisor, suffix = fmt['mil'] if n >= 1000000 else fmt['thou']
+            s = '${:}'.format(n/divisor)
+            if s.endswith('.0'):
+                s = s[:-2]
+            res.append(s+suffix)
+        return res
     
     def roi_curves(self):
         H = 400
@@ -477,3 +490,12 @@ class TestOP:
         assert 'T1' in m.columns and 'T2' in m.columns and 'wph' in m.columns
         assert round(m.wph[0],3) == 5.491
         assert round(m.wph[4],3) == 21.084    # the value shown in the OP manual
+
+    @staticmethod
+    def test_budget_formats():
+        '''
+        Test the function that generates budget labels.
+        '''
+        assert OP.format_budgets([n*1000000 for n in range(1,6)]) == ['$1M', '$2M', '$3M', '$4M', '$5M']
+        assert OP.format_budgets([n*100000 for n in range(1,6)]) == ['$100K', '$200K', '$300K', '$400K', '$500K']
+        assert OP.format_budgets([n*500000 for n in range(1,6)]) == ['$500K', '$1M', '$1.5M', '$2M', '$2.5M']
