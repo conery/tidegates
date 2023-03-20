@@ -28,6 +28,7 @@
 import os
 import subprocess
 from glob import glob
+from math import prod
 
 import pandas as pd
 import numpy as np
@@ -238,7 +239,7 @@ class OP:
         wph = np.zeros(len(self.summary))
         for i in range(len(tlist)):
             t = self.targets[i]
-            cp = self._cp(t, filtered, scaled)
+            cp = self._ah(t, filtered, scaled)
             wph += (self.weights[i] * cp)
             col = pd.DataFrame({t.abbrev: cp})
             self.summary = pd.concat([self.summary, col], axis=1)
@@ -251,17 +252,19 @@ class OP:
             self.summary = pd.concat([self.summary, pd.DataFrame({'wph': wph})], axis = 1)
         self.summary['netgain'] = self.summary.habitat - self.summary.habitat[0]
         return self.summary
+    
+    # Private method: compute the available habitat for a target, in the form of
+    # a vector of habitat values for each budget level
 
-    def _cp(self, target, data, scaled):
+    def _ah(self, target, data, scaled):
         budgets = self.summary.budget
         m = self.matrix
         res = np.zeros(len(budgets))
         for i in range(len(res)):
-            post = data[m.iloc[:,i]==1][target.postpass]
-            pre = data[m.iloc[:,i]==0][target.prepass]
-            pvec = pd.concat([post, pre])
+            action = m.iloc[:,i]
+            pvec = data[target.postpass].where(action == 1, data[target.prepass])
             habitat = data[target.habitat if scaled else target.unscaled]
-            res[i] = sum([pvec[self.paths[b]].prod() * habitat[b] for b in m.index])
+            res[i] = sum(prod(pvec[x] for x in self.paths[b]) * habitat[b] for b in m.index)
         return res
     
     def _gain(self, target, data):
@@ -318,13 +321,13 @@ class OP:
             'thou':  (1000, 'K'),
             'mil':   (1000000, 'M'),
         }
-        res = []
+        res = { }
         for n in cols:
             divisor, suffix = fmt['mil'] if n >= 1000000 else fmt['thou']
             s = '${:}'.format(n/divisor)
             if s.endswith('.0'):
                 s = s[:-2]
-            res.append(s+suffix)
+            res[n] = s+suffix
         return res
     
     def roi_curves(self):
@@ -496,6 +499,6 @@ class TestOP:
         '''
         Test the function that generates budget labels.
         '''
-        assert OP.format_budgets([n*1000000 for n in range(1,6)]) == ['$1M', '$2M', '$3M', '$4M', '$5M']
-        assert OP.format_budgets([n*100000 for n in range(1,6)]) == ['$100K', '$200K', '$300K', '$400K', '$500K']
-        assert OP.format_budgets([n*500000 for n in range(1,6)]) == ['$500K', '$1M', '$1.5M', '$2M', '$2.5M']
+        assert list(OP.format_budgets([n*1000000 for n in range(1,6)]).values()) == ['$1M', '$2M', '$3M', '$4M', '$5M']
+        assert list(OP.format_budgets([n*100000 for n in range(1,6)]).values()) == ['$100K', '$200K', '$300K', '$400K', '$500K']
+        assert list(OP.format_budgets([n*500000 for n in range(1,6)]).values()) == ['$500K', '$1M', '$1.5M', '$2M', '$2.5M']
