@@ -36,6 +36,7 @@ class Project:
         if ds == DataSet.TNC_OR:
             self.map_info = self._make_map_info()
             self.regions = self._make_region_list()
+            self.totals = self._make_totals()
             self.climates = ['Current', 'Future']
             dct = self.targets['Current']
             self.target_map = { dct[x].long: x for x in dct.keys()}
@@ -65,7 +66,13 @@ class Project:
         df = self.data[['BARID','REGION','POINT_Y']]
         mf = df.groupby('REGION').mean(numeric_only=True).sort_values(by='POINT_Y',ascending=False)
         return list(mf.index)
-
+    
+    def _make_totals(self):
+        '''
+        Compute the total cost to repair all barriers in each region
+        '''
+        tf = self.data[['BARID','REGION','COST']].groupby('REGION').sum(numeric_only=True)
+        return { x: tf.COST[x] for x in tf.index }
 
 ####################
 #

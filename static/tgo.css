@@ -26,7 +26,7 @@ p {
 }
 
 .bk-root {
-    margin-top: 30px;
+    margin-top: 10px;
 }
 
 .bk h2 {
@@ -41,7 +41,9 @@ p {
     font-family: Roboto, Arial, Helvetica, sans-serif;
     font-size: 1.5em;
     font-weight: 600;
+    margin-top: 0px;
     margin-bottom: 0px;
+    padding-top: 20px;
 }
 
 .bk-root .bk-tabs-header .bk-tab.bk-active {

@@ -1,10 +1,11 @@
 import argparse
 from glob import glob
-import panel as pn
+import os
 import re
 import subprocess
 import sys
 
+import panel as pn
 from bokeh.plotting import show
 
 from widgets import TideGates
@@ -52,7 +53,7 @@ def init_cli():
     # command line arguments, which is how it's run in the Docker container when launching the
     # web app
 
-    parser.add_argument('--action', metavar='A', choices=['generate', 'preview', 'run','parse','all'], help='operation to perform')
+    parser.add_argument('--action', metavar='A', choices=['generate', 'preview', 'run', 'parse', 'all'], help='operation to perform')
     parser.add_argument('--project', metavar='F', default='static/workbook.csv', help='CSV file with barrier data')
     parser.add_argument('--regions', metavar='R', default='all', nargs='+', help='one or more region names')
     parser.add_argument('--targets', metavar='T', nargs='+', default=['CO','FI'], help='one or more restoration targets')
@@ -78,15 +79,19 @@ def make_app():
     tg = TideGates()
     template.sidebar.append(tg.map_pane)
     template.main.append(tg.main)
+    if not os.environ.get('WINEARCH'):
+        print('TBD: set region, budget, target')
     return template
 
 def start_app():
-    pn.extension(sizing_mode = 'stretch_width')
+    # pn.extension(sizing_mode = 'stretch_width')
     pn.config.css_files = ['static/tgo.css']
     pn.serve( 
         {'tidegates': make_app},
         port = 5006,
         admin = True,
+        verbose = True,
+        autoreload = True,
     )
 
 def validate_options(name, given, expected):
