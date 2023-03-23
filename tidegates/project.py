@@ -103,7 +103,9 @@ class TestProject:
         The list of region names should be sorted from north to south
         '''
         p = Project('static/workbook.csv', DataSet.TNC_OR)
-        assert p.regions == ['Umpqua', 'Coos', 'Coquille']
+        assert len(p.regions) == 10
+        assert p.regions[0] == 'Columbia'
+        assert p.regions[-1] == 'Coquille'
 
     @staticmethod
     def test_map_info():

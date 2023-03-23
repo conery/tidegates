@@ -20,7 +20,7 @@ from math import ceil
 import os
 import re
 
-from targets import DataSet
+from targets import DataSet, make_layout
 from project import Project
 from optipass import OP
 from messages import Logging
@@ -41,9 +41,9 @@ class TGMap():
         tile_provider = get_provider(xyz.OpenStreetMap.Mapnik)
         p = bk.figure(
             title='Oregon Coast', 
-            height=800,
-            width=400,
-            x_range=(bf.map_info.x.min(),bf.map_info.x.max()), 
+            height=1000,
+            width=450,
+            x_range=(bf.map_info.x.min()*0.997,bf.map_info.x.max()*1.003), 
             y_range=(bf.map_info.y.min()*0.997,bf.map_info.y.max()*1.003),
             x_axis_type='mercator',
             y_axis_type='mercator',
@@ -77,7 +77,7 @@ class TGMap():
 
 class BudgetBox(pn.Column):
     def __init__(self):
-        super(BudgetBox, self).__init__()
+        super(BudgetBox, self).__init__(margin=(15,0,15,5))
         # self.budget = pn.widgets.FloatSlider(
         #     start=0, 
         #     end=0.1, 
@@ -126,7 +126,7 @@ class BudgetBox(pn.Column):
             self.steps, 
             self.step_size_text,
         ))
-        self.append(pn.layout.VSpacer(height=10))
+        # self.append(pn.layout.VSpacer(height=10))
 
     def set_step_size_text(self, n):
         print('setting step size text', n)
@@ -166,7 +166,7 @@ class BudgetBox(pn.Column):
 class RegionBox(pn.Column):
     
     def __init__(self, project, map, budget):
-        super(RegionBox, self).__init__()
+        super(RegionBox, self).__init__(margin=(10,0,10,5))
         self.totals = project.totals
         self.map = map
         self.budget_box = budget
@@ -194,6 +194,17 @@ class RegionBox(pn.Column):
                 amount = sum(self.totals[x] for x in self.selected)
                 self.budget_box.set_limit(amount)
         self.map.display_regions(self.selected)
+
+class TargetBox(pn.Column):
+
+    def __init__(self, targets):
+        super(TargetBox, self).__init__(margin=(10,0,10,5))
+        self.grid = pn.GridBox(ncols=2)
+        for row in make_layout():
+            boxes = [ pn.widgets.Checkbox(name=t, width=200) for t in row]
+            self.grid.objects.extend(boxes)
+        self.append(self.grid)
+
 
 welcome_text = '''
 <h2>Welcome</h2>
@@ -240,7 +251,8 @@ class TideGates(param.Parameterized):
         self.budget_box = BudgetBox()
         self.regions = RegionBox(self.bf, self.map, self.budget_box)
 
-        self.target_boxes = pn.widgets.CheckBoxGroup(name='Targets', options=list(self.bf.target_map.keys()), inline=False)
+        # self.target_boxes = pn.widgets.CheckBoxGroup(name='Targets', options=list(self.bf.target_map.keys()), inline=False)
+        self.target_boxes = TargetBox(list(self.bf.target_map.keys()))
 
         self.region_alert = pn.pane.Alert('**No geographic regions selected**', alert_type='danger')
         self.target_alert = pn.pane.Alert('**No optimizer targets selected**', alert_type='danger')
@@ -251,9 +263,9 @@ class TideGates(param.Parameterized):
 
         start_tab = pn.Column(
             # pn.Row(self.info),
-            pn.Row('<h3>Geographic regions</h3>'),
+            pn.Row('<h3>Geographic Regions</h3>'),
             pn.Pane(button_text,width=500),
-            pn.WidgetBox(self.regions),
+            pn.WidgetBox(self.regions, width=500),
 
             # pn.layout.VSpacer(height=5),
             pn.Row('<h3>Budget</h3>'),
@@ -261,15 +273,16 @@ class TideGates(param.Parameterized):
             pn.WidgetBox(self.budget_box, width=500),
 
             # pn.layout.VSpacer(height=5),
-            pn.Row('<h3>Restoration targets</h3>'),
-            pn.Pane(target_text, width=500),
+            pn.Row('<h3>Restoration Targets</h3>'),
+            # pn.Pane(target_text, width=500),
             pn.WidgetBox(self.target_boxes, width=500),
+            pn.Row(pn.widgets.StaticText(value='<b>Climate Scenario</b>'), self.climate_group, margin=(10,0,20,0)),
 
+            pn.Row(pn.layout.Spacer(width=200), self.optimize_button, width=500),
             pn.Row(self.success_alert),
             pn.Row(self.fail_alert),
             pn.Row(self.region_alert),
             pn.Row(self.target_alert),
-            pn.Row(pn.layout.Spacer(width=200), self.optimize_button, width=500),
         )
 
         self.main = pn.Tabs(

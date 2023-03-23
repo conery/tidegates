@@ -52,7 +52,7 @@ opm_targets = {
     'T2':  Target('T2', '', 'Target 2', 'HAB2', 'PRE2', 'POST2', ''),
 }
 
-# Restoration targets for the Southern Oregon Coast (Upmqua, Coquille, and Coos Rivers)
+# Restoration targets for the Oregon Coast
 
 CO = 'Fish habitat: Coho streams'
 CH = 'Fish habitat: Chinook streams'
@@ -74,7 +74,7 @@ fish_targets = {
 }
 
 current_infrastructure_targets = {
-    'FI': Target('FI', FI, 'Inund', 'sInundHab_Current', 'PREPASS_FISH', 'POSTPASS', 'InundHab_Current'),
+    'FI': Target('FI', FI, 'Inund', 'sInundHab_Current', 'PREPASS_Inund', 'POSTPASS', 'InundHab_Current'),
     'AG': Target('AG', AG, 'Agric', 'sAgri_Current', 'PREPASS_AgrInf', 'POSTPASS', 'Agri_Current'),
     'RR': Target('RR', RR, 'Roads', 'sRoadRail_Current', 'PREPASS_AgrInf', 'POSTPASS', 'RoadRail_Current'),
     'BL': Target('BL', BL, 'Bldgs', 'sBuilding_Current', 'PREPASS_AgrInf', 'POSTPASS', 'Building_Current'),
@@ -82,12 +82,24 @@ current_infrastructure_targets = {
 }
 
 future_infrastructure_targets = {
-    'FI': Target('FI', FI, 'Inund', 'sInundHab_Future', 'PREPASS_FISH', 'POSTPASS', 'InundHab_Future'),
+    'FI': Target('FI', FI, 'Inund', 'sInundHab_Future', 'PREPASS_Inund', 'POSTPASS', 'InundHab_Future'),
     'AG': Target('AG', AG, 'Agric', 'sAgri_Future', 'PREPASS_AgrInf', 'POSTPASS', 'Agri_Future'),
     'RR': Target('RR', RR, 'Roads', 'sRoadRail_Future', 'PREPASS_AgrInf', 'POSTPASS', 'RoadRail_Future'),
     'BL': Target('BL', BL, 'Bldgs', 'sBuilding_Future', 'PREPASS_AgrInf', 'POSTPASS', 'Building_Future'),
     'PS': Target('PS', PS, 'Public', 'sPublicUse_Future', 'PREPASS_AgrInf', 'POSTPASS', 'PublicUse_Future'),
 }
+
+# Create a list of target names in the order they should be displayed
+# in the GUI
+
+def make_layout():
+    return [
+        [CO, FI],
+        [CH, AG],
+        [ST, RR],
+        [CT, BL],
+        [CU, PS],
+    ]
 
 ####################
 #
