@@ -216,29 +216,55 @@ class TargetBox(pn.Column):
         return [t for t in self.boxes if self.boxes[t].value ]
 
 
+class InfoBox(pn.Row):
+
+    missing_params_text = '''
+    <b>Missing Information</b>
+
+    <p>Please select one or more geographic regions and one or more restoration targets.</p>
+    '''
+
+    success_message_text = '''
+    <b>Optimization Complete</b>
+
+    <p>Click the "Output" tab at the top of this window to view the results.</p>
+    '''
+
+    fail_message_text = '''
+    <b>Optimization Failed</b>
+
+    <p>One or more calls to OptiPass did not succeed (see log for explanation).</p>
+    '''
+
+    def __init__(self):
+        super(InfoBox, self).__init__()
+        self.blank = pn.pane.HTML(background='#FFFFFF', width=50, height=50)
+        self.missing_params_message = pn.pane.Alert(InfoBox.missing_params_text, alert_type='danger')
+        self.success_message = pn.pane.Alert(InfoBox.success_message_text, alert_type='success')
+        self.fail_message = pn.pane.Alert(InfoBox.fail_message_text, alert_type='danger')
+        self.erase()
+
+    def erase(self):
+        self.clear()
+        self.append(self.blank)
+
+    def show_missing(self):
+        self.clear()
+        self.append(self.missing_params_message)
+    
+    def show_success(self):
+        self.clear()
+        self.append(self.success_message)
+    
+    def show_fail(self):
+        self.clear()
+        self.append(self.fail_message)
+
+
 welcome_text = '''
 <h2>Welcome</h2>
 
 <p>Click on the Start tab above to enter optimization parameters and run the optimizer.</p>
-'''
-
-region_text = '''
-<p style="margin-top: 0">
-   Select one or more regions (at least one is required).  The dollar amount
-   next to a region name is the total cost for every barrier in that region.
-</p>
-'''
-
-target_text = '''
-<p>
-   Select one or more restoration targets.
-</p>
-'''
-
-budget_text = '''
-<p>
-   Select the maximum project budget and the budget increments.
-</p>
 '''
 
 class TideGates(param.Parameterized):
@@ -263,13 +289,8 @@ class TideGates(param.Parameterized):
 
         # self.target_boxes = pn.widgets.CheckBoxGroup(name='Targets', options=list(self.bf.target_map.keys()), inline=False)
         self.target_boxes = TargetBox(list(self.bf.target_map.keys()))
-
-        self.region_alert = pn.pane.Alert('**No geographic regions selected**', alert_type='danger')
-        self.target_alert = pn.pane.Alert('**No optimizer targets selected**', alert_type='danger')
-        self.success_alert = pn.pane.Alert('**Optimization complete.**  <br/>Click the "Output" tab at the top of this window to view the results.', alert_type='success')
-        self.fail_alert = pn.pane.Alert('**Optimization failed.**  <br/>One or more calls to OptiPass did not succeed (see log for explanation).', alert_type='danger')
-        
-        self.info = pn.widgets.StaticText(value='')
+ 
+        self.info = InfoBox()
 
         start_tab = pn.Column(
             # pn.Row(self.info),
@@ -298,10 +319,8 @@ class TideGates(param.Parameterized):
 
             pn.layout.VSpacer(height=20),
             pn.Row(pn.layout.Spacer(width=200), self.optimize_button, width=600),
-            pn.Row(self.success_alert),
-            pn.Row(self.fail_alert),
-            pn.Row(self.region_alert),
-            pn.Row(self.target_alert),
+            pn.layout.VSpacer(height=10),
+            self.info,
         )
 
         self.main = pn.Tabs(
@@ -311,24 +330,18 @@ class TideGates(param.Parameterized):
             sizing_mode = 'fixed',
         )
 
-        self.success_alert.visible = False
-        self.fail_alert.visible = False
-        self.region_alert.visible = False
-        self.target_alert.visible = False
-        # self.region_group.param.watch(self.region_cb, ['value'])
         self.optimize_button.on_click(self.run_optimizer)
-        self.optimizer_clicks = set()
 
-    # def region_cb(self, *events):
-    #     self.map.display_regions(events[0].new)
 
     def run_optimizer(self, _):
         Logging.log('running optimizer')
 
-        if not self.check_selections():
+        self.info.erase()
+
+        if len(self.regions.selected) == 0 or len(self.target_boxes.selected == 0):
+            self.info.show_missing()
             return
 
-        self.success_alert.visible = False
         self.main[1].loading = True
 
         budget_max, budget_delta = self.budget_box.values()
@@ -358,9 +371,9 @@ class TideGates(param.Parameterized):
         if len(self.op.outputs) == num_budgets+1:
             Logging.log('Output files:' + ','.join(self.op.outputs))
             self.add_output_pane()
-            self.success_alert.visible = True
+            self.info.show_success()
         else:
-            self.fail_alert.visible = True
+            self.info.show_fail()
 
     def progress(self):
         print('progress!')
@@ -419,13 +432,3 @@ class TideGates(param.Parameterized):
         )
 
         self.main.append(('Output', pn.Pane(output, min_width=500, height=800)))
-
-    def check_selections(self):
-        self.region_alert.visible = False
-        self.target_alert.visible = False
-        # if self.region_group.value == []:
-        if len(self.regions.selected) == 0:
-            self.region_alert.visible = True
-        if len(self.target_boxes.selected()) == 0:
-            self.target_alert.visible = True
-        return not (self.region_alert.visible or self.target_alert.visible)
