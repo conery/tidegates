@@ -41,8 +41,8 @@ class TGMap():
         tile_provider = get_provider(xyz.OpenStreetMap.Mapnik)
         p = bk.figure(
             title='Oregon Coast', 
-            height=1000,
-            width=450,
+            height=900,
+            width=425,
             x_range=(bf.map_info.x.min()*0.997,bf.map_info.x.max()*1.003), 
             y_range=(bf.map_info.y.min()*0.997,bf.map_info.y.max()*1.003),
             x_axis_type='mercator',
@@ -91,6 +91,7 @@ class BudgetBox(pn.Column):
         self.budget = pn.widgets.FloatInput(
             name='Budget',
             value=0,
+            start=0,
             end=0,
             width=175,
             format='$0,0',
@@ -99,6 +100,7 @@ class BudgetBox(pn.Column):
             name='Steps',
             value=10,
             width=75,
+            start=1,
             step=1,
         )
         # self.step_size = pn.widgets.FloatInput(
@@ -161,7 +163,7 @@ class BudgetBox(pn.Column):
         self.set_step_size_text(self.step_size)
 
     def values(self):
-        return self.budget.value, int(self.increment.value.replace('$','').replace(',',''))
+        return self.budget.value, self.step_size
  
 class RegionBox(pn.Column):
     
@@ -200,10 +202,18 @@ class TargetBox(pn.Column):
     def __init__(self, targets):
         super(TargetBox, self).__init__(margin=(10,0,10,5))
         self.grid = pn.GridBox(ncols=2)
+        self.boxes = { }
         for row in make_layout():
-            boxes = [ pn.widgets.Checkbox(name=t, width=200) for t in row]
-            self.grid.objects.extend(boxes)
+            lst = [ ]
+            for t in row:
+                b = pn.widgets.Checkbox(name=t, width=200)
+                lst.append(b)
+                self.boxes[t] = b
+            self.grid.objects.extend(lst)
         self.append(self.grid)
+
+    def selected(self):
+        return [t for t in self.boxes if self.boxes[t].value ]
 
 
 welcome_text = '''
@@ -212,7 +222,7 @@ welcome_text = '''
 <p>Click on the Start tab above to enter optimization parameters and run the optimizer.</p>
 '''
 
-button_text = '''
+region_text = '''
 <p style="margin-top: 0">
    Select one or more regions (at least one is required).  The dollar amount
    next to a region name is the total cost for every barrier in that region.
@@ -242,7 +252,7 @@ class TideGates(param.Parameterized):
         self.map = TGMap(self.bf)
         self.map_pane = pn.Pane(self.map.graphic())
 
-        self.optimize_button = pn.widgets.Button(name='Optimize', height=40, width=60, background='#b2d2dd')
+        self.optimize_button = pn.widgets.Button(name='Run Optimizer', height=40, width=60, background='#b2d2dd')
         self.load_button = pn.widgets.Button(name='Load',height=40,width=60)
         self.save_button = pn.widgets.Button(name='Save',height=40,width=60)
         self.reset_button = pn.widgets.Button(name='Reset',height=40,width=60)
@@ -264,21 +274,30 @@ class TideGates(param.Parameterized):
         start_tab = pn.Column(
             # pn.Row(self.info),
             pn.Row('<h3>Geographic Regions</h3>'),
-            pn.Pane(button_text,width=500),
-            pn.WidgetBox(self.regions, width=500),
+            # pn.Pane(region_text,width=500),
+            pn.WidgetBox(self.regions, width=600),
 
             # pn.layout.VSpacer(height=5),
             pn.Row('<h3>Budget</h3>'),
             # pn.Pane(budget_text, width=500),
-            pn.WidgetBox(self.budget_box, width=500),
+            pn.WidgetBox(self.budget_box, width=600),
 
             # pn.layout.VSpacer(height=5),
             pn.Row('<h3>Restoration Targets</h3>'),
             # pn.Pane(target_text, width=500),
-            pn.WidgetBox(self.target_boxes, width=500),
-            pn.Row(pn.widgets.StaticText(value='<b>Climate Scenario</b>'), self.climate_group, margin=(10,0,20,0)),
+            pn.WidgetBox(
+                pn.Row(
+                    self.target_boxes,
+                    pn.Column(
+                        pn.widgets.StaticText(value='<b>Climate Scenario</b>'),
+                        self.climate_group, margin=(10,0,20,0)
+                    ),
+                ),
+                width=600,
+            ),
 
-            pn.Row(pn.layout.Spacer(width=200), self.optimize_button, width=500),
+            pn.layout.VSpacer(height=20),
+            pn.Row(pn.layout.Spacer(width=200), self.optimize_button, width=600),
             pn.Row(self.success_alert),
             pn.Row(self.fail_alert),
             pn.Row(self.region_alert),
@@ -319,7 +338,7 @@ class TideGates(param.Parameterized):
             self.bf, 
             # self.region_group.value,
             list(self.regions.selected),
-            [self.bf.target_map[t] for t in self.target_boxes.value],
+            [self.bf.target_map[t] for t in self.target_boxes.selected()],
             self.climate_group.value,
         )
         self.op.generate_input_frame()
@@ -328,7 +347,7 @@ class TideGates(param.Parameterized):
             self.op.budget_delta = budget_delta
             self.op.budget_max = budget_max
         else:
-            self.op.run(self.budget_box.values())
+            self.op.run(self.budget_box.values(), self.progress)
         self.op.collect_results()
 
         self.main[1].loading = False
@@ -343,6 +362,8 @@ class TideGates(param.Parameterized):
         else:
             self.fail_alert.visible = True
 
+    def progress(self):
+        print('progress!')
 
     # When debugging outside of a container define an environment variable
     # named OP_OUTPUT, setting it to the base name of a set of existing output 
@@ -405,6 +426,6 @@ class TideGates(param.Parameterized):
         # if self.region_group.value == []:
         if len(self.regions.selected) == 0:
             self.region_alert.visible = True
-        if len(self.target_boxes.value) == 0:
+        if len(self.target_boxes.selected()) == 0:
             self.target_alert.visible = True
         return not (self.region_alert.visible or self.target_alert.visible)

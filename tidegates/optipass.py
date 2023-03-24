@@ -108,7 +108,7 @@ class OP:
     # This version assumes the web app is running on a host that has wine installed
     # to run OptiPass (a Windows .exe file).
 
-    def run(self, budgets: list[int], preview: bool = False):
+    def run(self, budgets: list[int], preview: bool = False, progress = lambda x: 0):
         '''
         Generate and execute the shell commands that run OptiPass.  If the shell
         environment includes a variable named WINEARCH it means the script is
@@ -137,6 +137,7 @@ class OP:
             Logging.log(cmnd)
             if not preview:
                 res = subprocess.run(cmnd, shell=True, capture_output=True)
+                progress()
             if preview or (res.returncode == 0):
                 outputs.append(outfile)
             else:

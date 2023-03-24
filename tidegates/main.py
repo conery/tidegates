@@ -75,7 +75,7 @@ def check_environment(action):
             exit(1)
 
 def make_app():
-    template = pn.template.BootstrapTemplate(title='Tide Gate Optimization', sidebar_width=450)
+    template = pn.template.BootstrapTemplate(title='Tide Gate Optimization', sidebar_width=425)
     tg = TideGates()
     template.sidebar.append(tg.map_pane)
     template.main.append(tg.main)
