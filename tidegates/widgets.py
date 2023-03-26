@@ -131,7 +131,6 @@ class BudgetBox(pn.Column):
         # self.append(pn.layout.VSpacer(height=10))
 
     def set_step_size_text(self, n):
-        print('setting step size text', n)
         self.step_size_text.value = f'Step Size:  ${n:,}'
 
     def set_limit(self, n):
@@ -157,8 +156,6 @@ class BudgetBox(pn.Column):
         self.budget.step = self.step_size
 
     def cb(self, *events):
-        print(events)
-        print('current', self.budget.value, self.steps.value, self.step_size)
         self.step_size = int(self.budget.value / self.steps.value)
         self.set_step_size_text(self.step_size)
 
@@ -197,6 +194,9 @@ class RegionBox(pn.Column):
                 self.budget_box.set_limit(amount)
         self.map.display_regions(self.selected)
 
+    def selection(self):
+        return self.selected
+
 class TargetBox(pn.Column):
 
     def __init__(self, targets):
@@ -212,7 +212,7 @@ class TargetBox(pn.Column):
             self.grid.objects.extend(lst)
         self.append(self.grid)
 
-    def selected(self):
+    def selection(self):
         return [t for t in self.boxes if self.boxes[t].value ]
 
 
@@ -242,6 +242,7 @@ class InfoBox(pn.Row):
         self.missing_params_message = pn.pane.Alert(InfoBox.missing_params_text, alert_type='danger')
         self.success_message = pn.pane.Alert(InfoBox.success_message_text, alert_type='success')
         self.fail_message = pn.pane.Alert(InfoBox.fail_message_text, alert_type='danger')
+        self.op_progress_bar = pn.indicators.Progress(name='OP Progress', value=0, max=100, width=300)
         self.erase()
 
     def erase(self):
@@ -260,6 +261,14 @@ class InfoBox(pn.Row):
         self.clear()
         self.append(self.fail_message)
 
+    def show_progress(self, count):
+        self.clear()
+        self.append(pn.Row(pn.widgets.StaticText(value='<b>Optimizing</b>  '), self.op_progress_bar))
+        self.delta = 100 // count
+
+    def update_progress(self):
+        self.op_progress_bar.value = min(100, self.op_progress_bar.value + self.delta)
+
 
 welcome_text = '''
 <h2>Welcome</h2>
@@ -268,7 +277,6 @@ welcome_text = '''
 '''
 
 class TideGates(param.Parameterized):
-
 
     def __init__(self, **params):
         super(TideGates, self).__init__(**params)
@@ -285,7 +293,7 @@ class TideGates(param.Parameterized):
 
         self.climate_group = pn.widgets.RadioBoxGroup(name='Climate', options=self.bf.climates, inline=False)
         self.budget_box = BudgetBox()
-        self.regions = RegionBox(self.bf, self.map, self.budget_box)
+        self.region_boxes = RegionBox(self.bf, self.map, self.budget_box)
 
         # self.target_boxes = pn.widgets.CheckBoxGroup(name='Targets', options=list(self.bf.target_map.keys()), inline=False)
         self.target_boxes = TargetBox(list(self.bf.target_map.keys()))
@@ -296,7 +304,7 @@ class TideGates(param.Parameterized):
             # pn.Row(self.info),
             pn.Row('<h3>Geographic Regions</h3>'),
             # pn.Pane(region_text,width=500),
-            pn.WidgetBox(self.regions, width=600),
+            pn.WidgetBox(self.region_boxes, width=600),
 
             # pn.layout.VSpacer(height=5),
             pn.Row('<h3>Budget</h3>'),
@@ -338,7 +346,7 @@ class TideGates(param.Parameterized):
 
         self.info.erase()
 
-        if len(self.regions.selected) == 0 or len(self.target_boxes.selected == 0):
+        if len(self.region_boxes.selection()) == 0 or len(self.target_boxes.selection()) == 0:
             self.info.show_missing()
             return
 
@@ -347,11 +355,14 @@ class TideGates(param.Parameterized):
         budget_max, budget_delta = self.budget_box.values()
         num_budgets = budget_max // budget_delta
 
+        # Uncomment this line to show a progress bar below the Optimize button (and uncomment
+        # the line below that updates the bar after each optimizer run)
+        # self.info.show_progress(num_budgets)
+
         self.op = OP(
             self.bf, 
-            # self.region_group.value,
-            list(self.regions.selected),
-            [self.bf.target_map[t] for t in self.target_boxes.selected()],
+            list(self.region_boxes.selection()),
+            [self.bf.target_map[t] for t in self.target_boxes.selection()],
             self.climate_group.value,
         )
         self.op.generate_input_frame()
@@ -360,8 +371,12 @@ class TideGates(param.Parameterized):
             self.op.budget_delta = budget_delta
             self.op.budget_max = budget_max
         else:
-            self.op.run(self.budget_box.values(), self.progress)
-        self.op.collect_results()
+            # Uncomment one of the following lines, depending on whether the progress
+            # bar is displayed
+            # self.op.run(self.budget_box.values(), False, self.info.update_progress)
+            self.op.run(self.budget_box.values(), False)
+        print('runs complete')
+        self.op.collect_results(False)
 
         self.main[1].loading = False
 
@@ -375,8 +390,6 @@ class TideGates(param.Parameterized):
         else:
             self.info.show_fail()
 
-    def progress(self):
-        print('progress!')
 
     # When debugging outside of a container define an environment variable
     # named OP_OUTPUT, setting it to the base name of a set of existing output 

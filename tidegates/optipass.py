@@ -108,7 +108,7 @@ class OP:
     # This version assumes the web app is running on a host that has wine installed
     # to run OptiPass (a Windows .exe file).
 
-    def run(self, budgets: list[int], preview: bool = False, progress = lambda x: 0):
+    def run(self, budgets: list[int], preview: bool, progress_hook = lambda: 0):
         '''
         Generate and execute the shell commands that run OptiPass.  If the shell
         environment includes a variable named WINEARCH it means the script is
@@ -137,9 +137,9 @@ class OP:
             Logging.log(cmnd)
             if not preview:
                 res = subprocess.run(cmnd, shell=True, capture_output=True)
-                progress()
             if preview or (res.returncode == 0):
                 outputs.append(outfile)
+                progress_hook()
             else:
                 Logging.log('OptiPass failed:')
                 Logging.log(res.stderr)
@@ -159,6 +159,8 @@ class OP:
         for x in df[df.DSID.isnull()].ID:
             G.add_node(x)
         self.paths = { n: self._path_from(n,G) for n in G.nodes }
+
+        # costs = { self.project.data.BARID[i]: self.project.data.COST[i] for i in self.project.data.index }
 
         cols = { x: [] for x in ['budget', 'weights', 'habitat', 'gates']}
         for fn in self.outputs:
