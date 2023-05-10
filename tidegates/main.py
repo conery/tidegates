@@ -92,6 +92,7 @@ def start_app():
         admin = True,
         verbose = True,
         autoreload = True,
+        websocket_origin= '*',
     )
 
 def validate_options(name, given, expected):
