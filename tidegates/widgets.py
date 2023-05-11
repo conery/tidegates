@@ -76,91 +76,50 @@ class TGMap():
 
 
 class BudgetBox(pn.Column):
+
+    # In this version the slider displays discrete budget levels.  The keys in this
+    # dict are the names of the levels, the values are the actual budget level and
+    # increment.
+
+    points = {
+        '$1M':      (1000000,   100000),
+        '$2.5M':    (2500000,   250000),
+        '$5M':      (5000000,   500000),
+        '$10M':    (10000000,  1000000),
+        '$25M':    (25000000,  2500000),
+        '$50M':    (50000000,  5000000),
+        '$100M':  (100000000, 10000000),
+    }
+
     def __init__(self):
         super(BudgetBox, self).__init__(margin=(15,0,15,5))
-        # self.budget = pn.widgets.FloatSlider(
-        #     start=0, 
-        #     end=0.1, 
-        #     step=0.1, 
-        #     value=0, 
-        #     tooltips=False, 
-        #     format=NumeralTickFormatter(format='$0,0'), 
-        #     width=400
-        # )
-        self.max = pn.widgets.StaticText(value='<b>Upper Limit:</b>  $0')
-        self.budget = pn.widgets.FloatInput(
-            name='Budget',
-            value=0,
-            start=0,
-            end=0,
-            width=175,
-            format='$0,0',
+        self.budget = pn.widgets.DiscreteSlider(
+            name='Maximum Budget',
+            options = list(BudgetBox.points.keys()),
+            value = '$1M',
         )
-        self.steps = pn.widgets.IntInput(
-            name='Steps',
-            value=10,
-            width=75,
-            start=1,
-            step=1,
-        )
-        # self.step_size = pn.widgets.FloatInput(
-        #     name='Step Size',
-        #     width=125,
-        #     format='$0,0'
-        # )
+
         self.budget.param.watch(self.cb, ['value'])
-        self.steps.param.watch(self.cb, ['value'])
-        # self.step_size_entry.param.watch(self.cb, ['value'])
-        self.step_size = 0
-        self.step_size_text = pn.widgets.StaticText(value=f'Step Size:  $0')
+        self.text = 'display placeholder'
 
-        # Version 1:  Slider with limit display
-        # self.append(pn.Row(
-        #     self.budget,
-        #     self.max,
-        # ))
+        self.append(self.budget)
+        self.append(pn.layout.VSpacer(height=10))
+        self.append(self.text)
 
-        # Version 2:  FloatEntry boxes
-        self.append(self.max)
-        self.append(pn.Row(
-            self.budget, 
-            pn.layout.Spacer(width=30), 
-            self.steps, 
-            self.step_size_text,
-        ))
-        # self.append(pn.layout.VSpacer(height=10))
-
-    def set_step_size_text(self, n):
-        self.step_size_text.value = f'Step Size:  ${n:,}'
+    # def set_step_size_text(self, n):
+    #     self.step_size_text.value = f'Step Size:  ${n:,}'
 
     def set_limit(self, n):
-        self.max.value = f'<b>Upper Limit:</b>  ${n:,}'
-
-        # Version 1:  set slider params
-        # n = round(n/1000000,1)
-        # self.budget.end = n
-        # if n >= 20:
-        #     self.budget.step = 1.0
-        # elif n >= 10:
-        #     self.budget.step = 0.5
-        # elif n >= 5:
-        #     self.budget.step = 0.25
-        # else:
-        #     self.budget.step = 0.1
-
-        # Version 2: Update entry boxes
-        blk =  1000000 if n < 20000000 else 10000000
-        amt = (ceil(n / (2*blk)))*blk
-        self.budget.end = n
-        self.budget.value = amt          # triggers callback to set step size
-        self.budget.step = self.step_size
+        print('set budget max to', n)
 
     def cb(self, *events):
-        self.step_size = int(self.budget.value / self.steps.value)
-        self.set_step_size_text(self.step_size)
+        # self.step_size = int(self.budget.value / self.steps.value)
+        # self.set_step_size_text(self.step_size)
+        pass
 
     def values(self):
-        return self.budget.value, self.step_size
+        # return self.budget.value, self.step_size
+        return 0, 0
  
 class RegionBox(pn.Column):
     
