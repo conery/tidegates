@@ -77,49 +77,89 @@ class TGMap():
 
 class BudgetBox(pn.Column):
 
-    # In this version the slider displays discrete budget levels.  The keys in this
-    # dict are the names of the levels, the values are the actual budget level and
-    # increment.
+    levels = [
+        ('$0', 0),
+        ('$500K', 500000),
+        ('$1M', 1000000),
+        ('$2.5M', 2500000),
+        ('$5M', 5000000),
+        ('$10M', 10000000),
+        ('$25M', 25000000),
+        ('$50M', 50000000),
+        ('$100M', 100000000),
+    ]
 
-    points = {
-        '$1M':      (1000000,   100000),
-        '$2.5M':    (2500000,   250000),
-        '$5M':      (5000000,   500000),
-        '$10M':    (10000000,  1000000),
-        '$25M':    (25000000,  2500000),
-        '$50M':    (50000000,  5000000),
-        '$100M':  (100000000, 10000000),
-    }
+    boxh = 125
+    boxw = 400
+    npts = 10
 
     def __init__(self):
         super(BudgetBox, self).__init__(margin=(15,0,15,5))
-        self.budget = pn.widgets.DiscreteSlider(
-            name='Maximum Budget',
-            options = list(BudgetBox.points.keys()),
-            value = '$1M',
+        self.labels = [x[0] for x in BudgetBox.levels]
+        self.map = { x[0]: x[1] for x in BudgetBox.levels }
+        self.tabs = pn.Tabs(
+            ('ROI', 
+             pn.WidgetBox(
+                pn.widgets.DiscreteSlider(
+                    options = self.labels[:1], 
+                    value = self.labels[0],
+                    name = 'Maximum Budget',
+                    margin=(20,20,20,20)
+                ),
+                height=BudgetBox.boxh,
+                width=BudgetBox.boxw)),
+            ('Fixed', 
+             pn.WidgetBox(
+                pn.widgets.TextInput(name='Budget Amount', value='$', margin=(20,20,20,20)),
+                height=BudgetBox.boxh,
+                width=BudgetBox.boxw)),
+            ('ℹ️',
+            pn.WidgetBox(
+                pn.pane.Markdown('''
+                    **ROI** (return on investment) will generate a plot that shows the optimal set
+                    of gates for several different budget levels.
+
+                    **Fixed** will compute the optimal set of gates for a single budget.
+                '''),
+                height=BudgetBox.boxh,
+                width=BudgetBox.boxw))
         )
+        self.append(self.tabs)
+        self.slider = self.tabs[0][0]
+        self.input = self.tabs[1][0]
 
-        self.budget.param.watch(self.cb, ['value'])
-        self.text = 'display placeholder'
-
-        self.append(self.budget)
-        self.append(pn.layout.VSpacer(height=10))
-        self.append(self.text)
-
-    # def set_step_size_text(self, n):
-    #     self.step_size_text.value = f'Step Size:  ${n:,}'
-
-    def set_limit(self, n):
-        print('set budget max to', n)
-
-    def cb(self, *events):
-        # self.step_size = int(self.budget.value / self.steps.value)
-        # self.set_step_size_text(self.step_size)
-        pass
+    def set_budget_max(self, n):
+        for i in range(len(BudgetBox.levels)-1, -1, -1):
+            if n >= BudgetBox.levels[i][1]:
+                self.slider.options = self.labels[:i+1]
+                break
 
     def values(self):
-        # return self.budget.value, self.step_size
-        return 0, 0
+        if self.tabs.active == 0:
+            x = self.map[self.slider.value]
+            return x, (x // BudgetBox.npts)
+        else:
+            s = self.input.value
+            if s.startswith('$'):
+                s = s[1:]
+            return self.parse_dollar_amount(self.input.value), 0
+        
+    def parse_dollar_amount(s):
+        try:
+            if s.startswith('$'):
+                s = s[1:]
+            if s.endswith(('K','M')):
+                multiplier = 1000 if s.endswith('K') else 1000000
+                res = int(float(s[:-1]) * multiplier)
+            elif ',' in s:
+                parts = s.split(',')
+                assert len(parts[0]) <= 3 and (len(parts) == 1 or all(len(p) == 3 for p in parts[1:]))
+                res = int(''.join(parts))
+            else:
+                res = int(s)
+            return res
+        except Exception:
+            raise ValueError('unexpected format in dollar amount')
  
 class RegionBox(pn.Column):
     
@@ -128,15 +168,21 @@ class RegionBox(pn.Column):
         self.totals = project.totals
         self.map = map
         self.budget_box = budget
-        self.grid = pn.GridBox(ncols=3)
+        # self.grid = pn.GridBox(ncols=3)
+        # for name in project.regions:
+        #     cost = round(project.totals[name]/1000000,1)
+        #     box = pn.widgets.Checkbox(name=name)
+        #     amt = pn.widgets.StaticText(value=f'${cost}M', align='end')
+        #     self.grid.objects.extend([box, pn.Spacer(width=50), amt])
+        #     box.param.watch(self.cb, ['value'])
+        boxes = []
         for name in project.regions:
-            cost = round(project.totals[name]/1000000,1)
             box = pn.widgets.Checkbox(name=name)
-            amt = pn.widgets.StaticText(value=f'${cost}M', align='end')
-            self.grid.objects.extend([box, pn.Spacer(width=50), amt])
             box.param.watch(self.cb, ['value'])
+            boxes.append(box)
+        self.grid = pn.GridBox(*boxes, ncols=2)
         self.selected = set()
-        self.sum = pn.widgets.StaticText(value='Total:  $0M')
+        # self.sum = pn.widgets.StaticText(value='Total:  $0M')
         self.append(self.grid)
         # self.append(self.sum)
         # self.append(self.budget)
@@ -150,7 +196,7 @@ class RegionBox(pn.Column):
                 else:
                     self.selected.remove(r)
                 amount = sum(self.totals[x] for x in self.selected)
-                self.budget_box.set_limit(amount)
+                self.budget_box.set_budget_max(amount)
         self.map.display_regions(self.selected)
 
     def selection(self):
@@ -268,10 +314,10 @@ class TideGates(param.Parameterized):
             # pn.layout.VSpacer(height=5),
             pn.Row('<h3>Budget</h3>'),
             # pn.Pane(budget_text, width=500),
-            pn.WidgetBox(self.budget_box, width=600),
+            self.budget_box,
 
             # pn.layout.VSpacer(height=5),
-            pn.Row('<h3>Restoration Targets</h3>'),
+            pn.Row('<h3>Targets</h3>'),
             # pn.Pane(target_text, width=500),
             pn.WidgetBox(
                 pn.Row(
