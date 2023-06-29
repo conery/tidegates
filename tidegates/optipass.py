@@ -25,6 +25,7 @@
 # When run on a Windows system it can also run OptiPass.
 #
 
+import platform
 import os
 import subprocess
 from glob import glob
@@ -108,6 +109,10 @@ class OP:
     # This version assumes the web app is running on a host that has wine installed
     # to run OptiPass (a Windows .exe file).
 
+    # To run OptiPass we need (a) a Windows host with the OptiPass command line version
+    # or (b) a Linux host with WINE installed.  If the host OS is a Mac print an error
+    # message (WINE can't run on Apple silicon).
+
     def run(self, budgets: list[int], preview: bool, progress_hook = lambda: 0):
         '''
         Generate and execute the shell commands that run OptiPass.  If the shell
@@ -115,7 +120,15 @@ class OP:
         running on Linux, and we need to use Wine, otherwise build a command that
         will run on Windows.
         '''
-        app = 'wine bin/OptiPassMain.exe' if os.environ.get('WINEARCH') else 'bin\\OptiPassMain.exe'
+        if platform.system() == 'Windows':
+            app = 'bin\\OptiPassMain.exe'
+        elif platform.system() == 'Linux' and os.environ.get('WINEARCH'):
+            app = 'wine bin/OptiPassMain.exe'
+        else:
+            Logging.log(f'{platform.system()} not configured to run WINE')
+            self.outputs = None
+            return
+        
         template = app + ' -f {bf} -o {of} -b {n}'
 
         df = self.generate_input_frame()

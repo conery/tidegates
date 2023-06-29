@@ -380,21 +380,20 @@ class TideGates(param.Parameterized):
             # bar is displayed
             # self.op.run(self.budget_box.values(), False, self.info.update_progress)
             self.op.run(self.budget_box.values(), False)
-        print('runs complete')
-        self.op.collect_results(False)
 
         self.main[1].loading = False
 
-        # Expect to find one file for each budget level plus one more
-        # for the $0 budget
+        # If OP ran successfully we expect to find one file for each budget level 
+        # plus one more for the $0 budget
 
-        if len(self.op.outputs) == num_budgets+1:
+        if self.op.outputs is not None and len(self.op.outputs) == num_budgets+1:
+            Logging.log('runs complete')
+            self.op.collect_results(False)
             Logging.log('Output files:' + ','.join(self.op.outputs))
             self.add_output_pane()
             self.info.show_success()
         else:
             self.info.show_fail()
-
 
     # When debugging outside of a container define an environment variable
     # named OP_OUTPUT, setting it to the base name of a set of existing output 

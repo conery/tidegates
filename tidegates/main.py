@@ -64,23 +64,11 @@ def init_cli():
 
     return parser.parse_args()
 
-def check_environment(action):
-    '''
-    We can't run OptiPass unless wine is installed
-    '''
-    if action == 'run':
-        res = subprocess.run(['which','wine'], capture_output=True)
-        if len(res.stdout) == 0:
-            print('wine needed to run OptiPass.exe')
-            exit(1)
-
 def make_app():
     template = pn.template.BootstrapTemplate(title='Tide Gate Optimization', sidebar_width=425)
     tg = TideGates()
     template.sidebar.append(tg.map_pane)
     template.main.append(tg.main)
-    if not os.environ.get('WINEARCH'):
-        print('TBD: set region, budget, target')
     return template
 
 def start_app():
@@ -143,7 +131,6 @@ if __name__ == '__main__':
             case 'generate':
                 print(op.generate_input_frame())
             case 'preview' | 'run':
-                check_environment(args.action)
                 op.generate_input_frame()
                 op.run(budgets, args.action=='preview')
             case 'parse':
@@ -159,6 +146,7 @@ if __name__ == '__main__':
             case 'all':
                 op.generate_input_frame()
                 op.run(budgets, args.action=='preview')
-                op.collect_results(args.scaled)
-                print(op.table_view())
-                show(op.roi_curves())
+                if op.outputs is not None:
+                    op.collect_results(args.scaled)
+                    print(op.table_view())
+                    show(op.roi_curves())
