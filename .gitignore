@@ -130,3 +130,4 @@ dmypy.json
 
 # Files and folders for this project
 tmp/
+winedots/

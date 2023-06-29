@@ -47,6 +47,12 @@ RUN cp winetricks /usr/local/bin
 # Install Visual C++ Redistributable 
 RUN wineboot -u && xvfb-run winetricks -q vcrun2015
 
+# Copy WINE prefix to home
+RUN mkdir /home/$USERNAME/.wine
+COPY winedots/.wine /home/$USERNAME/.wine
+COPY winedots/.local /home/$USERNAME/.local
+COPY winedots/.config /home/$USERNAME/.config
+
 # Install pip
 RUN apt-get install -y python3-pip
 
@@ -61,7 +67,7 @@ COPY requirements.txt .
 RUN python3 -m pip install -r requirements.txt
 
 # COPY . /home/$USERNAME
-# RUN chown -R $USERNAME /home/$USERNAME
+RUN chown -R $USERNAME /home/$USERNAME
 
 USER $USERNAME
 WORKDIR /home/$USERNAME/tidegates
