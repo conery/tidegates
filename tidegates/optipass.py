@@ -82,24 +82,24 @@ class OP:
         header.append('DSID')
 
         for t in self.targets:
-            df = pd.concat([df, filtered[t.habitat]], axis=1, ignore_index=True)
+            df = pd.concat([df, filtered[t.habitat]], axis=1)
             header.append('HAB_'+t.abbrev)
 
         for t in self.targets:
-            df = pd.concat([df, filtered[t.prepass]], axis=1, ignore_index=True)
+            df = pd.concat([df, filtered[t.prepass]], axis=1)
             header.append('PRE_'+t.abbrev)
 
-        df = pd.concat([df, filtered['NPROJ']], axis=1, ignore_index=True)
+        df = pd.concat([df, filtered['NPROJ']], axis=1)
         header.append('NPROJ')
 
         df = pd.concat([df, pd.Series(np.zeros(len(filtered)), name='ACTION', dtype=int)], axis=1)
         header.append('ACTION')
 
-        df = pd.concat([df, filtered['COST']], axis=1, ignore_index=True)
+        df = pd.concat([df, filtered['COST']], axis=1)
         header += ['COST']
 
         for t in self.targets:
-            df = pd.concat([df, filtered[t.postpass]], axis=1, ignore_index=True)
+            df = pd.concat([df, filtered[t.postpass]], axis=1)
             header.append('POST_'+t.abbrev)
 
         df.columns = header
@@ -354,12 +354,12 @@ class OP:
         figures = []
         for t in self.targets:
             f = figure(
-                title=t.long, 
-                x_axis_label='Budget', 
-                y_axis_label='Post-Restoration Habitat',
-                width=W,
-                height=H,                
-                )
+                title = t.long, 
+                x_axis_label = 'Budget', 
+                y_axis_label = t.label,
+                width = W,
+                height = H,                
+            )
             f.line(self.summary.budget, self.summary[t.abbrev], line_width=LW)
             f.circle(self.summary.budget, self.summary[t.abbrev], fill_color='white', size=D)
             f.xaxis.formatter = NumeralTickFormatter(format='$0a')
