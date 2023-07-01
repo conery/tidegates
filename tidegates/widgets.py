@@ -289,7 +289,7 @@ class TideGates(param.Parameterized):
         self.bf = Project('static/workbook.csv', DataSet.TNC_OR)
 
         self.map = TGMap(self.bf)
-        self.map_pane = pn.Pane(self.map.graphic())
+        self.map_pane = pn.panel(self.map.graphic())
 
         self.optimize_button = pn.widgets.Button(name='Run Optimizer', height=40, width=60, background='#b2d2dd')
         self.load_button = pn.widgets.Button(name='Load',height=40,width=60)
@@ -308,17 +308,17 @@ class TideGates(param.Parameterized):
         start_tab = pn.Column(
             # pn.Row(self.info),
             pn.Row('<h3>Geographic Regions</h3>'),
-            # pn.Pane(region_text,width=500),
+            # pn.panel(region_text,width=500),
             pn.WidgetBox(self.region_boxes, width=600),
 
             # pn.layout.VSpacer(height=5),
             pn.Row('<h3>Budget</h3>'),
-            # pn.Pane(budget_text, width=500),
+            # pn.panel(budget_text, width=500),
             self.budget_box,
 
             # pn.layout.VSpacer(height=5),
             pn.Row('<h3>Targets</h3>'),
-            # pn.Pane(target_text, width=500),
+            # pn.panel(target_text, width=500),
             pn.WidgetBox(
                 pn.Row(
                     self.target_boxes,
@@ -337,7 +337,7 @@ class TideGates(param.Parameterized):
         )
 
         self.main = pn.Tabs(
-            ('Home', pn.Pane(welcome_text)),
+            ('Home', pn.panel(welcome_text)),
             ('Start', start_tab),
             sizing_mode = 'fixed',
             width=800,
@@ -449,4 +449,4 @@ class TideGates(param.Parameterized):
            table
         )
 
-        self.main.append(('Output', pn.Pane(output, min_width=500, height=800)))
+        self.main.append(('Output', pn.panel(output, min_width=500, height=800)))
