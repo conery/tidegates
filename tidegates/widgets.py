@@ -339,8 +339,9 @@ class TideGates(param.Parameterized):
         self.main = pn.Tabs(
             ('Home', pn.Pane(welcome_text)),
             ('Start', start_tab),
-            min_width=800,
             sizing_mode = 'fixed',
+            width=800,
+            height=800,
         )
 
         self.optimize_button.on_click(self.run_optimizer)
