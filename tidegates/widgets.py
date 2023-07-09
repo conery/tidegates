@@ -21,6 +21,7 @@ import os
 import re
 
 from targets import DataSet, make_layout
+from budgets import BasicBudgetBox, AdvancedBudgetBox, FixedBudgetBox
 from project import Project
 from optipass import OP
 from messages import Logging
@@ -77,89 +78,22 @@ class TGMap():
 
 class BudgetBox(pn.Column):
 
-    levels = [
-        ('$0', 0),
-        ('$500K', 500000),
-        ('$1M', 1000000),
-        ('$2.5M', 2500000),
-        ('$5M', 5000000),
-        ('$10M', 10000000),
-        ('$25M', 25000000),
-        ('$50M', 50000000),
-        ('$100M', 100000000),
-    ]
-
-    boxh = 125
-    boxw = 400
-    npts = 10
-
     def __init__(self):
         super(BudgetBox, self).__init__(margin=(15,0,15,5))
-        self.labels = [x[0] for x in BudgetBox.levels]
-        self.map = { x[0]: x[1] for x in BudgetBox.levels }
         self.tabs = pn.Tabs(
-            ('ROI', 
-             pn.WidgetBox(
-                pn.widgets.DiscreteSlider(
-                    options = self.labels[:1], 
-                    value = self.labels[0],
-                    name = 'Maximum Budget',
-                    margin=(20,20,20,20)
-                ),
-                height=BudgetBox.boxh,
-                width=BudgetBox.boxw)),
-            ('Fixed', 
-             pn.WidgetBox(
-                pn.widgets.TextInput(name='Budget Amount', value='$', margin=(20,20,20,20)),
-                height=BudgetBox.boxh,
-                width=BudgetBox.boxw)),
-            ('ℹ️',
-            pn.WidgetBox(
-                pn.pane.Markdown('''
-                    **ROI** (return on investment) will generate a plot that shows the optimal set
-                    of gates for several different budget levels.
-
-                    **Fixed** will compute the optimal set of gates for a single budget.
-                '''),
-                height=BudgetBox.boxh,
-                width=BudgetBox.boxw))
+            ('Basic', BasicBudgetBox()),
+            ('Advanced', AdvancedBudgetBox()),
+            ('Fixed', FixedBudgetBox()),
         )
         self.append(self.tabs)
-        self.slider = self.tabs[0][0]
-        self.input = self.tabs[1][0]
 
     def set_budget_max(self, n):
-        for i in range(len(BudgetBox.levels)-1, -1, -1):
-            if n >= BudgetBox.levels[i][1]:
-                self.slider.options = self.labels[:i+1]
-                break
+        for t in self.tabs:
+            t.set_budget_max(n)
 
     def values(self):
-        if self.tabs.active == 0:
-            x = self.map[self.slider.value]
-            return x, (x // BudgetBox.npts)
-        else:
-            s = self.input.value
-            if s.startswith('$'):
-                s = s[1:]
-            return self.parse_dollar_amount(self.input.value), 0
-        
-    def parse_dollar_amount(s):
-        try:
-            if s.startswith('$'):
-                s = s[1:]
-            if s.endswith(('K','M')):
-                multiplier = 1000 if s.endswith('K') else 1000000
-                res = int(float(s[:-1]) * multiplier)
-            elif ',' in s:
-                parts = s.split(',')
-                assert len(parts[0]) <= 3 and (len(parts) == 1 or all(len(p) == 3 for p in parts[1:]))
-                res = int(''.join(parts))
-            else:
-                res = int(s)
-            return res
-        except Exception:
-            raise ValueError('unexpected format in dollar amount')
+        return self.tabs[self.tabs.active].values()
+
  
 class RegionBox(pn.Column):
     
