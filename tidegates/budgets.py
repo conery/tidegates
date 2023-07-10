@@ -25,6 +25,8 @@ from bokeh.models.formatters import NumeralTickFormatter
 #             width = self.BUDGETBOXWIDTH,
 #         )
 
+from styles import slider_style_sheet
+
 class BasicBudgetBox(pn.WidgetBox):
 
     levels = [
@@ -49,7 +51,8 @@ class BasicBudgetBox(pn.WidgetBox):
             options = self.labels[:1], 
             value = self.labels[0],
             name = 'Maximum Budget',
-            margin=(20,20,20,20)
+            margin=(20,20,20,20),
+            stylesheets=[slider_style_sheet],
         )
         self.append(self.slider)
 
@@ -117,6 +120,7 @@ class AdvancedBudgetBox(pn.WidgetBox):
             value=0,
             width=self.SLIDER_WIDTH,
             format=NumeralTickFormatter(format='$0,0'),
+            stylesheets=[slider_style_sheet],
         )
 
         self.inc_slider = pn.widgets.FloatSlider(
@@ -127,6 +131,7 @@ class AdvancedBudgetBox(pn.WidgetBox):
             value=0,
             width=self.SLIDER_WIDTH//2,
             format=NumeralTickFormatter(format='$0,0'),
+            stylesheets=[slider_style_sheet],
         )
 
         self.count_input = pn.widgets.IntInput(

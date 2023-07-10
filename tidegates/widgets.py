@@ -79,7 +79,7 @@ class TGMap():
 class BudgetBox(pn.Column):
 
     def __init__(self):
-        super(BudgetBox, self).__init__(margin=(15,0,15,5))
+        super(BudgetBox, self).__init__()
         self.tabs = pn.Tabs(
             ('Basic', BasicBudgetBox()),
             ('Advanced', AdvancedBudgetBox()),
@@ -94,6 +94,7 @@ class BudgetBox(pn.Column):
     def values(self):
         return self.tabs[self.tabs.active].values()
 
+from styles import box_styles, box_style_sheet
  
 class RegionBox(pn.Column):
     
@@ -102,24 +103,14 @@ class RegionBox(pn.Column):
         self.totals = project.totals
         self.map = map
         self.budget_box = budget
-        # self.grid = pn.GridBox(ncols=3)
-        # for name in project.regions:
-        #     cost = round(project.totals[name]/1000000,1)
-        #     box = pn.widgets.Checkbox(name=name)
-        #     amt = pn.widgets.StaticText(value=f'${cost}M', align='end')
-        #     self.grid.objects.extend([box, pn.Spacer(width=50), amt])
-        #     box.param.watch(self.cb, ['value'])
         boxes = []
         for name in project.regions:
-            box = pn.widgets.Checkbox(name=name)
+            box = pn.widgets.Checkbox(name=name, styles=box_styles, stylesheets=[box_style_sheet])
             box.param.watch(self.cb, ['value'])
             boxes.append(box)
         self.grid = pn.GridBox(*boxes, ncols=2)
         self.selected = set()
-        # self.sum = pn.widgets.StaticText(value='Total:  $0M')
         self.append(self.grid)
-        # self.append(self.sum)
-        # self.append(self.budget)
 
     def cb(self, *events):
         for e in events:
@@ -145,7 +136,7 @@ class TargetBox(pn.Column):
         for row in make_layout():
             lst = [ ]
             for t in row:
-                b = pn.widgets.Checkbox(name=t, width=200)
+                b = pn.widgets.Checkbox(name=t, styles=box_styles, stylesheets=[box_style_sheet])
                 lst.append(b)
                 self.boxes[t] = b
             self.grid.objects.extend(lst)
@@ -222,6 +213,8 @@ welcome_text = '''
 <p>Click on the Start tab above to enter optimization parameters and run the optimizer.</p>
 '''
 
+from styles import header_styles, button_style_sheet
+
 class TideGates(pn.template.BootstrapTemplate):
 
     def __init__(self, **params):
@@ -232,7 +225,7 @@ class TideGates(pn.template.BootstrapTemplate):
         self.map = TGMap(self.bf)
         self.map_pane = pn.panel(self.map.graphic())
 
-        self.optimize_button = pn.widgets.Button(name='Run Optimizer', height=40, width=60)
+        self.optimize_button = pn.widgets.Button(name='Run Optimizer', stylesheets=[button_style_sheet])
         self.load_button = pn.widgets.Button(name='Load',height=40,width=60)
         self.save_button = pn.widgets.Button(name='Save',height=40,width=60)
         self.reset_button = pn.widgets.Button(name='Reset',height=40,width=60)
@@ -248,18 +241,15 @@ class TideGates(pn.template.BootstrapTemplate):
 
         start_tab = pn.Column(
             # pn.Row(self.info),
-            pn.Row('<h3>Geographic Regions</h3>'),
-            # pn.panel(region_text,width=500),
+            self.section_head('Geographic Regions'),
             pn.WidgetBox(self.region_boxes, width=600),
 
             # pn.layout.VSpacer(height=5),
-            pn.Row('<h3>Budget</h3>'),
-            # pn.panel(budget_text, width=500),
+            self.section_head('Budget'),
             self.budget_box,
 
             # pn.layout.VSpacer(height=5),
-            pn.Row('<h3>Targets</h3>'),
-            # pn.panel(target_text, width=500),
+            self.section_head('Targets'),
             pn.WidgetBox(
                 pn.Row(
                     self.target_boxes,
@@ -271,9 +261,7 @@ class TideGates(pn.template.BootstrapTemplate):
                 width=600,
             ),
 
-            pn.layout.VSpacer(height=20),
-            pn.Row(pn.layout.Spacer(width=200), self.optimize_button, width=600),
-            pn.layout.VSpacer(height=10),
+            self.optimize_button,
             self.info,
         )
 
@@ -289,6 +277,10 @@ class TideGates(pn.template.BootstrapTemplate):
         self.main.append(self.tabs)        
 
         self.optimize_button.on_click(self.run_optimizer)
+
+
+    def section_head(self, s):
+        return pn.pane.HTML(f'<h3>{s}</h3>', styles=header_styles)
 
     def run_optimizer(self, _):
         Logging.log('running optimizer')
