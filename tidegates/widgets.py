@@ -155,7 +155,7 @@ class TargetBox(pn.Column):
         return [t for t in self.boxes if self.boxes[t].value ]
 
 
-class InfoBox(pn.Row):
+class InfoBox(pn.Column):
 
     missing_params_text = '''
     <b>Missing Information</b>
@@ -177,12 +177,20 @@ class InfoBox(pn.Row):
 
     def __init__(self):
         super(InfoBox, self).__init__()
-        self.blank = pn.pane.HTML(background='#FFFFFF', width=50, height=50)
-        self.missing_params_message = pn.pane.Alert(InfoBox.missing_params_text, alert_type='danger')
-        self.success_message = pn.pane.Alert(InfoBox.success_message_text, alert_type='success')
-        self.fail_message = pn.pane.Alert(InfoBox.fail_message_text, alert_type='danger')
-        self.op_progress_bar = pn.indicators.Progress(name='OP Progress', value=0, max=100, width=300)
-        self.erase()
+        self.append(pn.pane.HTML('<h3>Title</h3>'))
+        self.append(pn.pane.Alert(InfoBox.success_message_text, alert_type='success'))
+        self.append(pn.pane.HTML('<p>some more text...<p>'))
+        self.messages = [
+            self.missing_params_text,
+            self.success_message_text,
+            self.fail_message_text,
+        ]
+        self.message_num = 0
+
+    def show_alert(self, flag):
+        self[1].visible = False
+        self[2] = pn.pane.HTML(self.messages[self.message_num])
+        self.message_num = (self.message_num + 1) % len(self.messages)
 
     def erase(self):
         self.clear()
@@ -208,14 +216,13 @@ class InfoBox(pn.Row):
     def update_progress(self):
         self.op_progress_bar.value = min(100, self.op_progress_bar.value + self.delta)
 
-
 welcome_text = '''
 <h2>Welcome</h2>
 
 <p>Click on the Start tab above to enter optimization parameters and run the optimizer.</p>
 '''
 
-class TideGates(param.Parameterized):
+class TideGates(pn.template.BootstrapTemplate):
 
     def __init__(self, **params):
         super(TideGates, self).__init__(**params)
@@ -225,7 +232,7 @@ class TideGates(param.Parameterized):
         self.map = TGMap(self.bf)
         self.map_pane = pn.panel(self.map.graphic())
 
-        self.optimize_button = pn.widgets.Button(name='Run Optimizer', height=40, width=60, background='#b2d2dd')
+        self.optimize_button = pn.widgets.Button(name='Run Optimizer', height=40, width=60)
         self.load_button = pn.widgets.Button(name='Load',height=40,width=60)
         self.save_button = pn.widgets.Button(name='Save',height=40,width=60)
         self.reset_button = pn.widgets.Button(name='Reset',height=40,width=60)
@@ -270,7 +277,7 @@ class TideGates(param.Parameterized):
             self.info,
         )
 
-        self.main = pn.Tabs(
+        self.tabs = pn.Tabs(
             ('Home', pn.panel(welcome_text)),
             ('Start', start_tab),
             sizing_mode = 'fixed',
@@ -278,8 +285,10 @@ class TideGates(param.Parameterized):
             height=800,
         )
 
-        self.optimize_button.on_click(self.run_optimizer)
+        self.sidebar.append(self.map_pane)
+        self.main.append(self.tabs)        
 
+        self.optimize_button.on_click(self.run_optimizer)
 
     def run_optimizer(self, _):
         Logging.log('running optimizer')

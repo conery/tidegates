@@ -1,8 +1,6 @@
 import argparse
 from glob import glob
-import os
 import re
-import subprocess
 import sys
 
 import panel as pn
@@ -65,15 +63,19 @@ def init_cli():
     return parser.parse_args()
 
 def make_app():
-    template = pn.template.BootstrapTemplate(title='Tide Gate Optimization', sidebar_width=425)
-    tg = TideGates()
-    template.sidebar.append(tg.map_pane)
-    template.main.append(tg.main)
-    return template
+    # template = pn.template.BootstrapTemplate(title='Tide Gate Optimization', sidebar_width=425)
+    # tg = TideGates()
+    # template.sidebar.append(tg.map_pane)
+    # template.main.append(tg.main)
+    # return template
+    return TideGates(
+        title='Tide Gate Optimization', 
+        sidebar_width=425
+    )
 
 def start_app():
     # pn.extension(sizing_mode = 'stretch_width')
-    pn.config.css_files = ['static/tgo.css']
+    pn.extension(design='native')
     pn.serve( 
         {'tidegates': make_app},
         port = 5006,
