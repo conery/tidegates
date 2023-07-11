@@ -93,8 +93,7 @@ class TideGates(pn.template.BootstrapTemplate):
         self.map_pane = pn.pane.HTML(map_content, styles=map_styles)
 
         self.optimize_button = pn.widgets.Button(name='Run Optimizer')
-        self.continue_button = pn.widgets.Button(name='Continue')
-        self.cancel_button = pn.widgets.Button(name='Cancel')
+
 
         # self.climate_group = pn.widgets.RadioBoxGroup(name='Climate', options=self.bf.climates, inline=False)
         # self.budget_box = BudgetBox()
@@ -132,19 +131,18 @@ class TideGates(pn.template.BootstrapTemplate):
             # height=800,
         )
 
+        self.tabs.active = 1
+
         self.optimize_button.on_click(self.validate_settings)
-        self.continue_button.on_click(self.run_optimizer)
-        self.cancel_button.on_click(self.cancel_cb)
 
         self.sidebar.append(self.map_pane)
         self.main.append(self.tabs)
 
-        self.info = InfoBox()
+        self.info = InfoBox(self, self.run_optimizer)
         self.modal.append(self.info)
         self.toggle = False
 
     def validate_settings(self, _):
-        print('optimize button clicked')
         # self.modal.append(header('¿Que?'))
         # self.modal.clear()
         # self.modal.append(header('Verify Settings'))
@@ -164,23 +162,32 @@ class TideGates(pn.template.BootstrapTemplate):
         # for x in self.modal:
         #     print(x)
         self.toggle = not self.toggle
-        self.info.show_alert(self.toggle)
-        self.open_modal()
+        if self.toggle:
+            self.info.show_missing()
+        else:
+            self.info.show_params(['a','b'], (1000,10), ['x'])
 
-    def run_optimizer(self, _):
-        print('running optimizer...')
+    def run_optimizer(self, e):
+        print('running optimizer...', e)
         self.close_modal()
 
-    def cancel_cb(self, _):
-        print('cancel')
-        self.close_modal()
+    # def cancel_cb(self, _):
+    #     print('cancel')
+    #     self.close_modal()
 
 class InfoBox(pn.Column):
 
-    missing_params_text = '''
-    <b>Missing Information</b>
+    missing_params_text = '''### Missing Information
 
-    <p>Please select one or more geographic regions and one or more restoration targets.</p>
+    Please select one or more geographic regions and one or more restoration targets.
+    '''
+
+    preview_message_text = '''### Review Optimizer Settings
+
+    Clicking Continue will run OP with the following settings:
+    * regions
+    * targets
+    * budgets
     '''
 
     success_message_text = '''
@@ -195,46 +202,52 @@ class InfoBox(pn.Column):
     <p>One or more calls to OptiPass did not succeed (see log for explanation).</p>
     '''
 
-    def __init__(self):
+    def __init__(self, template, run_cb):
         super(InfoBox, self).__init__()
-        self.append(pn.pane.HTML('<h3>Title</h3>'))
-        self.append(pn.pane.Alert(InfoBox.success_message_text, alert_type='success'))
+        self.template = template
+        self.messages = self.make_messages()
+        self.continue_button = pn.widgets.Button(name='Continue')
+        self.cancel_button = pn.widgets.Button(name='Cancel')
+        self.append(self.messages['default'])
         self.append(pn.pane.HTML('<p>some more text...<p>'))
-        self.messages = [
-            self.missing_params_text,
-            self.success_message_text,
-            self.fail_message_text,
-        ]
-        self.message_num = 0
+        self.append(pn.Row(self.cancel_button, self.continue_button))
+        self.continue_button.on_click(run_cb)
+        self.cancel_button.on_click(self.cancel_cb)
 
-    def show_alert(self, flag):
-        self[1].visible = False
-        self[2] = pn.pane.HTML(self.messages[self.message_num])
-        self.message_num = (self.message_num + 1) % len(self.messages)
+    def cancel_cb(self, _):
+        self.template.close_modal()
 
-    def erase(self):
-        self.clear()
-        self.append(self.blank)
+    def make_messages(self):
+        return {
+            'default': pn.pane.Alert('### Placehoder', alert_type = 'secondary'),
+            'missing': pn.pane.Alert(self.missing_params_text, alert_type = 'warning'),
+            'preview': pn.pane.Alert(self.preview_message_text, alert_type = 'secondary'),
+        }
+
+        # self.continue_button.on_click(self.run_optimizer)
+
+    # def show_alert(self, flag):
+    #     if flag:
+    #         self[0] = self.messages['default']
+    #         self[1].visible = False
+    #         self[2].visible = False
+    #     else:
+    #         self[0] = self.messages['missing']
+    #         self[1] = pn.pane.HTML('<p>dynamic text</p>')
+    #         self[2].visible = True
+    #     self.template.open_modal()
 
     def show_missing(self):
-        self.clear()
-        self.append(self.missing_params_message)
-    
-    def show_success(self):
-        self.clear()
-        self.append(self.success_message)
-    
-    def show_fail(self):
-        self.clear()
-        self.append(self.fail_message)
-
-    def show_progress(self, count):
-        self.clear()
-        self.append(pn.Row(pn.widgets.StaticText(value='<b>Optimizing</b>  '), self.op_progress_bar))
-        self.delta = 100 // count
-
-    def update_progress(self):
-        self.op_progress_bar.value = min(100, self.op_progress_bar.value + self.delta)
+        self[0] = self.messages['missing']
+        self[1].visible = False
+        self[2].visible = False
+        self.template.open_modal()
+        
+    def show_params(self, regions, budgets, targets):
+        self[0] = self.messages['preview']
+        self[1].visible = False
+        self[2].visible = True
+        self.template.open_modal()
 
 def make_app():
     return TideGates(

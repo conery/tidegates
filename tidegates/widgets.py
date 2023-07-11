@@ -148,64 +148,64 @@ class TargetBox(pn.Column):
 
 class InfoBox(pn.Column):
 
-    missing_params_text = '''
-    <b>Missing Information</b>
+    missing_params_text = '''### Missing Information
 
-    <p>Please select one or more geographic regions and one or more restoration targets.</p>
-    '''
+Please select
 
-    success_message_text = '''
-    <b>Optimization Complete</b>
+'''
 
-    <p>Click the "Output" tab at the top of this window to view the results.</p>
-    '''
+    preview_message_text = '''### Review Optimizer Settings
 
-    fail_message_text = '''
-    <b>Optimization Failed</b>
+Clicking Continue will run OP with the following settings:
 
-    <p>One or more calls to OptiPass did not succeed (see log for explanation).</p>
-    '''
+'''
 
-    def __init__(self):
+    def __init__(self, template, run_cb):
         super(InfoBox, self).__init__()
-        self.append(pn.pane.HTML('<h3>Title</h3>'))
-        self.append(pn.pane.Alert(InfoBox.success_message_text, alert_type='success'))
+        self.template = template
+        self.messages = self.make_messages()
+        self.continue_button = pn.widgets.Button(name='Continue')
+        self.cancel_button = pn.widgets.Button(name='Cancel')
+        self.append(self.messages['default'])
         self.append(pn.pane.HTML('<p>some more text...<p>'))
-        self.messages = [
-            self.missing_params_text,
-            self.success_message_text,
-            self.fail_message_text,
-        ]
-        self.message_num = 0
+        self.append(pn.Row(self.cancel_button, self.continue_button))
+        self.continue_button.on_click(run_cb)
+        self.cancel_button.on_click(self.cancel_cb)
 
-    def show_alert(self, flag):
+    def cancel_cb(self, _):
+        self.template.close_modal()
+
+    def make_messages(self):
+        return {
+            'default': pn.pane.Alert('### Placehoder', alert_type = 'secondary'),
+            'missing': pn.pane.Alert(self.missing_params_text, alert_type = 'warning'),
+            'preview': pn.pane.Alert(self.preview_message_text, alert_type = 'secondary'),
+        }
+ 
+    def show_missing(self, rlist, bmax, tlist):
+        text = self.missing_params_text
+        if len(rlist) == 0:
+            text += ' * one or more geographic regions\n'
+        if bmax == 0:
+            text += ' * a maximum budget\n'
+        if len(tlist) == 0:
+            text += ' * one or more targets\n'
+        print(text)
+        self[0] = pn.pane.Alert(text, alert_type = 'warning')
         self[1].visible = False
-        self[2] = pn.pane.HTML(self.messages[self.message_num])
-        self.message_num = (self.message_num + 1) % len(self.messages)
-
-    def erase(self):
-        self.clear()
-        self.append(self.blank)
-
-    def show_missing(self):
-        self.clear()
-        self.append(self.missing_params_message)
-    
-    def show_success(self):
-        self.clear()
-        self.append(self.success_message)
-    
-    def show_fail(self):
-        self.clear()
-        self.append(self.fail_message)
-
-    def show_progress(self, count):
-        self.clear()
-        self.append(pn.Row(pn.widgets.StaticText(value='<b>Optimizing</b>  '), self.op_progress_bar))
-        self.delta = 100 // count
-
-    def update_progress(self):
-        self.op_progress_bar.value = min(100, self.op_progress_bar.value + self.delta)
+        self[2].visible = False
+        self.template.open_modal()
+        
+    def show_params(self, regions, bmax, bstep, targets):
+        n = bmax // bstep
+        text = self.preview_message_text
+        text += f'  * Regions: `{regions}`\n\n'
+        text += f'  * {n} budget levels from {bstep} up to {bmax} in increments of {bstep}\n\n'
+        text += f'  * Targets: `{targets}`\n\n' 
+        self[0] = pn.pane.Alert(text, alert_type = 'secondary')
+        self[1].visible = False
+        self[2].visible = True
+        self.template.open_modal()
 
 welcome_text = '''
 <h2>Welcome</h2>
@@ -225,19 +225,14 @@ class TideGates(pn.template.BootstrapTemplate):
         self.map = TGMap(self.bf)
         self.map_pane = pn.panel(self.map.graphic())
 
-        self.optimize_button = pn.widgets.Button(name='Run Optimizer', stylesheets=[button_style_sheet])
-        self.load_button = pn.widgets.Button(name='Load',height=40,width=60)
-        self.save_button = pn.widgets.Button(name='Save',height=40,width=60)
-        self.reset_button = pn.widgets.Button(name='Reset',height=40,width=60)
-
-        self.climate_group = pn.widgets.RadioBoxGroup(name='Climate', options=self.bf.climates, inline=False)
         self.budget_box = BudgetBox()
         self.region_boxes = RegionBox(self.bf, self.map, self.budget_box)
-
-        # self.target_boxes = pn.widgets.CheckBoxGroup(name='Targets', options=list(self.bf.target_map.keys()), inline=False)
         self.target_boxes = TargetBox(list(self.bf.target_map.keys()))
+        self.climate_group = pn.widgets.RadioBoxGroup(name='Climate', options=self.bf.climates, inline=False)
  
-        self.info = InfoBox()
+        self.optimize_button = pn.widgets.Button(name='Run Optimizer', stylesheets=[button_style_sheet])
+
+        self.info = InfoBox(self, self.run_optimizer)
 
         start_tab = pn.Column(
             # pn.Row(self.info),
@@ -262,7 +257,6 @@ class TideGates(pn.template.BootstrapTemplate):
             ),
 
             self.optimize_button,
-            self.info,
         )
 
         self.tabs = pn.Tabs(
@@ -272,24 +266,31 @@ class TideGates(pn.template.BootstrapTemplate):
             width=800,
             height=800,
         )
-
+        
         self.sidebar.append(self.map_pane)
         self.main.append(self.tabs)        
 
-        self.optimize_button.on_click(self.run_optimizer)
+        self.info = InfoBox(self, self.run_optimizer)
+        self.modal.append(self.info)
 
+        self.optimize_button.on_click(self.validate_settings)
 
     def section_head(self, s):
         return pn.pane.HTML(f'<h3>{s}</h3>', styles=header_styles)
 
+    def validate_settings(self, _):
+        regions = self.region_boxes.selection()
+        budget_max, budget_delta = self.budget_box.values()
+        targets = self.target_boxes.selection()
+
+        if len(regions) == 0 or budget_max == 0 or len(targets) == 0:
+            self.info.show_missing(regions, budget_max, targets)
+            return
+        
+        self.info.show_params(regions, budget_max, budget_delta, targets)
+
     def run_optimizer(self, _):
         Logging.log('running optimizer')
-
-        self.info.erase()
-
-        if len(self.region_boxes.selection()) == 0 or len(self.target_boxes.selection()) == 0:
-            self.info.show_missing()
-            return
 
         self.main[1].loading = True
 
