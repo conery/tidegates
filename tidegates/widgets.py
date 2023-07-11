@@ -87,6 +87,19 @@ class BudgetBox(pn.Column):
         )
         self.append(self.tabs)
 
+    @staticmethod
+    def format_budget_amount(n):
+        n = int(n)
+        if n >= 1000000:
+            x = n / 1000000
+            s = f'${x:.1f}M' if (n % 1000000) else f'${x:.0f}M'
+        elif n >= 1000:
+            x = n / 1000
+            s = f'${x:.1f}K' if (n % 1000) else f'${x:.0f}K'
+        else:
+            s = f'${n}'
+        return s
+
     def set_budget_max(self, n):
         for t in self.tabs:
             t.set_budget_max(n)
@@ -163,10 +176,9 @@ Clicking Continue will run OP with the following settings:
     def __init__(self, template, run_cb):
         super(InfoBox, self).__init__()
         self.template = template
-        self.messages = self.make_messages()
         self.continue_button = pn.widgets.Button(name='Continue')
         self.cancel_button = pn.widgets.Button(name='Cancel')
-        self.append(self.messages['default'])
+        self.append(pn.pane.Alert('placeholder', alert_type = 'secondary'))
         self.append(pn.pane.HTML('<p>some more text...<p>'))
         self.append(pn.Row(self.cancel_button, self.continue_button))
         self.continue_button.on_click(run_cb)
@@ -174,13 +186,6 @@ Clicking Continue will run OP with the following settings:
 
     def cancel_cb(self, _):
         self.template.close_modal()
-
-    def make_messages(self):
-        return {
-            'default': pn.pane.Alert('### Placehoder', alert_type = 'secondary'),
-            'missing': pn.pane.Alert(self.missing_params_text, alert_type = 'warning'),
-            'preview': pn.pane.Alert(self.preview_message_text, alert_type = 'secondary'),
-        }
  
     def show_missing(self, rlist, bmax, tlist):
         text = self.missing_params_text
@@ -198,9 +203,11 @@ Clicking Continue will run OP with the following settings:
         
     def show_params(self, regions, bmax, bstep, targets):
         n = bmax // bstep
+        fbmax = BudgetBox.format_budget_amount(bmax)
+        fbstep = BudgetBox.format_budget_amount(bstep)
         text = self.preview_message_text
         text += f'  * Regions: `{regions}`\n\n'
-        text += f'  * {n} budget levels from {bstep} up to {bmax} in increments of {bstep}\n\n'
+        text += f'  * {n} budget levels from {fbstep} up to {fbmax} in increments of {fbstep}\n\n'
         text += f'  * Targets: `{targets}`\n\n' 
         self[0] = pn.pane.Alert(text, alert_type = 'secondary')
         self[1].visible = False

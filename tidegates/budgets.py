@@ -65,7 +65,7 @@ class BasicBudgetBox(pn.WidgetBox):
     def values(self):
         x = self.map[self.slider.value]
         return x, (x // self.increments)
-
+    
 class FixedBudgetBox(pn.WidgetBox):
 
     def __init__(self):
