@@ -33,6 +33,7 @@ from math import prod
 
 import pandas as pd
 import numpy as np
+import panel as pn
 import networkx as nx
 import tempfile
 
@@ -68,8 +69,6 @@ class OP:
         file" that will be read by OptiPass.  Save the frame as the
         input_frame attribute of the object.
         '''
-
-        print('generate input frame')
 
         filtered = self.project.data[self.project.data.REGION.isin(self.regions)]
         filtered.index = list(range(len(filtered)))
@@ -354,7 +353,8 @@ class OP:
         W = 400
         LW = 2
         D = 10
-        figures = []
+        # figures = []
+        figures = pn.Tabs(tabs_location='left')
         for t in self.targets:
             f = figure(
                 title = t.long, 
@@ -367,8 +367,9 @@ class OP:
             f.circle(self.summary.budget, self.summary[t.abbrev], fill_color='white', size=D)
             f.xaxis.formatter = NumeralTickFormatter(format='$0a')
             f.toolbar_location = None
-            figures.append(f)
-            figures.append(Spacer(width=50))
+            # figures.append(f)
+            # figures.append(Spacer(width=50))
+            figures.append((t.short, f))
         f = figure(
             title='Weighted Potential Habitat', 
             x_axis_label='Budget', 
@@ -380,8 +381,10 @@ class OP:
         f.circle(self.summary.budget, self.summary.netgain, fill_color='white', size=D)
         f.xaxis.formatter = NumeralTickFormatter(format='$0a')
         f.toolbar_location = None
-        figures.append(f)
-        return row(*figures)
+        # figures.append(f)
+        # return row(*figures)
+        figures.append(('Net', f))
+        return figures
 
 ####################
 #

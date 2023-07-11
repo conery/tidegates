@@ -321,14 +321,12 @@ class TideGates(pn.template.BootstrapTemplate):
 
     def run_optimizer(self, _):
         Logging.log('running optimizer')
-        print('run_optimizer')
 
         self.close_modal()
         self.main[0].loading = True
 
         budget_max, budget_delta = self.budget_box.values()
         num_budgets = budget_max // budget_delta
-        print(num_budgets, budget_max, budget_delta)
 
         # Uncomment this line to show a progress bar below the Optimize button (and uncomment
         # the line below that updates the bar after each optimizer run)
@@ -340,7 +338,6 @@ class TideGates(pn.template.BootstrapTemplate):
             [self.bf.target_map[t] for t in self.target_boxes.selection()],
             self.climate_group.value,
         )
-        print('OP created')
         self.op.generate_input_frame()
         # if base := os.environ.get('OP_OUTPUT'):
         #     self._find_output_files(base)
@@ -385,7 +382,6 @@ class TideGates(pn.template.BootstrapTemplate):
     # panel to show the results.
 
     def add_output_pane(self):
-        print('add output frame')
         formatters = { }
         alignment = { }
         df = self.op.table_view()
@@ -401,7 +397,6 @@ class TideGates(pn.template.BootstrapTemplate):
                 alignment[col] = 'right'
             elif col == 'Cost':
                 formatters[col] = {'type': 'money', 'symbol': '$', 'precision': 0}
-        print(df)
         table = pn.widgets.Tabulator(
             df, 
             show_index=False, 
@@ -418,10 +413,9 @@ class TideGates(pn.template.BootstrapTemplate):
             pn.layout.VSpacer(height=20),
             self.op.roi_curves(), 
             pn.layout.VSpacer(height=30),
-           table
+            table
         )
 
-        print('appending tab')
         # self.main.append(('Output', pn.panel(output, min_width=500, height=800)))
         self.tabs[2] = ('Output', output)
 
