@@ -69,6 +69,8 @@ class OP:
         input_frame attribute of the object.
         '''
 
+        print('generate input frame')
+
         filtered = self.project.data[self.project.data.REGION.isin(self.regions)]
         filtered.index = list(range(len(filtered)))
 
@@ -104,6 +106,7 @@ class OP:
 
         df.columns = header
         self.input_frame = df
+
         return df
 
     # This version assumes the web app is running on a host that has wine installed

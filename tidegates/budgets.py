@@ -80,9 +80,10 @@ class FixedBudgetBox(pn.WidgetBox):
         s = self.input.value
         if s.startswith('$'):
             s = s[1:]
-        return self.parse_dollar_amount(self.input.value), 0
+        n = self.parse_dollar_amount(self.input.value)
+        return n, n
 
-    def parse_dollar_amount(s):
+    def parse_dollar_amount(self,s):
         try:
             if s.startswith('$'):
                 s = s[1:]

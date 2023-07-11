@@ -173,13 +173,22 @@ Clicking Continue will run OP with the following settings:
 
 '''
 
+    success_text = '''### Optimization Complete
+
+Click on the **Output** tab to see the results.
+'''
+
+    fail_text = '''### Optimization Failed
+
+One or more OptiPass runs failed.  See the log in the Admin panel for details.
+'''
+
     def __init__(self, template, run_cb):
         super(InfoBox, self).__init__()
         self.template = template
         self.continue_button = pn.widgets.Button(name='Continue')
         self.cancel_button = pn.widgets.Button(name='Cancel')
         self.append(pn.pane.Alert('placeholder', alert_type = 'secondary'))
-        self.append(pn.pane.HTML('<p>some more text...<p>'))
         self.append(pn.Row(self.cancel_button, self.continue_button))
         self.continue_button.on_click(run_cb)
         self.cancel_button.on_click(self.cancel_cb)
@@ -195,10 +204,8 @@ Clicking Continue will run OP with the following settings:
             text += ' * a maximum budget\n'
         if len(tlist) == 0:
             text += ' * one or more targets\n'
-        print(text)
         self[0] = pn.pane.Alert(text, alert_type = 'warning')
         self[1].visible = False
-        self[2].visible = False
         self.template.open_modal()
         
     def show_params(self, regions, bmax, bstep, targets):
@@ -210,14 +217,29 @@ Clicking Continue will run OP with the following settings:
         text += f'  * {n} budget levels from {fbstep} up to {fbmax} in increments of {fbstep}\n\n'
         text += f'  * Targets: `{targets}`\n\n' 
         self[0] = pn.pane.Alert(text, alert_type = 'secondary')
+        self[1].visible = True
+        self.template.open_modal()
+
+    def show_success(self):
+        self[0] = pn.pane.Alert(self.success_text, alert_type = 'success')
         self[1].visible = False
-        self[2].visible = True
+        self.template.open_modal()
+
+    def show_fail(self):
+        self[0] = pn.pane.Alert(self.fail_text, alert_type = 'danger')
+        self[1].visible = False
         self.template.open_modal()
 
 welcome_text = '''
 <h2>Welcome</h2>
 
 <p>Click on the Start tab above to enter optimization parameters and run the optimizer.</p>
+'''
+
+placeholder_text = '''
+<h2>Nothing to See Yet</h2>
+
+<p>After running the optimizer this tab will show the results.</p>
 '''
 
 from styles import header_styles, button_style_sheet
@@ -267,8 +289,9 @@ class TideGates(pn.template.BootstrapTemplate):
         )
 
         self.tabs = pn.Tabs(
-            ('Home', pn.panel(welcome_text)),
+            ('Home', pn.pane.HTML(welcome_text)),
             ('Start', start_tab),
+            ('Output', pn.pane.HTML(placeholder_text)),
             sizing_mode = 'fixed',
             width=800,
             height=800,
@@ -298,11 +321,14 @@ class TideGates(pn.template.BootstrapTemplate):
 
     def run_optimizer(self, _):
         Logging.log('running optimizer')
+        print('run_optimizer')
 
-        self.main[1].loading = True
+        self.close_modal()
+        self.main[0].loading = True
 
         budget_max, budget_delta = self.budget_box.values()
         num_budgets = budget_max // budget_delta
+        print(num_budgets, budget_max, budget_delta)
 
         # Uncomment this line to show a progress bar below the Optimize button (and uncomment
         # the line below that updates the bar after each optimizer run)
@@ -314,18 +340,19 @@ class TideGates(pn.template.BootstrapTemplate):
             [self.bf.target_map[t] for t in self.target_boxes.selection()],
             self.climate_group.value,
         )
+        print('OP created')
         self.op.generate_input_frame()
-        if base := os.environ.get('OP_OUTPUT'):
-            self._find_output_files(base)
-            self.op.budget_delta = budget_delta
-            self.op.budget_max = budget_max
-        else:
+        # if base := os.environ.get('OP_OUTPUT'):
+        #     self._find_output_files(base)
+        #     self.op.budget_delta = budget_delta
+        #     self.op.budget_max = budget_max
+        # else:
             # Uncomment one of the following lines, depending on whether the progress
             # bar is displayed
             # self.op.run(self.budget_box.values(), False, self.info.update_progress)
-            self.op.run(self.budget_box.values(), False)
+        self.op.run(self.budget_box.values(), False)
 
-        self.main[1].loading = False
+        self.main[0].loading = False
 
         # If OP ran successfully we expect to find one file for each budget level 
         # plus one more for the $0 budget
@@ -339,17 +366,17 @@ class TideGates(pn.template.BootstrapTemplate):
         else:
             self.info.show_fail()
 
-    # When debugging outside of a container define an environment variable
-    # named OP_OUTPUT, setting it to the base name of a set of existing output 
-    # files.  This helper function collects the file names so they can be
-    # used in the display
+    # # When debugging outside of a container define an environment variable
+    # # named OP_OUTPUT, setting it to the base name of a set of existing output 
+    # # files.  This helper function collects the file names so they can be
+    # # used in the display
 
-    def _find_output_files(self, pattern):
-        def number_part(fn):
-            return int(re.search(r'_(\d+)\.txt$', fn).group(1))
+    # def _find_output_files(self, pattern):
+    #     def number_part(fn):
+    #         return int(re.search(r'_(\d+)\.txt$', fn).group(1))
 
-        outputs = glob(f'tmp/{pattern}_*.txt')
-        self.op.outputs = sorted(outputs, key=number_part)
+    #     outputs = glob(f'tmp/{pattern}_*.txt')
+    #     self.op.outputs = sorted(outputs, key=number_part)
 
     def table_click_cb(self, *events):
         Logging.log('table cb', len(events), events[0])
@@ -358,6 +385,7 @@ class TideGates(pn.template.BootstrapTemplate):
     # panel to show the results.
 
     def add_output_pane(self):
+        print('add output frame')
         formatters = { }
         alignment = { }
         df = self.op.table_view()
@@ -373,6 +401,7 @@ class TideGates(pn.template.BootstrapTemplate):
                 alignment[col] = 'right'
             elif col == 'Cost':
                 formatters[col] = {'type': 'money', 'symbol': '$', 'precision': 0}
+        print(df)
         table = pn.widgets.Tabulator(
             df, 
             show_index=False, 
@@ -392,4 +421,7 @@ class TideGates(pn.template.BootstrapTemplate):
            table
         )
 
-        self.main.append(('Output', pn.panel(output, min_width=500, height=800)))
+        print('appending tab')
+        # self.main.append(('Output', pn.panel(output, min_width=500, height=800)))
+        self.tabs[2] = ('Output', output)
+
