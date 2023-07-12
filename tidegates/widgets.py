@@ -376,7 +376,8 @@ class TideGates(pn.template.BootstrapTemplate):
     #     self.op.outputs = sorted(outputs, key=number_part)
 
     def table_click_cb(self, *events):
-        Logging.log('table cb', len(events), events[0])
+        # Logging.log('table cb', len(events), events[0])
+        print('table click', len(events), events[0])
 
     # After running OptiPass call these two methods to add tabs to the main
     # panel to show the results.

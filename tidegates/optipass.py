@@ -355,6 +355,7 @@ class OP:
         D = 10
         # figures = []
         figures = pn.Tabs(tabs_location='left')
+        # figures = pn.Accordion()
         for t in self.targets:
             f = figure(
                 title = t.long, 
