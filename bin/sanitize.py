@@ -6,6 +6,8 @@
 #    NPROJ is 0 or 1
 #    COST is an int
 #    POINT_X and POINT_Y are floats
+#    make sure NPROJ is 0 if PrimaryTG is not 1
+#    make sure NPROJ is 0 if COST is 0
 
 # TODO  add argument parser
 # TODO  write sanitized file to stdout
@@ -62,6 +64,12 @@ with open(fn) as f:
         for col in ['POINT_X','POINT_Y']:
             if not re.match(r'-?\d+\.\d+', rec[col]):
                 errors.append(f'Line {reader.line_num}: {col} not a float')
+
+        if rec['PrimaryTG'] == 0 and rec['NPROJ'] != 0:
+            errors.append(f'Line {reader.line_num}: NPROJ not 0 for non-primary gate')
+        
+        if rec['COST'] == 0 and rec['NPROJ'] != 0:
+            errors.append(f'Line {reader.line_num}: NPROJ not 0 when cost is $0')
 
     if s := dsid - barid:
         errors.append(f'Downstream IDs not in BARID column: {s}')
