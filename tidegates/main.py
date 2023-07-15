@@ -4,7 +4,6 @@ import re
 import sys
 
 import panel as pn
-from bokeh.plotting import show
 
 from widgets import TideGates
 from targets import DataSet
@@ -51,7 +50,7 @@ def init_cli():
     # command line arguments, which is how it's run in the Docker container when launching the
     # web app
 
-    parser.add_argument('--action', metavar='A', choices=['generate', 'preview', 'run', 'parse', 'all'], help='operation to perform')
+    parser.add_argument('--action', metavar='A', choices=['generate', 'preview', 'run', 'parse', 'all', 'gui'], help='operation to perform')
     parser.add_argument('--project', metavar='F', default='static/workbook.csv', help='CSV file with barrier data')
     parser.add_argument('--regions', metavar='R', default='all', nargs='+', help='one or more region names')
     parser.add_argument('--targets', metavar='T', nargs='+', default=['CO','FI'], help='one or more restoration targets')
@@ -151,6 +150,20 @@ if __name__ == '__main__':
                 if op.outputs is not None:
                     op.collect_results(args.scaled)
                     print(op.table_view())
-                    for f in op.roi_curves(*budgets):
-                        print(f)
-                        show(f)
+                    op.roi_curves(*budgets).show()
+            case 'gui':
+                app = TideGates(title='Tide Gate Optimization [Integration Test]', sidebar_width=425)
+                app.optimize_button.disabled = True
+                app.tabs.active = 1
+                for r in regions:
+                    for b in app.region_boxes.grid:
+                        if b.name == r:
+                            b.value = True
+                m = app.bf.targets['Current']
+                for t in targets:
+                    s = m[t].long
+                    for b in app.target_boxes.grid:
+                        if b.name == s:
+                            b.value = True
+                pn.serve(app, autoreload=True)
+
