@@ -364,7 +364,7 @@ class OP:
             
             @param.depends('bi')
             def plot(self):
-                nonlocal x, y
+                # nonlocal x, y
                 p = figure(width=W, height=H)
                 p.line(x, y, line_width=LW)
                 p.circle(x, y, fill_color='white', size=D)
@@ -388,24 +388,24 @@ class OP:
         figures = pn.Tabs(tabs_location='left')
         for t in self.targets:
             # Uncomment to make a static image
-            # f = figure(
-            #     title = t.long, 
-            #     x_axis_label = 'Budget', 
-            #     y_axis_label = t.label,
-            #     width = W,
-            #     height = H,                
-            # )
-            # f.line(self.summary.budget, self.summary[t.abbrev], line_width=LW)
-            # f.circle(self.summary.budget, self.summary[t.abbrev], fill_color='white', size=D)
-            # f.xaxis.formatter = NumeralTickFormatter(format='$0a')
-            # f.toolbar_location = None
-            # figures.append((t.short, f))
+            f = figure(
+                title = t.long, 
+                x_axis_label = 'Budget', 
+                y_axis_label = t.label,
+                width = W,
+                height = H,                
+            )
+            f.line(self.summary.budget, self.summary[t.abbrev], line_width=LW)
+            f.circle(self.summary.budget, self.summary[t.abbrev], fill_color='white', size=D)
+            f.xaxis.formatter = NumeralTickFormatter(format='$0a')
+            f.toolbar_location = None
+            figures.append((t.short, f))
 
             # Uncomment to make a dynamic image
-            x = self.summary.budget
-            y = self.summary[t.abbrev]
-            print(t.short, x, y)
-            figures.append((t.short, BudgetViewer()))
+            # x = self.summary.budget
+            # y = self.summary[t.abbrev]
+            # print(t.short, x, y)
+            # figures.append((t.short, BudgetViewer()))
 
         # f = figure(
         #     title='Weighted Potential Habitat', 

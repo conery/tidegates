@@ -382,10 +382,11 @@ class TideGates(pn.template.BootstrapTemplate):
     # After running OptiPass call these two methods to add tabs to the main
     # panel to show the results.
 
-    def add_output_pane(self):
+    def add_output_pane(self, op=None):
+        op = op or self.op
         formatters = { }
         alignment = { }
-        df = self.op.table_view()
+        df = op.table_view()
         for col in df.columns:
             if col.startswith('$') or col in ['Primary','Dominant']:
                 formatters[col] = {'type': 'tickCross', 'crossElement': ''}
@@ -412,7 +413,7 @@ class TideGates(pn.template.BootstrapTemplate):
 
         output = pn.Column(
             pn.layout.VSpacer(height=20),
-            self.op.roi_curves(*self.budget_box.values()), 
+            op.roi_curves(*self.budget_box.values()), 
             pn.layout.VSpacer(height=30),
             table
         )

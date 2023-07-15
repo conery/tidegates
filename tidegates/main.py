@@ -152,9 +152,11 @@ if __name__ == '__main__':
                     print(op.table_view())
                     op.roi_curves(*budgets).show()
             case 'gui':
+                if not (args.budget and args.output):
+                    print('gui action requires --output and --budget')
+                    exit(1)
                 app = TideGates(title='Tide Gate Optimization [Integration Test]', sidebar_width=425)
                 app.optimize_button.disabled = True
-                app.tabs.active = 1
                 for r in regions:
                     for b in app.region_boxes.grid:
                         if b.name == r:
@@ -165,5 +167,12 @@ if __name__ == '__main__':
                     for b in app.target_boxes.grid:
                         if b.name == s:
                             b.value = True
+                op = OP(p,regions,targets,climate)
+                op.budget_max, op.budget_delta = budgets
+                op.input_frame = op.generate_input_frame()
+                op.outputs = output_files(args.output)
+                op.collect_results(False)
+                app.add_output_pane(op)
+                app.tabs.active = 2
                 pn.serve(app, autoreload=True)
 
