@@ -412,7 +412,7 @@ class TideGates(pn.template.BootstrapTemplate):
 
         output = pn.Column(
             pn.layout.VSpacer(height=20),
-            self.op.roi_curves(), 
+            self.op.roi_curves(*self.budget_box.values()), 
             pn.layout.VSpacer(height=30),
             table
         )

@@ -144,11 +144,13 @@ if __name__ == '__main__':
                 op.outputs = output_files(args.output)
                 op.collect_results(args.scaled)
                 print(op.table_view())
-                show(op.roi_curves())
+                op.roi_curves(*budgets).show()
             case 'all':
                 op.generate_input_frame()
                 op.run(budgets, args.action=='preview')
                 if op.outputs is not None:
                     op.collect_results(args.scaled)
                     print(op.table_view())
-                    show(op.roi_curves())
+                    for f in op.roi_curves(*budgets):
+                        print(f)
+                        show(f)
