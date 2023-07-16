@@ -367,13 +367,15 @@ class TideGates(pn.template.BootstrapTemplate):
             self._make_title(op),
             pn.pane.HTML('<h3>ROI Curves</h3>'),
             op.roi_curves(*self.budget_box.values()), 
-            pn.pane.HTML('<h3>Barriers</h3>'),
-            self._make_table(op),
+            pn.pane.HTML('<h3>Budget Summary</h3>'),
+            self._make_budget_table(op),
+            # pn.pane.HTML('<h3>Barrier Details</h3>'),
+            # self._make_gate_table(op),
+            pn.Accordion(('Barrier Details', self._make_gate_table(op)))
         )
 
         # self.main.append(('Output', pn.panel(output, min_width=500, height=800)))
         self.tabs[2] = ('Output', output)
-
 
     def _make_title(self, op):
         title_template = '<p><b>Regions:</b> {r}; <b>Targets:</b> {t}; <b>Budgets:</b> {min} to {max}</p> '
@@ -388,8 +390,31 @@ class TideGates(pn.template.BootstrapTemplate):
             min = BudgetBox.format_budget_amount(binc),
             max = BudgetBox.format_budget_amount(bmax),
         ))
+    
+    def _make_budget_table(self, op):
+        df = op.summary[['budget','habitat']]
+        colnames = ['Budget', 'Net Gain']
+        df = pd.concat([
+            df,
+            pd.Series(op.summary.gates.apply(len))
+        ], axis=1)
+        colnames.append('# Barriers')
+        for t in op.targets:
+            if t.abbrev in op.summary.columns:
+                df = pd.concat([df, op.summary[t.abbrev]], axis=1)
+                colnames.append(t.short)
+        print(df)
+        print(colnames)
+        df.columns = colnames
+        table = pn.widgets.Tabulator(
+            df,
+            show_index=False,
+            selectable=True,
+            sorters = [ ],
+        )
+        return table
 
-    def _make_table(self, op):
+    def _make_gate_table(self, op):
         formatters = { }
         alignment = { }
         df = op.table_view()
