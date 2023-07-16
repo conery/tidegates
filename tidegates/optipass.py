@@ -204,7 +204,7 @@ class OP:
     def _parse_op_output(self, fn, dct):
         '''
         Parse an output file, appending results to the lists.  We need to handle
-        two different format, depending on whether there was one target or more
+        two different formats, depending on whether there was one target or more
         than one.
 
         This version ignores the STATUS and OPTGAP lines.

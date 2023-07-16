@@ -361,57 +361,67 @@ class TideGates(pn.template.BootstrapTemplate):
 
     def add_output_pane(self, op=None):
         op = op or self.op
-        formatters = { }
-        alignment = { }
-        df = op.table_view()
-        for col in df.columns:
-            if col.startswith('$') or col in ['Primary','Dominant']:
-                formatters[col] = {'type': 'tickCross', 'crossElement': ''}
-                alignment[col] = 'center'
-            elif col.endswith(('hab','gain','tude')):
-                formatters[col] = NumberFormatter(format='0.00')
-                alignment[col] = 'right'
-            elif col == 'Cost':
-                formatters[col] = {'type': 'money', 'symbol': '$', 'precision': 0}
-        table = pn.widgets.Tabulator(
-            df, 
-            show_index=False, 
-            frozen_columns=['ID'],
-            formatters=formatters,
-            text_align=alignment,
-            configuration={'columnDefaults': {'headerSort': False}},
-            sorters = [ ],
-        )
-        table.disabled = True
 
         output = pn.Column(
-            pn.layout.VSpacer(height=20),
             pn.pane.HTML('<h3>Optimization Complete</h3>'),
             self._make_title(op),
-            pn.layout.VSpacer(height=20),
             pn.pane.HTML('<h3>ROI Curves</h3>'),
             op.roi_curves(*self.budget_box.values()), 
-            pn.layout.VSpacer(height=30),
             pn.pane.HTML('<h3>Barriers</h3>'),
-            table
+            self._make_table(op),
         )
 
         # self.main.append(('Output', pn.panel(output, min_width=500, height=800)))
         self.tabs[2] = ('Output', output)
 
-    title_template = '<p><b>Regions:</b> {r}; <b>Targets:</b> {t}; {n} budget levels from {min} to {max}</p> '
 
     def _make_title(self, op):
+        title_template = '<p><b>Regions:</b> {r}; <b>Targets:</b> {t}; <b>Budgets:</b> {min} to {max}</p> '
         regions = op.regions
         targets = [t.short for t in op.targets]
         bmax = op.budget_max
         binc = op.budget_delta
-        n = bmax // binc
-        return pn.pane.HTML(self.title_template.format(
+        # n = bmax // binc
+        return pn.pane.HTML(title_template.format(
             r = ', '.join(regions),
             t = ', '.join(targets),
-            n = n,
             min = BudgetBox.format_budget_amount(binc),
             max = BudgetBox.format_budget_amount(bmax),
         ))
 
+    def _make_table(self, op):
+        formatters = { }
+        alignment = { }
+        df = op.table_view()
+        hidden = ['Count']
+        for col in df.columns:
+            if col.startswith('$') or col in ['Primary','Dominant']:
+                formatters[col] = {'type': 'tickCross', 'crossElement': ''}
+                alignment[col] = 'center'
+            elif col.endswith('hab'):
+                c = col.replace('_hab','')
+                formatters[c] = NumberFormatter(format='0.0')
+                alignment[c] = 'center'
+            elif col.endswith('tude'):
+                formatters[col] = NumberFormatter(format='0.00')
+                alignment[col] = 'right'
+            elif col.endswith('gain'):
+                hidden.append(col)
+            elif col == 'Cost':
+                formatters[col] = {'type': 'money', 'symbol': '$', 'precision': 0}
+                alignment[col] = 'right'
+        df.columns = [c.replace('_hab','') for c in df.columns]
+        table = pn.widgets.Tabulator(
+            df, 
+            show_index=False, 
+            frozen_columns=['ID'],
+            hidden_columns=hidden,
+            formatters=formatters,
+            text_align=alignment,
+            configuration={'columnDefaults': {'headerSort': False}},
+            sorters = [ ],
+            header_align={c: 'center' for c in df.columns},
+            selectable = False,
+        )
+        table.disabled = True
+        return table
