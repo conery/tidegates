@@ -43,7 +43,7 @@ class TGMap():
         p = bk.figure(
             title='Oregon Coast', 
             height=900,
-            width=425,
+            width=400,
             x_range=(bf.map_info.x.min()*0.997,bf.map_info.x.max()*1.003), 
             y_range=(bf.map_info.y.min()*0.997,bf.map_info.y.max()*1.003),
             x_axis_type='mercator',
@@ -62,8 +62,8 @@ class TGMap():
         for r in bf.regions:
             df = bf.map_info[bf.map_info.region == r]
             c = p.circle('x', 'y', size=5, color='darkslategray', source=df, tags=list(df.id))
-            c.nonselection_glyph = Circle(size=5, fill_color='darkslategray')
-            c.selection_glyph = Circle(size=8, fill_color='blue')
+            # c.nonselection_glyph = Circle(size=5, fill_color='darkslategray')
+            # c.selection_glyph = Circle(size=8, fill_color='blue')
             dots[r] = c
             c.visible = False
         return p, dots
@@ -72,8 +72,8 @@ class TGMap():
         for r, dots in self.dots.items():
             dots.visible = r in lst
 
-    def set_selection(self, lst):
-        self.map.select({'tag': lst[0]})
+    # def set_selection(self, lst):
+    #     self.map.select({'tag': lst[0]})
 
 
 class BudgetBox(pn.Column):
@@ -394,23 +394,37 @@ class TideGates(pn.template.BootstrapTemplate):
     def _make_budget_table(self, op):
         df = op.summary[['budget','habitat']]
         colnames = ['Budget', 'Net Gain']
+        formatters = { 
+            'Budget': {'type': 'money', 'symbol': '$', 'precision': 0},
+            'Net Gain': NumberFormatter(format='0.0', text_align='center'),
+        }
+        alignment = { 
+            'Budget': 'right',
+            'Net Gain': 'center',
+        }
         df = pd.concat([
             df,
             pd.Series(op.summary.gates.apply(len))
         ], axis=1)
         colnames.append('# Barriers')
+        alignment['# Barriers'] = 'center'
         for t in op.targets:
             if t.abbrev in op.summary.columns:
                 df = pd.concat([df, op.summary[t.abbrev]], axis=1)
                 colnames.append(t.short)
+                formatters[t.short] = NumberFormatter(format='0.0', text_align='center')
         print(df)
         print(colnames)
         df.columns = colnames
         table = pn.widgets.Tabulator(
             df,
             show_index=False,
-            selectable=True,
-            sorters = [ ],
+            editors = { c: None for c in colnames },
+            text_align = alignment,
+            header_align={c: 'center' for c in colnames},
+            formatters = formatters,
+            selectable = True,
+            configuration={'columnDefaults': {'headerSort': False}},
         )
         return table
 
@@ -425,11 +439,11 @@ class TideGates(pn.template.BootstrapTemplate):
                 alignment[col] = 'center'
             elif col.endswith('hab'):
                 c = col.replace('_hab','')
-                formatters[c] = NumberFormatter(format='0.0')
-                alignment[c] = 'center'
+                formatters[c] = NumberFormatter(format='0.0', text_align='center')
+                # alignment[c] = 'center'
             elif col.endswith('tude'):
-                formatters[col] = NumberFormatter(format='0.00')
-                alignment[col] = 'right'
+                formatters[col] = NumberFormatter(format='0.00', text_align='center')
+                # alignment[col] = 'right'
             elif col.endswith('gain'):
                 hidden.append(col)
             elif col == 'Cost':
@@ -444,7 +458,6 @@ class TideGates(pn.template.BootstrapTemplate):
             formatters=formatters,
             text_align=alignment,
             configuration={'columnDefaults': {'headerSort': False}},
-            sorters = [ ],
             header_align={c: 'center' for c in df.columns},
             selectable = False,
         )
