@@ -230,6 +230,108 @@ One or more OptiPass runs failed.  See the log in the Admin panel for details.
         self[1].visible = False
         self.template.open_modal()
 
+class OutputPane(pn.Column):
+
+    def __init__(self, op):
+        super(OutputPane, self).__init__()
+        self.op = op
+        self.append(pn.pane.HTML('<h3>Optimization Complete</h3>'))
+        self.append(self._make_title())
+        self.append(pn.pane.HTML('<h3>ROI Curves</h3>'))
+        self.append(op.roi_curves(self.op.budget_max, self.op.budget_delta))
+        self.append(pn.pane.HTML('<h3>Budget Summary</h3>'))
+        self.append(self._make_budget_table())
+        # pn.pane.HTML('<h3>Barrier Details</h3>'),
+        # self._make_gate_table(op),
+        self.append(pn.Accordion(('Barrier Details', self._make_gate_table())))
+    
+    def _make_title(self):
+        title_template = '<p><b>Regions:</b> {r}; <b>Targets:</b> {t}; <b>Budgets:</b> {min} to {max}</p> '
+        regions = self.op.regions
+        targets = [t.short for t in self.op.targets]
+        bmax = self.op.budget_max
+        binc = self.op.budget_delta
+        # n = bmax // binc
+        return pn.pane.HTML(title_template.format(
+            r = ', '.join(regions),
+            t = ', '.join(targets),
+            min = BudgetBox.format_budget_amount(binc),
+            max = BudgetBox.format_budget_amount(bmax),
+        ))
+    
+    def _make_budget_table(self):
+        df = self.op.summary[['budget','habitat', 'gates']]
+        colnames = ['Budget', 'Net Gain', 'gates']
+        formatters = { 
+            'Budget': {'type': 'money', 'symbol': '$', 'precision': 0},
+            'Net Gain': NumberFormatter(format='0.0', text_align='center'),
+        }
+        alignment = { 
+            'Budget': 'right',
+            'Net Gain': 'center',
+        }
+        df = pd.concat([
+            df,
+            pd.Series(self.op.summary.gates.apply(len))
+        ], axis=1)
+        colnames.append('# Barriers')
+        alignment['# Barriers'] = 'center'
+        for t in self.op.targets:
+            if t.abbrev in self.op.summary.columns:
+                df = pd.concat([df, self.op.summary[t.abbrev]], axis=1)
+                colnames.append(t.short)
+                formatters[t.short] = NumberFormatter(format='0.0', text_align='center')
+        df.columns = colnames
+        table = pn.widgets.Tabulator(
+            df,
+            show_index = False,
+            hidden_columns = ['gates'],
+            editors = { c: None for c in colnames },
+            text_align = alignment,
+            header_align = {c: 'center' for c in colnames},
+            formatters = formatters,
+            selectable = True,
+            configuration = {'columnDefaults': {'headerSort': False}},
+        )
+        return table
+
+    def _make_gate_table(self):
+        formatters = { }
+        alignment = { }
+        df = self.op.table_view()
+        hidden = ['Count']
+        for col in df.columns:
+            if col.startswith('$') or col in ['Primary','Dominant']:
+                formatters[col] = {'type': 'tickCross', 'crossElement': ''}
+                alignment[col] = 'center'
+            elif col.endswith('hab'):
+                c = col.replace('_hab','')
+                formatters[c] = NumberFormatter(format='0.0', text_align='center')
+                # alignment[c] = 'center'
+            elif col.endswith('tude'):
+                formatters[col] = NumberFormatter(format='0.00', text_align='center')
+                # alignment[col] = 'right'
+            elif col.endswith('gain'):
+                hidden.append(col)
+            elif col == 'Cost':
+                formatters[col] = {'type': 'money', 'symbol': '$', 'precision': 0}
+                alignment[col] = 'right'
+        df.columns = [c.replace('_hab','') for c in df.columns]
+        table = pn.widgets.Tabulator(
+            df, 
+            show_index=False, 
+            frozen_columns=['ID'],
+            hidden_columns=hidden,
+            formatters=formatters,
+            text_align=alignment,
+            configuration={'columnDefaults': {'headerSort': False}},
+            header_align={c: 'center' for c in df.columns},
+            selectable = False,
+        )
+        table.disabled = True
+        return table
+
+
 welcome_text = '''
 <h2>Welcome</h2>
 
@@ -361,105 +463,4 @@ class TideGates(pn.template.BootstrapTemplate):
 
     def add_output_pane(self, op=None):
         op = op or self.op
-
-        output = pn.Column(
-            pn.pane.HTML('<h3>Optimization Complete</h3>'),
-            self._make_title(op),
-            pn.pane.HTML('<h3>ROI Curves</h3>'),
-            op.roi_curves(*self.budget_box.values()), 
-            pn.pane.HTML('<h3>Budget Summary</h3>'),
-            self._make_budget_table(op),
-            # pn.pane.HTML('<h3>Barrier Details</h3>'),
-            # self._make_gate_table(op),
-            pn.Accordion(('Barrier Details', self._make_gate_table(op)))
-        )
-
-        # self.main.append(('Output', pn.panel(output, min_width=500, height=800)))
-        self.tabs[2] = ('Output', output)
-
-    def _make_title(self, op):
-        title_template = '<p><b>Regions:</b> {r}; <b>Targets:</b> {t}; <b>Budgets:</b> {min} to {max}</p> '
-        regions = op.regions
-        targets = [t.short for t in op.targets]
-        bmax = op.budget_max
-        binc = op.budget_delta
-        # n = bmax // binc
-        return pn.pane.HTML(title_template.format(
-            r = ', '.join(regions),
-            t = ', '.join(targets),
-            min = BudgetBox.format_budget_amount(binc),
-            max = BudgetBox.format_budget_amount(bmax),
-        ))
-    
-    def _make_budget_table(self, op):
-        df = op.summary[['budget','habitat']]
-        colnames = ['Budget', 'Net Gain']
-        formatters = { 
-            'Budget': {'type': 'money', 'symbol': '$', 'precision': 0},
-            'Net Gain': NumberFormatter(format='0.0', text_align='center'),
-        }
-        alignment = { 
-            'Budget': 'right',
-            'Net Gain': 'center',
-        }
-        df = pd.concat([
-            df,
-            pd.Series(op.summary.gates.apply(len))
-        ], axis=1)
-        colnames.append('# Barriers')
-        alignment['# Barriers'] = 'center'
-        for t in op.targets:
-            if t.abbrev in op.summary.columns:
-                df = pd.concat([df, op.summary[t.abbrev]], axis=1)
-                colnames.append(t.short)
-                formatters[t.short] = NumberFormatter(format='0.0', text_align='center')
-        print(df)
-        print(colnames)
-        df.columns = colnames
-        table = pn.widgets.Tabulator(
-            df,
-            show_index=False,
-            editors = { c: None for c in colnames },
-            text_align = alignment,
-            header_align={c: 'center' for c in colnames},
-            formatters = formatters,
-            selectable = True,
-            configuration={'columnDefaults': {'headerSort': False}},
-        )
-        return table
-
-    def _make_gate_table(self, op):
-        formatters = { }
-        alignment = { }
-        df = op.table_view()
-        hidden = ['Count']
-        for col in df.columns:
-            if col.startswith('$') or col in ['Primary','Dominant']:
-                formatters[col] = {'type': 'tickCross', 'crossElement': ''}
-                alignment[col] = 'center'
-            elif col.endswith('hab'):
-                c = col.replace('_hab','')
-                formatters[c] = NumberFormatter(format='0.0', text_align='center')
-                # alignment[c] = 'center'
-            elif col.endswith('tude'):
-                formatters[col] = NumberFormatter(format='0.00', text_align='center')
-                # alignment[col] = 'right'
-            elif col.endswith('gain'):
-                hidden.append(col)
-            elif col == 'Cost':
-                formatters[col] = {'type': 'money', 'symbol': '$', 'precision': 0}
-                alignment[col] = 'right'
-        df.columns = [c.replace('_hab','') for c in df.columns]
-        table = pn.widgets.Tabulator(
-            df, 
-            show_index=False, 
-            frozen_columns=['ID'],
-            hidden_columns=hidden,
-            formatters=formatters,
-            text_align=alignment,
-            configuration={'columnDefaults': {'headerSort': False}},
-            header_align={c: 'center' for c in df.columns},
-            selectable = False,
-        )
-        table.disabled = True
-        return table
+        self.tabs[2] = ('Output', OutputPane(op))
