@@ -339,14 +339,6 @@ class TideGates(pn.template.BootstrapTemplate):
             self.climate_group.value,
         )
         self.op.generate_input_frame()
-        # if base := os.environ.get('OP_OUTPUT'):
-        #     self._find_output_files(base)
-        #     self.op.budget_delta = budget_delta
-        #     self.op.budget_max = budget_max
-        # else:
-            # Uncomment one of the following lines, depending on whether the progress
-            # bar is displayed
-            # self.op.run(self.budget_box.values(), False, self.info.update_progress)
         self.op.run(self.budget_box.values(), False)
 
         self.main[0].loading = False
@@ -363,23 +355,8 @@ class TideGates(pn.template.BootstrapTemplate):
         else:
             self.info.show_fail()
 
-    # # When debugging outside of a container define an environment variable
-    # # named OP_OUTPUT, setting it to the base name of a set of existing output 
-    # # files.  This helper function collects the file names so they can be
-    # # used in the display
 
-    # def _find_output_files(self, pattern):
-    #     def number_part(fn):
-    #         return int(re.search(r'_(\d+)\.txt$', fn).group(1))
-
-    #     outputs = glob(f'tmp/{pattern}_*.txt')
-    #     self.op.outputs = sorted(outputs, key=number_part)
-
-    def table_click_cb(self, *events):
-        # Logging.log('table cb', len(events), events[0])
-        print('table click', len(events), events[0])
-
-    # After running OptiPass call these two methods to add tabs to the main
+    # After running OptiPass call this method to add a tab to the main
     # panel to show the results.
 
     def add_output_pane(self, op=None):
@@ -391,9 +368,6 @@ class TideGates(pn.template.BootstrapTemplate):
             if col.startswith('$') or col in ['Primary','Dominant']:
                 formatters[col] = {'type': 'tickCross', 'crossElement': ''}
                 alignment[col] = 'center'
-            # elif col in targets:
-            #     # Logging.log('target', col, 'max', df[col].max())
-            #     formatters[col] = {'type': 'progress', 'max': df[col].max(), 'color': '#3c76af'}
             elif col.endswith(('hab','gain','tude')):
                 formatters[col] = NumberFormatter(format='0.00')
                 alignment[col] = 'right'
@@ -408,16 +382,36 @@ class TideGates(pn.template.BootstrapTemplate):
             configuration={'columnDefaults': {'headerSort': False}},
             sorters = [ ],
         )
-        table.on_click(self.table_click_cb)
         table.disabled = True
 
         output = pn.Column(
             pn.layout.VSpacer(height=20),
+            pn.pane.HTML('<h3>Optimization Complete</h3>'),
+            self._make_title(op),
+            pn.layout.VSpacer(height=20),
+            pn.pane.HTML('<h3>ROI Curves</h3>'),
             op.roi_curves(*self.budget_box.values()), 
             pn.layout.VSpacer(height=30),
+            pn.pane.HTML('<h3>Barriers</h3>'),
             table
         )
 
         # self.main.append(('Output', pn.panel(output, min_width=500, height=800)))
         self.tabs[2] = ('Output', output)
+
+    title_template = '<p><b>Regions:</b> {r}; <b>Targets:</b> {t}; {n} budget levels from {min} to {max}</p> '
+
+    def _make_title(self, op):
+        regions = op.regions
+        targets = [t.short for t in op.targets]
+        bmax = op.budget_max
+        binc = op.budget_delta
+        n = bmax // binc
+        return pn.pane.HTML(self.title_template.format(
+            r = ', '.join(regions),
+            t = ', '.join(targets),
+            n = n,
+            min = BudgetBox.format_budget_amount(binc),
+            max = BudgetBox.format_budget_amount(bmax),
+        ))
 

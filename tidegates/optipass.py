@@ -50,7 +50,7 @@ class OP:
 
     def __init__(self, project: Project, regions: list[str], targets: list[str], climate: str):
         '''
-        Instatiate a new OP object.
+        Instantiate a new OP object.
         * project is a Project object containing barrier data
         * regions is a list of unique names from the barrier file
         * targets is a list of 2-letter target IDs
@@ -193,7 +193,6 @@ class OP:
         self.matrix = pd.DataFrame(dct, index=self.input_frame.ID)
         self.matrix['count'] = self.matrix.sum(axis=1)
         self.potential_habitat(self.targets, scaled)
-        self.summary.to_csv('tmp/summary.csv')
 
     def _path_from(self, x, graph):
         '''
@@ -355,39 +354,9 @@ class OP:
         W = 400
         LW = 2
         D = 10
-
-        # Instances of this class are interactive graphics for ROI plots
-
-        class BudgetViewer(pn.viewable.Viewer):
-        
-            bi = param.Integer(default=0, bounds=(0,budget_max), step=budget_inc)
-            
-            @param.depends('bi')
-            def plot(self):
-                # nonlocal x, y
-                p = figure(width=W, height=H)
-                p.line(x, y, line_width=LW)
-                p.circle(x, y, fill_color='white', size=D)
-                p.xaxis.formatter = NumeralTickFormatter(format='$0a')
-                p.toolbar_location = None
-                p.line([self.bi, self.bi],[0,y[self.bi//budget_inc]])
-                # p.add_layout(Label(
-                #     x=self.bi + 2,
-                #     y=(benefits[self.bi//5])-2,
-                #     text=f'({self.bi},{benefits[self.bi//5]})',
-                #     # border_line_color='black',
-                # ))
-                return p
-            
-            def __panel__(self):
-                return pn.Column(
-                    pn.Param(self, width=W, name="B"),
-                    self.plot,
-                )
             
         figures = pn.Tabs(tabs_location='left')
         for t in self.targets:
-            # Uncomment to make a static image
             f = figure(
                 title = t.long, 
                 x_axis_label = 'Budget', 
@@ -401,29 +370,22 @@ class OP:
             f.toolbar_location = None
             figures.append((t.short, f))
 
-            # Uncomment to make a dynamic image
-            # x = self.summary.budget
-            # y = self.summary[t.abbrev]
-            # print(t.short, x, y)
-            # figures.append((t.short, BudgetViewer()))
-
-        # f = figure(
-        #     title='Weighted Potential Habitat', 
-        #     x_axis_label='Budget', 
-        #     y_axis_label='Net Gain',
-        #     width=W,
-        #     height=H,
-        #     )
-        # f.line(self.summary.budget, self.summary.netgain, line_width=LW)
-        # f.circle(self.summary.budget, self.summary.netgain, fill_color='white', size=D)
-        # f.xaxis.formatter = NumeralTickFormatter(format='$0a')
-        # f.toolbar_location = None
-        # # figures.append(f)
-        # # return row(*figures)
-        # figures.append(('Net', f))
+        f = figure(
+            title='Combined Potential Habitat Gain', 
+            x_axis_label='Budget', 
+            y_axis_label='Weighted Net Gain',
+            width=W,
+            height=H,
+        )
+        f.line(self.summary.budget, self.summary.netgain, line_width=LW)
+        f.circle(self.summary.budget, self.summary.netgain, fill_color='white', size=D)
+        f.xaxis.formatter = NumeralTickFormatter(format='$0a')
+        f.toolbar_location = None
+        # figures.append(f)
+        # return row(*figures)
+        figures.insert(0, ('Net', f))
         return figures
     
-
 
 ####################
 #
