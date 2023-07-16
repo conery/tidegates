@@ -230,11 +230,17 @@ One or more OptiPass runs failed.  See the log in the Admin panel for details.
         self[1].visible = False
         self.template.open_modal()
 
+# Create an instance of the OutputPane class to store the tables and plots to
+# show after running the optimizer
+
+from styles import accordion_style_sheet
+
 class OutputPane(pn.Column):
 
-    def __init__(self, op):
+    def __init__(self, op, bf):
         super(OutputPane, self).__init__()
         self.op = op
+        self.bf = bf
         self.append(pn.pane.HTML('<h3>Optimization Complete</h3>'))
         self.append(self._make_title())
         self.append(pn.pane.HTML('<h3>ROI Curves</h3>'))
@@ -243,7 +249,10 @@ class OutputPane(pn.Column):
         self.append(self._make_budget_table())
         # pn.pane.HTML('<h3>Barrier Details</h3>'),
         # self._make_gate_table(op),
-        self.append(pn.Accordion(('Barrier Details', self._make_gate_table())))
+        self.append(pn.Accordion(
+            ('Barrier Details', self._make_gate_table()),
+            stylesheets = [accordion_style_sheet],
+        ))
     
     def _make_title(self):
         title_template = '<p><b>Regions:</b> {r}; <b>Targets:</b> {t}; <b>Budgets:</b> {min} to {max}</p> '
@@ -293,6 +302,8 @@ class OutputPane(pn.Column):
             selectable = True,
             configuration = {'columnDefaults': {'headerSort': False}},
         )
+        table.on_click(self.budget_table_cb)
+        self.budget_table = df
         return table
 
     def _make_gate_table(self):
@@ -329,8 +340,23 @@ class OutputPane(pn.Column):
             selectable = False,
         )
         table.disabled = True
+        self.gate_table = df
         return table
+    
+    def make_dots(self, plot):
+        self.selected_row = None
+        self.dots = []
+        for row in self.budget_table.itertuples():
+            df = self.bf.map_info[self.bf.data.BARID.isin(row.gates)]
+            c = plot.star_dot('x', 'y', size=20, line_color='blue', fill_color='white', source=df)
+            c.visible = False
+            self.dots.append(c)
 
+    def budget_table_cb(self, e):
+        if n := self.selected_row:
+            self.dots[n].visible = False
+        self.selected_row = e.row
+        self.dots[self.selected_row].visible = True
 
 welcome_text = '''
 <h2>Welcome</h2>
@@ -463,4 +489,6 @@ class TideGates(pn.template.BootstrapTemplate):
 
     def add_output_pane(self, op=None):
         op = op or self.op
-        self.tabs[2] = ('Output', OutputPane(op))
+        pane = OutputPane(op, self.bf)
+        pane.make_dots(self.map.graphic())
+        self.tabs[2] = ('Output', pane)

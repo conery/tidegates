@@ -155,7 +155,8 @@ if __name__ == '__main__':
                 if not (args.budget and args.output):
                     print('gui action requires --output and --budget')
                     exit(1)
-                app = TideGates(title='Tide Gate Optimization [Integration Test]', sidebar_width=425)
+                app = make_app()
+                app.title = 'Tide Gate Optimization [Integration Test]'
                 app.optimize_button.disabled = True
                 for r in regions:
                     for b in app.region_boxes.grid:
