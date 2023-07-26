@@ -106,7 +106,7 @@ class AdvancedBudgetBox(pn.WidgetBox):
     INC_STEP = 1000
     COUNT_MIN = 2
     COUNT_MAX = 100
-    SLIDER_WIDTH = 600
+    SLIDER_WIDTH = 400
 
     def __init__(self):
         super(AdvancedBudgetBox, self).__init__(margin=(15,0,15,5))
@@ -144,7 +144,7 @@ class AdvancedBudgetBox(pn.WidgetBox):
             width=75,
         )
 
-        self.append(pn.Row(self.max_slider, pn.pane.HTML('<b>Limit:<b>')))
+        self.append(pn.Row(self.max_slider, pn.pane.HTML('<b>Limit: N/A<b>')))
         self.append(pn.Row(self.inc_slider, self.count_input))
 
         self.max_slider.param.watch(self.max_updated, ['value'])
@@ -159,7 +159,8 @@ class AdvancedBudgetBox(pn.WidgetBox):
         self.max_slider.start = self.MAX_STEP
         self.inc_slider.end = max(1, n // 2)
         self.inc_slider.start = max(self.INC_STEP, n / self.COUNT_MAX)
-        self[0][1] = pn.pane.HTML(f'<b>Limit: ${n}</b>')
+        lim = 'N/A' if n == 0 else f'${n/1000000:.2f}M'
+        self[0][1] = pn.pane.HTML(f'<b>Limit: {lim}</b>')
 
     def max_updated(self, e):
         self.inc_slider.value = self.max_slider.value // self.count_input.value

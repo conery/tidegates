@@ -40,7 +40,7 @@ import tempfile
 
 from bokeh.plotting import figure, show
 from bokeh.layouts import row, Spacer
-from bokeh.models import NumeralTickFormatter, Label
+from bokeh.models import NumeralTickFormatter, Label, HoverTool
 
 from messages import Logging
 from project import Project
@@ -335,18 +335,20 @@ class OP:
 
     @staticmethod
     def format_budgets(cols):
-        fmt = {
-            'thou':  (1000, 'K'),
-            'mil':   (1000000, 'M'),
-        }
-        res = { }
-        for n in cols:
-            divisor, suffix = fmt['mil'] if n >= 1000000 else fmt['thou']
-            s = '${:}'.format(n/divisor)
-            if s.endswith('.0'):
-                s = s[:-2]
-            res[n] = s+suffix
-        return res
+        return { n: OP.format_budget_amount(n) for n in cols }
+    
+    dollar_format = {
+        'thou':  (1000, 'K'),
+        'mil':   (1000000, 'M'),
+    }
+
+    @staticmethod
+    def format_budget_amount(n):
+        divisor, suffix = OP.dollar_format['mil'] if n >= 1000000 else OP.dollar_format['thou']
+        s = '${:}'.format(n/divisor)
+        if s.endswith('.0'):
+            s = s[:-2]
+        return s+suffix
     
     def roi_curves(self, budget_max, budget_inc):
 
@@ -362,28 +364,32 @@ class OP:
                 x_axis_label = 'Budget', 
                 y_axis_label = t.label,
                 width = W,
-                height = H,                
+                height = H,
+                tools = [HoverTool(mode='vline')],
+                tooltips = 'Budget @x{$0.0a}, Benefit @y{0.0}',
             )
             f.line(self.summary.budget, self.summary[t.abbrev], line_width=LW)
             f.circle(self.summary.budget, self.summary[t.abbrev], fill_color='white', size=D)
-            f.xaxis.formatter = NumeralTickFormatter(format='$0a')
+            f.xaxis.formatter = NumeralTickFormatter(format='$0.0a')
             f.toolbar_location = None
             figures.append((t.short, f))
 
-        f = figure(
-            title='Combined Potential Habitat Gain', 
-            x_axis_label='Budget', 
-            y_axis_label='Weighted Net Gain',
-            width=W,
-            height=H,
-        )
-        f.line(self.summary.budget, self.summary.netgain, line_width=LW)
-        f.circle(self.summary.budget, self.summary.netgain, fill_color='white', size=D)
-        f.xaxis.formatter = NumeralTickFormatter(format='$0a')
-        f.toolbar_location = None
-        # figures.append(f)
-        # return row(*figures)
-        figures.insert(0, ('Net', f))
+        if len(self.targets) > 1:
+            f = figure(
+                title='Combined Potential Benefit', 
+                x_axis_label='Budget', 
+                y_axis_label='Weighted Net Gain',
+                width=W,
+                height=H,
+                tools = [HoverTool(mode='vline')],
+                tooltips = 'Budget @x{$0.0a}, Benefit @y{0.0}',
+            )
+            f.line(self.summary.budget, self.summary.netgain, line_width=LW)
+            f.circle(self.summary.budget, self.summary.netgain, fill_color='white', size=D)
+            f.xaxis.formatter = NumeralTickFormatter(format='$0.0a')
+            f.toolbar_location = None
+            figures.insert(0, ('Net', f))
+
         return figures
     
 

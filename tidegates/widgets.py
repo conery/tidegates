@@ -87,19 +87,6 @@ class BudgetBox(pn.Column):
         )
         self.append(self.tabs)
 
-    @staticmethod
-    def format_budget_amount(n):
-        n = int(n)
-        if n >= 1000000:
-            x = n / 1000000
-            s = f'${x:.1f}M' if (n % 1000000) else f'${x:.0f}M'
-        elif n >= 1000:
-            x = n / 1000
-            s = f'${x:.1f}K' if (n % 1000) else f'${x:.0f}K'
-        else:
-            s = f'${n}'
-        return s
-
     def set_budget_max(self, n):
         for t in self.tabs:
             t.set_budget_max(n)
@@ -210,11 +197,14 @@ One or more OptiPass runs failed.  See the log in the Admin panel for details.
         
     def show_params(self, regions, bmax, bstep, targets):
         n = bmax // bstep
-        fbmax = BudgetBox.format_budget_amount(bmax)
-        fbstep = BudgetBox.format_budget_amount(bstep)
+        fbmax = OP.format_budget_amount(bmax)
+        fbstep = OP.format_budget_amount(bstep)
         text = self.preview_message_text
         text += f'  * Regions: `{regions}`\n\n'
-        text += f'  * {n} budget levels from {fbstep} up to {fbmax} in increments of {fbstep}\n\n'
+        if n > 1:
+            text += f'  * {n} budget levels from {fbstep} up to {fbmax} in increments of {fbstep}\n\n'
+        else:
+            text += f'  * a single budget of {fbmax}\n\n'
         text += f'  * Targets: `{targets}`\n\n' 
         self[0] = pn.pane.Alert(text, alert_type = 'secondary')
         self[1].visible = True
@@ -243,8 +233,11 @@ class OutputPane(pn.Column):
         self.bf = bf
         self.append(pn.pane.HTML('<h3>Optimization Complete</h3>'))
         self.append(self._make_title())
-        self.append(pn.pane.HTML('<h3>ROI Curves</h3>'))
-        self.append(self._make_figures())
+
+        if op.budget_max > op.budget_delta:
+            self.append(pn.pane.HTML('<h3>ROI Curves</h3>'))
+            self.append(self._make_figures())
+
         self.append(pn.pane.HTML('<h3>Budget Summary</h3>'))
         self.append(self._make_budget_table())
         # pn.pane.HTML('<h3>Barrier Details</h3>'),
@@ -255,19 +248,27 @@ class OutputPane(pn.Column):
         ))
     
     def _make_title(self):
-        title_template = '<p><b>Regions:</b> {r}; <b>Targets:</b> {t}; <b>Budgets:</b> {min} to {max}</p> '
         regions = self.op.regions
         targets = [t.short for t in self.op.targets]
         bmax = self.op.budget_max
         binc = self.op.budget_delta
-        # n = bmax // binc
-        return pn.pane.HTML(title_template.format(
-            r = ', '.join(regions),
-            t = ', '.join(targets),
-            min = BudgetBox.format_budget_amount(binc),
-            max = BudgetBox.format_budget_amount(bmax),
-        ))
-    
+        if bmax > binc:
+            title_template = '<p><b>Regions:</b> {r}; <b>Targets:</b> {t}; <b>Budgets:</b> {min} to {max}</p>'
+            # n = bmax // binc
+            return pn.pane.HTML(title_template.format(
+                r = ', '.join(regions),
+                t = ', '.join(targets),
+                min = OP.format_budget_amount(binc),
+                max = OP.format_budget_amount(bmax),
+            ))
+        else:
+            title_template = '<p><b>Regions:</b> {r}; <b>Targets:</b> {t}; <b>Budget:</b> {b}'
+            return pn.pane.HTML(title_template.format(
+                r = ', '.join(regions),
+                t = ', '.join(targets),
+                b = OP.format_budget_amount(bmax),
+            ))
+            
     def _make_figures(self):
         figures = pn.Tabs(
             tabs_location='left',
@@ -359,6 +360,8 @@ class OutputPane(pn.Column):
             df = self.bf.map_info[self.bf.data.BARID.isin(row.gates)]
             c = plot.circle_dot('x', 'y', size=12, line_color='blue', fill_color='white', source=df)
             # c = plot.star_dot('x', 'y', size=20, line_color='blue', fill_color='white', source=df)
+            # c = plot.star('x', 'y', size=12, color='blue', source=df)
+            # c = plot.hex('x', 'y', size=12, color='green', source=df)
             c.visible = False
             self.dots.append(c)
 
