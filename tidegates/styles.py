@@ -55,3 +55,14 @@ accordion_style_sheet = ''':host(.solid) .bk-panel-models-layout-Card.accordion
     border: 0px;
 }
 '''
+
+tab_style_sheet = '''.bk-tab {
+    color: #3171B0;
+    text-align: left;
+}
+.bk-header .bk-tab-active{
+    color: black;
+    text-align: left;
+    background-color: gray;
+}
+'''

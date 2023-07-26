@@ -355,7 +355,7 @@ class OP:
         LW = 2
         D = 10
             
-        figures = pn.Tabs(tabs_location='left')
+        figures = []
         for t in self.targets:
             f = figure(
                 title = t.long, 

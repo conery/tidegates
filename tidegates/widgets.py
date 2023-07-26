@@ -233,7 +233,7 @@ One or more OptiPass runs failed.  See the log in the Admin panel for details.
 # Create an instance of the OutputPane class to store the tables and plots to
 # show after running the optimizer
 
-from styles import accordion_style_sheet
+from styles import accordion_style_sheet, tab_style_sheet
 
 class OutputPane(pn.Column):
 
@@ -244,7 +244,7 @@ class OutputPane(pn.Column):
         self.append(pn.pane.HTML('<h3>Optimization Complete</h3>'))
         self.append(self._make_title())
         self.append(pn.pane.HTML('<h3>ROI Curves</h3>'))
-        self.append(op.roi_curves(self.op.budget_max, self.op.budget_delta))
+        self.append(self._make_figures())
         self.append(pn.pane.HTML('<h3>Budget Summary</h3>'))
         self.append(self._make_budget_table())
         # pn.pane.HTML('<h3>Barrier Details</h3>'),
@@ -267,6 +267,15 @@ class OutputPane(pn.Column):
             min = BudgetBox.format_budget_amount(binc),
             max = BudgetBox.format_budget_amount(bmax),
         ))
+    
+    def _make_figures(self):
+        figures = pn.Tabs(
+            tabs_location='left',
+            stylesheets = [tab_style_sheet],
+        )
+        for p in self.op.roi_curves(self.op.budget_max, self.op.budget_delta):
+            figures.append(p)
+        return figures
     
     def _make_budget_table(self):
         df = self.op.summary[['budget','habitat', 'gates']]
@@ -348,7 +357,8 @@ class OutputPane(pn.Column):
         self.dots = []
         for row in self.budget_table.itertuples():
             df = self.bf.map_info[self.bf.data.BARID.isin(row.gates)]
-            c = plot.star_dot('x', 'y', size=20, line_color='blue', fill_color='white', source=df)
+            c = plot.circle_dot('x', 'y', size=12, line_color='blue', fill_color='white', source=df)
+            # c = plot.star_dot('x', 'y', size=20, line_color='blue', fill_color='white', source=df)
             c.visible = False
             self.dots.append(c)
 
