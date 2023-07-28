@@ -170,15 +170,26 @@ Click on the **Output** tab to see the results.
 One or more OptiPass runs failed.  See the log in the Admin panel for details.
 '''
 
-    def __init__(self, template, run_cb):
+    download_text = '''### Download
+
+Download options...
+'''
+
+    def __init__(self, template, run_cb, download_cb):
         super(InfoBox, self).__init__()
         self.template = template
+
         self.continue_button = pn.widgets.Button(name='Continue')
-        self.cancel_button = pn.widgets.Button(name='Cancel')
-        self.append(pn.pane.Alert('placeholder', alert_type = 'secondary'))
-        self.append(pn.Row(self.cancel_button, self.continue_button))
         self.continue_button.on_click(run_cb)
+
+        self.cancel_button = pn.widgets.Button(name='Cancel')
         self.cancel_button.on_click(self.cancel_cb)
+
+        self.download_button = pn.widgets.Button(name='Download')
+        self.download_button.on_click(download_cb)
+
+        # self.append(pn.pane.Alert('placeholder', alert_type = 'secondary'))
+        # self.append(pn.Row(self.cancel_button, self.continue_button))
 
     def cancel_cb(self, _):
         self.template.close_modal()
@@ -191,8 +202,10 @@ One or more OptiPass runs failed.  See the log in the Admin panel for details.
             text += ' * a maximum budget\n'
         if len(tlist) == 0:
             text += ' * one or more targets\n'
-        self[0] = pn.pane.Alert(text, alert_type = 'warning')
-        self[1].visible = False
+        self.clear()
+        self.append(pn.pane.Alert(text, alert_type = 'warning'))
+        # self[0] = pn.pane.Alert(text, alert_type = 'warning')
+        # self[1].visible = False
         self.template.open_modal()
         
     def show_params(self, regions, bmax, bstep, targets):
@@ -206,33 +219,52 @@ One or more OptiPass runs failed.  See the log in the Admin panel for details.
         else:
             text += f'  * a single budget of {fbmax}\n\n'
         text += f'  * Targets: `{targets}`\n\n' 
-        self[0] = pn.pane.Alert(text, alert_type = 'secondary')
-        self[1].visible = True
+        self.clear()
+        self.append(pn.pane.Alert(text, alert_type = 'secondary'))
+        self.append(pn.Row(self.cancel_button, self.continue_button))
+        # self[0] = pn.pane.Alert(text, alert_type = 'secondary')
+        # self[1].visible = True
         self.template.open_modal()
 
     def show_success(self):
-        self[0] = pn.pane.Alert(self.success_text, alert_type = 'success')
-        self[1].visible = False
+        self.clear()
+        self.append(pn.pane.Alert(self.success_text, alert_type = 'success'))
+        # self[0] = pn.pane.Alert(self.success_text, alert_type = 'success')
+        # self[1].visible = False
         self.template.open_modal()
 
     def show_fail(self):
-        self[0] = pn.pane.Alert(self.fail_text, alert_type = 'danger')
-        self[1].visible = False
+        self.clear()
+        self.append(pn.pane.Alert(self.fail_text, alert_type = 'danger'))
+        # self[0] = pn.pane.Alert(self.fail_text, alert_type = 'danger')
+        # self[1].visible = False
+        self.template.open_modal()
+
+    def show_download(self, _):
+        self.clear()
+        self.append(pn.pane.Alert(self.download_text, alert_type = 'secondary'))
+        self.append(self.download_button)
         self.template.open_modal()
 
 # Create an instance of the OutputPane class to store the tables and plots to
 # show after running the optimizer
 
-from styles import accordion_style_sheet, tab_style_sheet
+from styles import accordion_style_sheet, tab_style_sheet, download_style_sheet
 
 class OutputPane(pn.Column):
 
-    def __init__(self, op, bf):
+    def __init__(self, op, bf, cb):
         super(OutputPane, self).__init__()
         self.op = op
         self.bf = bf
+        self.download_button = pn.widgets.Button(name='Download', stylesheets=[download_style_sheet])
+        self.download_button.on_click(cb)
+
         self.append(pn.pane.HTML('<h3>Optimization Complete</h3>'))
-        self.append(self._make_title())
+        self.append(pn.Row(
+            self._make_title(),
+            self.download_button,
+        ))
 
         if op.budget_max > op.budget_delta:
             self.append(pn.pane.HTML('<h3>ROI Curves</h3>'))
@@ -242,6 +274,7 @@ class OutputPane(pn.Column):
         self.append(self._make_budget_table())
         # pn.pane.HTML('<h3>Barrier Details</h3>'),
         # self._make_gate_table(op),
+
         self.append(pn.Accordion(
             ('Barrier Details', self._make_gate_table()),
             stylesheets = [accordion_style_sheet],
@@ -402,7 +435,7 @@ class TideGates(pn.template.BootstrapTemplate):
  
         self.optimize_button = pn.widgets.Button(name='Run Optimizer', stylesheets=[button_style_sheet])
 
-        self.info = InfoBox(self, self.run_optimizer)
+        self.info = InfoBox(self, self.run_optimizer, self.download)
 
         start_tab = pn.Column(
             # pn.Row(self.info),
@@ -433,6 +466,7 @@ class TideGates(pn.template.BootstrapTemplate):
             ('Home', pn.pane.HTML(welcome_text)),
             ('Start', start_tab),
             ('Output', pn.pane.HTML(placeholder_text)),
+            # ('Download', pn.pane.HTML(placeholder_text)),
             sizing_mode = 'fixed',
             width=800,
             height=800,
@@ -441,7 +475,7 @@ class TideGates(pn.template.BootstrapTemplate):
         self.sidebar.append(self.map_pane)
         self.main.append(self.tabs)        
 
-        self.info = InfoBox(self, self.run_optimizer)
+        self.info = InfoBox(self, self.run_optimizer, self.download)
         self.modal.append(self.info)
 
         self.optimize_button.on_click(self.validate_settings)
@@ -488,13 +522,16 @@ class TideGates(pn.template.BootstrapTemplate):
         # plus one more for the $0 budget
 
         if self.op.outputs is not None and len(self.op.outputs) == num_budgets+1:
+            self.info.show_success()
             Logging.log('runs complete')
             self.op.collect_results(False)
             Logging.log('Output files:' + ','.join(self.op.outputs))
             self.add_output_pane()
-            self.info.show_success()
         else:
             self.info.show_fail()
+
+    def download(self, _):
+        self.op.download()
 
 
     # After running OptiPass call this method to add a tab to the main
@@ -502,6 +539,6 @@ class TideGates(pn.template.BootstrapTemplate):
 
     def add_output_pane(self, op=None):
         op = op or self.op
-        pane = OutputPane(op, self.bf)
+        pane = OutputPane(op, self.bf, self.info.show_download)
         pane.make_dots(self.map.graphic())
         self.tabs[2] = ('Output', pane)

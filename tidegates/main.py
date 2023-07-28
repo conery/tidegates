@@ -175,6 +175,6 @@ if __name__ == '__main__':
                 op.collect_results(False)
                 app.add_output_pane(op)
                 app.tabs.active = 2
-                pn.extension('floatpanel', design='native')
+                pn.extension(design='native')
                 pn.serve(app, autoreload=True)
 
