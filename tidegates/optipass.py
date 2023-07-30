@@ -392,9 +392,6 @@ class OP:
 
         return figures
     
-    def download(self):
-        print('OP.download...')
-    
 
 ####################
 #

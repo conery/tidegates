@@ -49,17 +49,6 @@ button_style_sheet = ''':host(.solid) .bk-btn
 }
 '''
 
-download_style_sheet = ''':host(.solid) .bk-btn
-{
-    margin-left: 30px;
-    font-weight: 500;
-    color: #3171B0;
-    padding: 7px;
-    border: 1px solid #3171B0;
-    border-radius: 5px;
-}
-'''
-
 accordion_style_sheet = ''':host(.solid) .bk-panel-models-layout-Card.accordion
 {
     background-color: white;

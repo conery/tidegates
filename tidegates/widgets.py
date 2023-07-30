@@ -1,30 +1,23 @@
 import param
 
 import panel as pn
-from panel.layout.gridstack import GridStack
-
-# import folium as fm
-import numpy as np
 import pandas as pd
 
 import bokeh.plotting as bk
-import bokeh.layouts as layouts
-from bokeh.models import Circle
-from bokeh.models.formatters import NumeralTickFormatter
+from bokeh.io import export_png
 from bokeh.models.widgets.tables import NumberFormatter
 from bokeh.tile_providers import get_provider
 import xyzservices.providers as xyz
 
-from glob import glob
-from math import ceil
-import os
-import re
+from shutil import make_archive, rmtree
+from pathlib import Path
 
 from targets import DataSet, make_layout
 from budgets import BasicBudgetBox, AdvancedBudgetBox, FixedBudgetBox
 from project import Project
 from optipass import OP
 from messages import Logging
+from styles import *
 
 pn.extension('gridstack', 'tabulator')
 
@@ -62,8 +55,6 @@ class TGMap():
         for r in bf.regions:
             df = bf.map_info[bf.map_info.region == r]
             c = p.circle('x', 'y', size=5, color='darkslategray', source=df, tags=list(df.id))
-            # c.nonselection_glyph = Circle(size=5, fill_color='darkslategray')
-            # c.selection_glyph = Circle(size=8, fill_color='blue')
             dots[r] = c
             c.visible = False
         return p, dots
@@ -71,9 +62,6 @@ class TGMap():
     def display_regions(self, lst):
         for r, dots in self.dots.items():
             dots.visible = r in lst
-
-    # def set_selection(self, lst):
-    #     self.map.select({'tag': lst[0]})
 
 
 class BudgetBox(pn.Column):
@@ -93,8 +81,6 @@ class BudgetBox(pn.Column):
 
     def values(self):
         return self.tabs[self.tabs.active].values()
-
-from styles import box_styles, box_style_sheet
  
 class RegionBox(pn.Column):
     
@@ -156,7 +142,7 @@ Please select
 
     preview_message_text = '''### Review Optimizer Settings
 
-Clicking Continue will run OP with the following settings:
+Clicking Continue will run OptiPass with the following settings:
 
 '''
 
@@ -170,12 +156,7 @@ Click on the **Output** tab to see the results.
 One or more OptiPass runs failed.  See the log in the Admin panel for details.
 '''
 
-    download_text = '''### Download
-
-Download options...
-'''
-
-    def __init__(self, template, run_cb, download_cb):
+    def __init__(self, template, run_cb):
         super(InfoBox, self).__init__()
         self.template = template
 
@@ -184,9 +165,6 @@ Download options...
 
         self.cancel_button = pn.widgets.Button(name='Cancel')
         self.cancel_button.on_click(self.cancel_cb)
-
-        self.download_button = pn.widgets.Button(name='Download')
-        self.download_button.on_click(download_cb)
 
         # self.append(pn.pane.Alert('placeholder', alert_type = 'secondary'))
         # self.append(pn.Row(self.cancel_button, self.continue_button))
@@ -240,31 +218,19 @@ Download options...
         # self[1].visible = False
         self.template.open_modal()
 
-    def show_download(self, _):
-        self.clear()
-        self.append(pn.pane.Alert(self.download_text, alert_type = 'secondary'))
-        self.append(self.download_button)
-        self.template.open_modal()
-
 # Create an instance of the OutputPane class to store the tables and plots to
 # show after running the optimizer
 
-from styles import accordion_style_sheet, tab_style_sheet, download_style_sheet
-
 class OutputPane(pn.Column):
 
-    def __init__(self, op, bf, cb):
+    def __init__(self, op, bf):
         super(OutputPane, self).__init__()
         self.op = op
         self.bf = bf
-        self.download_button = pn.widgets.Button(name='Download', stylesheets=[download_style_sheet])
-        self.download_button.on_click(cb)
+        self.figures = None    # will be set to list of plots by _make_figures
 
         self.append(pn.pane.HTML('<h3>Optimization Complete</h3>'))
-        self.append(pn.Row(
-            self._make_title(),
-            self.download_button,
-        ))
+        self.append(self._make_title())
 
         if op.budget_max > op.budget_delta:
             self.append(pn.pane.HTML('<h3>ROI Curves</h3>'))
@@ -303,13 +269,15 @@ class OutputPane(pn.Column):
             ))
             
     def _make_figures(self):
-        figures = pn.Tabs(
+        self.figures = []
+        tabs = pn.Tabs(
             tabs_location='left',
             stylesheets = [tab_style_sheet],
         )
         for p in self.op.roi_curves(self.op.budget_max, self.op.budget_delta):
-            figures.append(p)
-        return figures
+            tabs.append(p)
+            self.figures.append(p[1])
+        return tabs
     
     def _make_budget_table(self):
         df = self.op.summary[['budget','habitat', 'gates']]
@@ -404,19 +372,87 @@ class OutputPane(pn.Column):
         self.selected_row = e.row
         self.dots[self.selected_row].visible = True
 
-welcome_text = '''
-<h2>Welcome</h2>
+class DownloadPane(pn.Column):
 
-<p>Click on the Start tab above to enter optimization parameters and run the optimizer.</p>
-'''
+    NB = 'Net benefit plot'
+    IT = 'Individual target plots'
+    BS = 'Budget summary table'
+    BD = 'Barrier detail table'
 
-placeholder_text = '''
-<h2>Nothing to See Yet</h2>
+    def __init__(self, outputs):
+        super(DownloadPane, self).__init__()
+        self.outputs = outputs
+        self.folder_name = self._make_folder_name()
 
-<p>After running the optimizer this tab will show the results.</p>
-'''
+        self.grid = pn.GridBox(ncols=2)
+        self.boxes = { }
+        for x in [self.NB, self.BS, self.IT, self.BD]:
+            b = pn.widgets.Checkbox(name=x, styles=box_styles, stylesheets=[box_style_sheet], value=True)
+            self.boxes[x] = b
+            self.grid.objects.append(b)
 
-from styles import header_styles, button_style_sheet
+        self.filename_input = pn.widgets.TextInput(
+            name = 'Archive Folder Name', 
+            value = self.folder_name,
+        )
+
+        self.make_archive_button = pn.widgets.Button(name='Create Archive', stylesheets=[button_style_sheet])
+        self.make_archive_button.on_click(self._archive_cb)
+
+        self.append(pn.pane.HTML('<h3>Save Outputs</h3>', styles=header_styles))
+        self.append(self.grid)
+        self.append(self.filename_input)
+        self.append(self.make_archive_button)
+        self.append(pn.pane.HTML('<p>placeholder</p>', visible=False))
+
+    def _make_folder_name(self):
+        parts = [s[:3] for s in self.outputs.op.regions]
+        parts.extend([t.abbrev for t in self.outputs.op.targets])
+        parts.append(OP.format_budget_amount(self.outputs.op.budget_max)[1:])
+        return '_'.join(parts)
+
+    def _archive_cb(self, e):
+        if not any([x.value for x in self.boxes.values()]):
+            return
+        self.loading = True
+        base = self._make_archive_dir()
+        self._save_files(base)
+        p = make_archive(base, 'zip', base)
+        self.loading = False
+        self[-1] = pn.widgets.FileDownload(file=p, filename=self.filename_input.value_input+'.zip')
+
+    def _make_archive_dir(self):
+        archive_dir = Path.cwd() / 'tmp' / self.filename_input.value_input
+        if Path.exists(archive_dir):
+            rmtree(archive_dir)
+        Path.mkdir(archive_dir)
+        return archive_dir
+
+    def _save_files(self, loc):
+        if self.outputs.figures:
+            if self.boxes[self.NB].value:
+                export_png(self.outputs.figures[0], filename=loc/'net.png')
+                # print(self.NB)
+            if self.boxes[self.IT].value:
+                for i in range(len(self.outputs.figures)-1):
+                    fn = self.outputs.op.targets[i].abbrev + '.png'
+                    export_png(self.outputs.figures[i+1], filename=loc/fn)
+                # print(self.IT)
+        if self.boxes[self.BS].value:
+            df = self.outputs.budget_table.drop(['gates'], axis=1)
+            df.to_csv(
+                loc/'budget_table.csv', 
+                index=False,
+                float_format=lambda n: round(n,2)
+            )
+            # print(self.BS)
+        if self.boxes[self.BD].value:
+            self.outputs.gate_table.to_csv(
+                loc/'gate_table.csv',
+                index=False,
+                float_format=lambda n: round(n,2)
+            )
+            # print(self.BD)
 
 class TideGates(pn.template.BootstrapTemplate):
 
@@ -435,7 +471,12 @@ class TideGates(pn.template.BootstrapTemplate):
  
         self.optimize_button = pn.widgets.Button(name='Run Optimizer', stylesheets=[button_style_sheet])
 
-        self.info = InfoBox(self, self.run_optimizer, self.download)
+        self.info = InfoBox(self, self.run_optimizer)
+
+        welcome_tab = pn.Column(
+            self.section_head('Welcome'),
+            pn.pane.HTML(open('static/welcome.html').read()),
+        )
 
         start_tab = pn.Column(
             # pn.Row(self.info),
@@ -462,11 +503,20 @@ class TideGates(pn.template.BootstrapTemplate):
             self.optimize_button,
         )
 
+        output_tab = pn.Column(
+            self.section_head('Nothing to See Yet'),
+            pn.pane.HTML('<p>After running the optimizer this tab will show the results.</p>')
+        )
+
+        download_tab = pn.Column(
+            self.section_head('Nothing to Download Yet'),
+            pn.pane.HTML('<p>After running the optimizer use this tab to save the results.</p>')        )
+
         self.tabs = pn.Tabs(
-            ('Home', pn.pane.HTML(welcome_text)),
+            ('Home', welcome_tab),
             ('Start', start_tab),
-            ('Output', pn.pane.HTML(placeholder_text)),
-            # ('Download', pn.pane.HTML(placeholder_text)),
+            ('Output', output_tab),
+            ('Download', download_tab),
             sizing_mode = 'fixed',
             width=800,
             height=800,
@@ -475,7 +525,7 @@ class TideGates(pn.template.BootstrapTemplate):
         self.sidebar.append(self.map_pane)
         self.main.append(self.tabs)        
 
-        self.info = InfoBox(self, self.run_optimizer, self.download)
+        self.info = InfoBox(self, self.run_optimizer)
         self.modal.append(self.info)
 
         self.optimize_button.on_click(self.validate_settings)
@@ -530,15 +580,14 @@ class TideGates(pn.template.BootstrapTemplate):
         else:
             self.info.show_fail()
 
-    def download(self, _):
-        self.op.download()
-
-
     # After running OptiPass call this method to add a tab to the main
     # panel to show the results.
 
     def add_output_pane(self, op=None):
         op = op or self.op
-        pane = OutputPane(op, self.bf, self.info.show_download)
-        pane.make_dots(self.map.graphic())
-        self.tabs[2] = ('Output', pane)
+
+        output = OutputPane(op, self.bf)
+        output.make_dots(self.map.graphic())
+        self.tabs[2] = ('Output', output)
+
+        self.tabs[3] = ('Download', DownloadPane(output))
