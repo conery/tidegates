@@ -96,6 +96,7 @@ class RegionBox(pn.Column):
             boxes.append(box)
         self.grid = pn.GridBox(*boxes, ncols=2)
         self.selected = set()
+        self.external_cb = None
         self.append(self.grid)
 
     def cb(self, *events):
@@ -109,9 +110,16 @@ class RegionBox(pn.Column):
                 amount = sum(self.totals[x] for x in self.selected)
                 self.budget_box.set_budget_max(amount)
         self.map.display_regions(self.selected)
+        if self.external_cb:
+            self.external_cb()
 
     def selection(self):
         return self.selected
+    
+    def add_external_callback(self, f):
+        '''Save a reference to an external function to call when a region box is clicked'''
+        self.external_cb = f
+
 
 class TargetBox(pn.Column):
 
@@ -372,6 +380,11 @@ class OutputPane(pn.Column):
         self.selected_row = e.row
         self.dots[self.selected_row].visible = True
 
+    def hide_dots(self):
+        if self.selected_row:
+            self.dots[self.selected_row].visible = False
+        self.selected_row = None
+
 class DownloadPane(pn.Column):
 
     NB = 'Net benefit plot'
@@ -419,10 +432,11 @@ class DownloadPane(pn.Column):
         self._save_files(base)
         p = make_archive(base, 'zip', base)
         self.loading = False
-        self[-1] = pn.widgets.FileDownload(file=p, filename=self.filename_input.value_input+'.zip')
+        self[-1] = pn.widgets.FileDownload(file=p, filename=self.filename+'.zip')
 
     def _make_archive_dir(self):
-        archive_dir = Path.cwd() / 'tmp' / self.filename_input.value_input
+        self.filename = self.filename_input.value_input or self.filename_input.value
+        archive_dir = Path.cwd() / 'tmp' / self.filename
         if Path.exists(archive_dir):
             rmtree(archive_dir)
         Path.mkdir(archive_dir)
@@ -588,6 +602,8 @@ class TideGates(pn.template.BootstrapTemplate):
 
         output = OutputPane(op, self.bf)
         output.make_dots(self.map.graphic())
+        self.region_boxes.add_external_callback(output.hide_dots)
+
         self.tabs[2] = ('Output', output)
 
         self.tabs[3] = ('Download', DownloadPane(output))
