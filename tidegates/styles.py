@@ -49,6 +49,16 @@ button_style_sheet = ''':host(.solid) .bk-btn
 }
 '''
 
+help_button_style_sheet = ''':host(.solid) .bk-btn
+{
+    font-weight: 600;
+    font-size: 1.1em;
+    color: #3171B0;
+    padding: 5px;
+    margin-top: 20px;
+}
+'''
+
 accordion_style_sheet = ''':host(.solid) .bk-panel-models-layout-Card.accordion
 {
     background-color: white;

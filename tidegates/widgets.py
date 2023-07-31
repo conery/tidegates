@@ -19,7 +19,7 @@ from optipass import OP
 from messages import Logging
 from styles import *
 
-pn.extension('gridstack', 'tabulator')
+pn.extension('gridstack', 'tabulator', 'floatpanel')
 
 class TGMap():
     def __init__(self, bf):
@@ -488,6 +488,18 @@ class TideGates(pn.template.BootstrapTemplate):
 
         self.info = InfoBox(self, self.run_optimizer)
 
+        self.map_help_button = pn.widgets.Button(name='ℹ️', stylesheets = [help_button_style_sheet])
+        self.map_help_button.on_click(self.map_help_cb)
+
+        self.region_help_button = pn.widgets.Button(name='ℹ️', stylesheets = [help_button_style_sheet])
+        self.region_help_button.on_click(self.region_help_cb)
+
+        self.budget_help_button = pn.widgets.Button(name='ℹ️', stylesheets = [help_button_style_sheet])
+        self.budget_help_button.on_click(self.budget_help_cb)
+
+        self.target_help_button = pn.widgets.Button(name='ℹ️', stylesheets = [help_button_style_sheet])
+        self.target_help_button.on_click(self.target_help_cb)
+
         welcome_tab = pn.Column(
             self.section_head('Welcome'),
             pn.pane.HTML(open('static/welcome.html').read()),
@@ -495,20 +507,22 @@ class TideGates(pn.template.BootstrapTemplate):
 
         help_tab = pn.Column(
             self.section_head('Instructions'),
-            pn.pane.HTML(open('static/help.html').read()),
+            pn.pane.HTML(open('static/help1.html').read()),
+            pn.pane.PNG('static/ROI.png', width=400),
+            pn.pane.HTML(open('static/help2.html').read()),
         )
 
         start_tab = pn.Column(
             # pn.Row(self.info),
-            self.section_head('Geographic Regions'),
+            self.section_head('Geographic Regions', self.region_help_button),
             pn.WidgetBox(self.region_boxes, width=600),
 
             # pn.layout.VSpacer(height=5),
-            self.section_head('Budget'),
+            self.section_head('Budget', self.budget_help_button),
             self.budget_box,
 
             # pn.layout.VSpacer(height=5),
-            self.section_head('Targets'),
+            self.section_head('Targets', self.target_help_button),
             pn.WidgetBox(
                 pn.Row(
                     self.target_boxes,
@@ -544,15 +558,17 @@ class TideGates(pn.template.BootstrapTemplate):
         )
         
         self.sidebar.append(self.map_pane)
-        self.main.append(self.tabs)        
+        self.sidebar.append(self.map_help_button)
+        self.main.append(self.tabs)
 
         self.info = InfoBox(self, self.run_optimizer)
         self.modal.append(self.info)
 
         self.optimize_button.on_click(self.validate_settings)
 
-    def section_head(self, s):
-        return pn.pane.HTML(f'<h3>{s}</h3>', styles=header_styles)
+    def section_head(self, s, b = None):
+        header = pn.pane.HTML(f'<h3>{s}</h3>', styles=header_styles)
+        return header if b is None else pn.Row(header, b)
 
     def validate_settings(self, _):
         regions = self.region_boxes.selection()
@@ -611,6 +627,49 @@ class TideGates(pn.template.BootstrapTemplate):
         output.make_dots(self.map.graphic())
         self.region_boxes.add_external_callback(output.hide_dots)
 
-        self.tabs[2] = ('Output', output)
+        self.tabs[3] = ('Output', output)
 
-        self.tabs[3] = ('Download', DownloadPane(output))
+        self.tabs[4] = ('Download', DownloadPane(output))
+
+    def map_help_cb(self, _):
+        msg = pn.pane.HTML('''
+        <p>When you move your mouse over the map the cursor will change to a "crosshairs" symbol.  Navigating with the map is similar to using Google maps or other online maps:</p>
+        <ul>
+            <li>Left-click and drag to pan (move left and right or up and down).</li>
+            <li>If you want to zoom in and out, first click the magnifying glass symbol below the map; then you can zoom in and out using the scroll wheel on your mouse.</li>   
+        </ul>
+        ''')
+        self.tabs[0].append(pn.layout.FloatPanel(msg, name='Map Controls', contained=False, position='left-bottom', width=400))
+    
+    def region_help_cb(self, _):
+        msg = pn.pane.HTML('''
+        <p>Select a region by clicking in the box to the left of an estuary name.</p>
+        <p>Each time you click in a box the map will be updated to show the positions of the barriers that are in our database for the estuary.</p>
+        <p>You must select at least one region before you run the optimizer.</p>
+        ''')
+        self.tabs[2].append(pn.layout.FloatPanel(msg, name='Geographic Regions', contained=False, position='center', width=400))
+    
+    def budget_help_cb(self, _):
+        msg = pn.pane.HTML('''
+        <p>There are three ways to specify the project budgets used by the optimizer.</p>
+        <H4>Basic</H4>
+        <p>The simplest method is to specify an upper limit by moving the slider back and forth.  When you use this method, the server will run OptiPass 10 times, ending at the value you select with the slider.  For example, if you set the slider at $10M, the server will make ROI curves based on budgets of $1M, $2M, <i>etc</i>, up to the maximum of $10M.</p>
+        <p>Note that the slider is disabled until you select one or more regions.  That's because the maximum value depends on the costs of the gates in each region.
+        For example, the total cost of all gates in the Coquille region is $11.8M.  Once you choose that region, you can move the budget slider
+        left and right to pick a maximum budget for OptiPass to consider.
+        <H4>Advanced</H4>
+        <p>If you click on the Advanced tab in this section you will see ways to specify the budget interval and the number of budgets.</p>
+        <p>You can use this method if you want more control over the layout of the ROI curves, for example you can include more points by increasing the number of budgets.</p>
+        <H4>Fixed</H4>
+        <p>If you know exactly how much money you have to spend you can enter that amount by clicking on the Fixed tab and entering the budget amount.</p>
+        <p>The server will run OptiPass just once, using that budget.  The output will have tables showing the gets identified by OptiPass, but there will be no ROI curve.</p>
+        ''')
+        self.tabs[2].append(pn.layout.FloatPanel(msg, name='Budget Levels', contained=False, position='center', width=400))
+    
+    def target_help_cb(self, _):
+        msg = pn.pane.HTML('''
+        <p>Click a box next to a target name to have OptiPass include that target in its calculations.</p>
+        <p>If more than one target is selected the server will generate an ROI curve for each indivdual target and an overall "net benefit" curve based on considering all targets at the same time.</p>
+        ''')
+        self.tabs[2].append(pn.layout.FloatPanel(msg, name='Targets', contained=False, position='center', width=400))
+    
