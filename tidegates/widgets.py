@@ -112,6 +112,7 @@ class RegionBox(pn.Column):
         self.map.display_regions(self.selected)
         if self.external_cb:
             self.external_cb()
+        print(self.map.map.x_range, self.map.map.y_range)
 
     def selection(self):
         return self.selected
@@ -492,6 +493,11 @@ class TideGates(pn.template.BootstrapTemplate):
             pn.pane.HTML(open('static/welcome.html').read()),
         )
 
+        help_tab = pn.Column(
+            self.section_head('Instructions'),
+            pn.pane.HTML(open('static/help.html').read()),
+        )
+
         start_tab = pn.Column(
             # pn.Row(self.info),
             self.section_head('Geographic Regions'),
@@ -528,6 +534,7 @@ class TideGates(pn.template.BootstrapTemplate):
 
         self.tabs = pn.Tabs(
             ('Home', welcome_tab),
+            ('Help', help_tab),
             ('Start', start_tab),
             ('Output', output_tab),
             ('Download', download_tab),
