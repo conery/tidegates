@@ -94,7 +94,7 @@ class RegionBox(pn.Column):
             box = pn.widgets.Checkbox(name=name, styles=box_styles, stylesheets=[box_style_sheet])
             box.param.watch(self.cb, ['value'])
             boxes.append(box)
-        self.grid = pn.GridBox(*boxes, ncols=2)
+        self.grid = pn.GridBox(*boxes, ncols=3)
         self.selected = set()
         self.external_cb = None
         self.append(self.grid)
@@ -112,7 +112,6 @@ class RegionBox(pn.Column):
         self.map.display_regions(self.selected)
         if self.external_cb:
             self.external_cb()
-        print(self.map.map.x_range, self.map.map.y_range)
 
     def selection(self):
         return self.selected
@@ -122,10 +121,10 @@ class RegionBox(pn.Column):
         self.external_cb = f
 
 
-class TargetBox(pn.Column):
+class BasicTargetBox(pn.Column):
 
     def __init__(self, targets):
-        super(TargetBox, self).__init__(margin=(10,0,10,5))
+        super(BasicTargetBox, self).__init__(margin=(10,0,10,5))
         self.grid = pn.GridBox(ncols=2)
         self.boxes = { }
         for row in make_layout():
@@ -139,7 +138,31 @@ class TargetBox(pn.Column):
 
     def selection(self):
         return [t for t in self.boxes if self.boxes[t].value ]
+    
+class WeightedTargetBox(pn.Column):
 
+    def __init__(self, targets):
+        super(WeightedTargetBox, self).__init__(margin=(10,0,10,5))
+        self.grid = pn.GridBox(ncols=2)
+        self.boxes = { }
+        for row in make_layout():
+            lst = [ ]
+            for t in row:
+                w = pn.widgets.IntSlider(name=t, value=0, step=1, start=0, end=5, width=250, bar_color='#3171B0')
+                lst.append(w)
+                self.boxes[t] = w
+            self.grid.objects.extend(lst)
+        self.append(self.grid)
+
+class TargetBox(pn.Column):
+
+    def __init__(self, targets):
+        super(TargetBox, self).__init__(margin=(10,0,10,5))
+        self.tabs = pn.Tabs(
+            ('Basic', BasicTargetBox(targets)),
+            ('Weighted', WeightedTargetBox(targets)),
+        )
+        self.append(self.tabs)
 
 class InfoBox(pn.Column):
 
@@ -526,9 +549,11 @@ class TideGates(pn.template.BootstrapTemplate):
             pn.WidgetBox(
                 pn.Row(
                     self.target_boxes,
+                    pn.layout.HSpacer(),
                     pn.Column(
                         pn.widgets.StaticText(value='<b>Climate Scenario</b>'),
-                        self.climate_group, margin=(10,0,20,0)
+                        self.climate_group, 
+                        margin=(10,0,20,0),
                     ),
                 ),
                 width=600,
