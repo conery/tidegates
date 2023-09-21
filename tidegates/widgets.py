@@ -139,21 +139,30 @@ class BasicTargetBox(pn.Column):
     def selection(self):
         return [t for t in self.boxes if self.boxes[t].value ]
     
+    def weights(self):
+        return []
+    
 class WeightedTargetBox(pn.Column):
 
     def __init__(self, targets):
         super(WeightedTargetBox, self).__init__(margin=(10,0,10,5))
         self.grid = pn.GridBox(ncols=2)
-        self.boxes = { }
-        for row in make_layout():
-            lst = [ ]
-            for t in row:
-                w = pn.widgets.IntSlider(name=t, value=0, step=1, start=0, end=5, width=250, bar_color='#3171B0')
-                lst.append(w)
-                self.boxes[t] = w
-            self.grid.objects.extend(lst)
+        # self.boxes = [ ]
+        for tnames in make_layout():
+            for t in tnames:
+                w = pn.Row()
+                w.append(pn.widgets.TextInput(name='', placeholder='', width=25, stylesheets=[input_style_sheet]))
+                w.append(t)
+                # self.boxes.append(w)
+                self.grid.objects.append(w)
         self.append(self.grid)
 
+    def selection(self):
+        return [w[1].object for w in self.grid.objects if w[0].value]
+
+    def weights(self):
+        return [w[0].value for w in self.grid.objects if w[0].value]
+    
 class TargetBox(pn.Column):
 
     def __init__(self, targets):
@@ -164,12 +173,23 @@ class TargetBox(pn.Column):
         )
         self.append(self.tabs)
 
+    def selection(self):
+        return self.tabs[self.tabs.active].selection()
+    
+    def weights(self):
+        return self.tabs[self.tabs.active].weights()
+
 class InfoBox(pn.Column):
 
     missing_params_text = '''### Missing Information
 
 Please select
 
+'''
+
+    invalid_weights_text = '''### Invalid Weights
+
+Target weights must be numbers between 1 and 5 (not {})
 '''
 
     preview_message_text = '''### Review Optimizer Settings
@@ -217,18 +237,27 @@ One or more OptiPass runs failed.  See the log in the Admin panel for details.
         # self[0] = pn.pane.Alert(text, alert_type = 'warning')
         # self[1].visible = False
         self.template.open_modal()
+
+    def show_invalid_weights(self, w):
+        text = self.invalid_weights_text.format(w)
+        self.clear()
+        self.append(pn.pane.Alert(text, alert_type = 'warning'))
+        self.template.open_modal()
         
-    def show_params(self, regions, bmax, bstep, targets):
+    def show_params(self, regions, bmax, bstep, targets, weights):
         n = bmax // bstep
         fbmax = OP.format_budget_amount(bmax)
         fbstep = OP.format_budget_amount(bstep)
         text = self.preview_message_text
-        text += f'  * Regions: `{regions}`\n\n'
+        text += f'  * Regions: {", ".join(regions)}\n\n'
         if n > 1:
             text += f'  * {n} budget levels from {fbstep} up to {fbmax} in increments of {fbstep}\n\n'
         else:
             text += f'  * a single budget of {fbmax}\n\n'
-        text += f'  * Targets: `{targets}`\n\n' 
+        targets = [t.split(':')[-1] for t in targets]
+        if weights:
+            targets = [f'{targets[i]} ⨉ {weights[i]}' for i in range(len(targets))]
+        text += f'  * Targets: {", ".join(targets)}\n\n' 
         self.clear()
         self.append(pn.pane.Alert(text, alert_type = 'secondary'))
         self.append(pn.Row(self.cancel_button, self.continue_button))
@@ -281,6 +310,8 @@ class OutputPane(pn.Column):
     def _make_title(self):
         regions = self.op.regions
         targets = [t.short for t in self.op.targets]
+        if self.op.weighted:
+            targets = [f'{targets[i]} ⨉ {self.op.weights[i]}' for i in range(len(targets))]
         bmax = self.op.budget_max
         binc = self.op.budget_delta
         if bmax > binc:
@@ -328,11 +359,14 @@ class OutputPane(pn.Column):
         ], axis=1)
         colnames.append('# Barriers')
         alignment['# Barriers'] = 'center'
-        for t in self.op.targets:
+        for i, t in enumerate(self.op.targets):
             if t.abbrev in self.op.summary.columns:
                 df = pd.concat([df, self.op.summary[t.abbrev]], axis=1)
-                colnames.append(t.short)
-                formatters[t.short] = NumberFormatter(format='0.0', text_align='center')
+                col = t.short
+                if self.op.weighted:
+                    col += f'⨉{self.op.weights[i]}'
+                colnames.append(col)
+                formatters[col] = NumberFormatter(format='0.0', text_align='center')
         df.columns = colnames
         table = pn.widgets.Tabulator(
             df,
@@ -444,7 +478,10 @@ class DownloadPane(pn.Column):
 
     def _make_folder_name(self):
         parts = [s[:3] for s in self.outputs.op.regions]
-        parts.extend([t.abbrev for t in self.outputs.op.targets])
+        lst = [t.abbrev for t in self.outputs.op.targets]
+        if self.outputs.op.weighted:
+            lst = [f'{lst[i]}x{self.outputs.op.weights[i]}' for i in range(len(lst))]
+        parts.extend(lst)
         parts.append(OP.format_budget_amount(self.outputs.op.budget_max)[1:])
         return '_'.join(parts)
 
@@ -604,7 +641,12 @@ class TideGates(pn.template.BootstrapTemplate):
             self.info.show_missing(regions, budget_max, targets)
             return
         
-        self.info.show_params(regions, budget_max, budget_delta, targets)
+        if weights := self.target_boxes.weights():
+            if not all([w.isdigit() and (1 <= int(w) <= 5) for w in weights]):
+                self.info.show_invalid_weights(weights)
+                return
+
+        self.info.show_params(regions, budget_max, budget_delta, targets, weights)
 
     def run_optimizer(self, _):
         Logging.log('running optimizer')
@@ -623,6 +665,7 @@ class TideGates(pn.template.BootstrapTemplate):
             self.bf, 
             list(self.region_boxes.selection()),
             [self.bf.target_map[t] for t in self.target_boxes.selection()],
+            self.target_boxes.weights(),
             self.climate_group.value,
         )
         self.op.generate_input_frame()

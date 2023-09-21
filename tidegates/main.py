@@ -126,7 +126,7 @@ if __name__ == '__main__':
 
         climate = args.climate.capitalize()
         budgets = parse_budget(args.budget)
-        op = OP(p,regions,targets,climate)
+        op = OP(p,regions,targets,None,climate)
 
         match args.action:
             case 'generate':
@@ -168,7 +168,7 @@ if __name__ == '__main__':
                     for b in app.target_boxes.grid:
                         if b.name == s:
                             b.value = True
-                op = OP(p,regions,targets,climate)
+                op = OP(p,regions,targets,None,climate)
                 op.budget_max, op.budget_delta = budgets
                 op.input_frame = op.generate_input_frame()
                 op.outputs = output_files(args.output)

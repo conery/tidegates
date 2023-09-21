@@ -76,3 +76,10 @@ tab_style_sheet = '''.bk-tab {
     background-color: gray;
 }
 '''
+
+input_style_sheet = '''.bk-input {
+    padding: 0px;
+    text-align: center;
+    background-color: #EEEEEE;
+}
+'''

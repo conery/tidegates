@@ -48,7 +48,7 @@ from targets import DataSet
 
 class OP:
 
-    def __init__(self, project: Project, regions: list[str], targets: list[str], climate: str):
+    def __init__(self, project: Project, regions: list[str], targets: list[str], weights: list[str], climate: str):
         '''
         Instantiate a new OP object.
         * project is a Project object containing barrier data
@@ -58,6 +58,12 @@ class OP:
         '''
         self.project = project
         self.regions = regions
+        if weights:
+            self.weights = [int(s) for s in weights]
+            self.weighted = True
+        else:
+            self.weights = [1] * len(targets)
+            self.weighted = False
         self.climate = climate
         structs = self.project.targets[climate] if climate else self.project.targets
         self.targets = [structs[t] for t in targets]
@@ -149,10 +155,13 @@ class OP:
             cmnd = template.format(bf=barrier_file, of=outfile, n=budget)
             if (num_targets := len(self.targets)) > 1:
                 cmnd += ' -t {}'.format(num_targets)
-                cmnd += ' -w' + ' 1.0' * num_targets
+                cmnd += ' -w ' + ', '.join([str(n) for n in self.weights])
             Logging.log(cmnd)
+            print(cmnd)
             if not preview:
                 res = subprocess.run(cmnd, shell=True, capture_output=True)
+                print(res.stdout)
+                print(res.stderr)
             if preview or (res.returncode == 0):
                 outputs.append(outfile)
                 progress_hook()
@@ -178,12 +187,12 @@ class OP:
 
         # costs = { self.project.data.BARID[i]: self.project.data.COST[i] for i in self.project.data.index }
 
-        cols = { x: [] for x in ['budget', 'weights', 'habitat', 'gates']}
+        # cols = { x: [] for x in ['budget', 'weights', 'habitat', 'gates']}
+        cols = { x: [] for x in ['budget', 'habitat', 'gates']}
         for fn in self.outputs:
             self._parse_op_output(fn, cols)
-        self.weights = cols['weights'][0]           # should all be the same
-
-        del cols['weights']
+        # self.weights = cols['weights'][0]           # should all be the same
+        # del cols['weights']
         self.summary = pd.DataFrame(cols)
         
         dct = {}
@@ -223,7 +232,7 @@ class OP:
             f.readline()                        # skip OPTGAP
             line = f.readline()
             if line.startswith('PTNL'):
-                dct['weights'].append([1.0])
+                # dct['weights'].append([1.0])
                 hab = parse_header_line(line, 'PTNL_HABITAT')
                 dct['habitat'].append(float(hab))
                 f.readline()                    # skip NETGAIN
@@ -231,7 +240,7 @@ class OP:
                 lst = []
                 while w := parse_header_line(f.readline(), 'TARGET'):
                     lst.append(float(w))
-                dct['weights'].append(lst)
+                # dct['weights'].append(lst)
                 while line := f.readline():      # skip the individual habitat lines
                     if line.startswith('WT_PTNL_HAB'):
                         break
@@ -358,9 +367,12 @@ class OP:
         D = 10
             
         figures = []
-        for t in self.targets:
+        for i, t in enumerate(self.targets):
+            title = t.long
+            if self.weighted:
+                title += f' ⨉ {int(self.weights[i])}'
             f = figure(
-                title = t.long, 
+                title = title, 
                 x_axis_label = 'Budget', 
                 y_axis_label = t.label,
                 width = W,
@@ -408,10 +420,11 @@ class TestOP:
         Test the OP constructor.
         '''
         p = Project('static/workbook.csv', DataSet.TNC_OR)
-        op = OP(p, ['Coos'], ['CO','CH'], 'Current')
+        op = OP(p, ['Coos'], ['CO','CH'], ['1','1'], 'Current')
         assert op.project == p
         assert op.regions == ['Coos']
         assert op.climate == 'Current'
+        assert op.weights == [1,1]
         assert len(op.targets) == 2
         t = op.targets[0]
         assert t.abbrev == 'CO'
@@ -426,13 +439,13 @@ class TestOP:
         '''
 
         p = Project('static/workbook.csv', DataSet.TNC_OR)
-        op = OP(p, ['Coos'], ['CO','CH'], 'Current')
+        op = OP(p, ['Coos'], ['CO','CH'], ['1','1'], 'Current')
         op.generate_input_frame()
         tf = op.input_frame
 
         assert list(tf.columns) == ['ID','REG', 'FOCUS', 'DSID', 'HAB_CO', 'HAB_CH', 'PRE_CO', 'PRE_CH', 'NPROJ', 'ACTION', 'COST', 'POST_CO', 'POST_CH']
 
-    # NOTE:  the OPM project does not have habitat in unscaled ("target") unita
+    # NOTE:  the OPM project does not have habitat in unscaled ("target") units
     # so the calls to collect_results in these tests need to specify scaled = True
 
     @staticmethod
@@ -441,14 +454,14 @@ class TestOP:
         Test the OPResults class by collecting results for Example 1 from the 
         OptiPass User Manual.
         '''
-        op = OP(Project('static/test_wb.csv', DataSet.OPM), ['OPM'], ['T1'], None)
+        op = OP(Project('static/test_wb.csv', DataSet.OPM), ['OPM'], ['T1'], ['1'], None)
         op.input_frame = pd.read_csv('static/Example_1/Example1.txt', sep='\t')
         op.outputs = sorted(glob('static/Example_1/example_*.txt'))
         op.collect_results(scaled=True)
 
         assert len(op.targets) == 1
         assert op.targets[0].abbrev == 'T1'
-        assert len(op.weights) == 1 and round(op.weights[0]) == 1
+        # assert len(op.weights) == 1 and round(op.weights[0]) == 1
 
         assert type(op.summary) == pd.DataFrame
         assert len(op.summary) == 6
@@ -471,7 +484,7 @@ class TestOP:
         '''
         Same as test_example_1, but using Example 4, which has two restoration targets.
         '''
-        op = OP(Project('static/test_wb.csv', DataSet.OPM), ['OPM'], ['T1','T2'], None)
+        op = OP(Project('static/test_wb.csv', DataSet.OPM), ['OPM'], ['T1','T2'], ['3','1'], None)
         op.input_frame = pd.read_csv('static/Example_4/Example4.txt', sep='\t')
         op.outputs = sorted(glob('static/Example_4/example_*.txt'))
         op.collect_results(scaled=True)
@@ -496,7 +509,7 @@ class TestOP:
         Test the method that computes potential habitat, using the results 
         genearated for Example 1 in the OptiPass manual.
         '''
-        op = OP(Project('static/test_wb.csv', DataSet.OPM), ['OPM'], ['T1'], None)
+        op = OP(Project('static/test_wb.csv', DataSet.OPM), ['OPM'], ['T1'], ['1'], None)
         op.input_frame = pd.read_csv('static/Example_1/Example1.txt', sep='\t')
         op.outputs = sorted(glob('static/Example_1/example_*.txt'))
         op.collect_results(scaled=True)
@@ -512,7 +525,7 @@ class TestOP:
         '''
         Same as test_potential_habitat_1, but using Example 4, with two restoration targets
         '''
-        op = OP(Project('static/test_wb.csv', DataSet.OPM), ['OPM'], ['T1','T2'], None)
+        op = OP(Project('static/test_wb.csv', DataSet.OPM), ['OPM'], ['T1','T2'], ['3','1'], None)
         op.input_frame = pd.read_csv('static/Example_4/Example4.txt', sep='\t')
         op.outputs = sorted(glob('static/Example_4/example_*.txt'))
         op.collect_results(scaled=True)
