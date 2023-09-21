@@ -147,13 +147,11 @@ class WeightedTargetBox(pn.Column):
     def __init__(self, targets):
         super(WeightedTargetBox, self).__init__(margin=(10,0,10,5))
         self.grid = pn.GridBox(ncols=2)
-        # self.boxes = [ ]
         for tnames in make_layout():
             for t in tnames:
                 w = pn.Row()
                 w.append(pn.widgets.TextInput(name='', placeholder='', width=25, stylesheets=[input_style_sheet]))
                 w.append(t)
-                # self.boxes.append(w)
                 self.grid.objects.append(w)
         self.append(self.grid)
 
@@ -218,9 +216,6 @@ One or more OptiPass runs failed.  See the log in the Admin panel for details.
         self.cancel_button = pn.widgets.Button(name='Cancel')
         self.cancel_button.on_click(self.cancel_cb)
 
-        # self.append(pn.pane.Alert('placeholder', alert_type = 'secondary'))
-        # self.append(pn.Row(self.cancel_button, self.continue_button))
-
     def cancel_cb(self, _):
         self.template.close_modal()
  
@@ -234,8 +229,6 @@ One or more OptiPass runs failed.  See the log in the Admin panel for details.
             text += ' * one or more targets\n'
         self.clear()
         self.append(pn.pane.Alert(text, alert_type = 'warning'))
-        # self[0] = pn.pane.Alert(text, alert_type = 'warning')
-        # self[1].visible = False
         self.template.open_modal()
 
     def show_invalid_weights(self, w):
@@ -261,22 +254,16 @@ One or more OptiPass runs failed.  See the log in the Admin panel for details.
         self.clear()
         self.append(pn.pane.Alert(text, alert_type = 'secondary'))
         self.append(pn.Row(self.cancel_button, self.continue_button))
-        # self[0] = pn.pane.Alert(text, alert_type = 'secondary')
-        # self[1].visible = True
         self.template.open_modal()
 
     def show_success(self):
         self.clear()
         self.append(pn.pane.Alert(self.success_text, alert_type = 'success'))
-        # self[0] = pn.pane.Alert(self.success_text, alert_type = 'success')
-        # self[1].visible = False
         self.template.open_modal()
 
     def show_fail(self):
         self.clear()
         self.append(pn.pane.Alert(self.fail_text, alert_type = 'danger'))
-        # self[0] = pn.pane.Alert(self.fail_text, alert_type = 'danger')
-        # self[1].visible = False
         self.template.open_modal()
 
 # Create an instance of the OutputPane class to store the tables and plots to
@@ -299,8 +286,6 @@ class OutputPane(pn.Column):
 
         self.append(pn.pane.HTML('<h3>Budget Summary</h3>'))
         self.append(self._make_budget_table())
-        # pn.pane.HTML('<h3>Barrier Details</h3>'),
-        # self._make_gate_table(op),
 
         self.append(pn.Accordion(
             ('Barrier Details', self._make_gate_table()),
@@ -316,7 +301,6 @@ class OutputPane(pn.Column):
         binc = self.op.budget_delta
         if bmax > binc:
             title_template = '<p><b>Regions:</b> {r}; <b>Targets:</b> {t}; <b>Budgets:</b> {min} to {max}</p>'
-            # n = bmax // binc
             return pn.pane.HTML(title_template.format(
                 r = ', '.join(regions),
                 t = ', '.join(targets),
@@ -404,7 +388,16 @@ class OutputPane(pn.Column):
             elif col == 'Cost':
                 formatters[col] = {'type': 'money', 'symbol': '$', 'precision': 0}
                 alignment[col] = 'right'
-        df.columns = [c.replace('_hab','') for c in df.columns]
+        colnames = [c.replace('_hab','') for c in df.columns]
+        if self.op.weighted:
+            for i, t in enumerate(self.op.targets):
+                if t.short not in colnames:             # shouldn't happen, but just in case...
+                    continue
+                j = colnames.index(t.short)
+                colnames[j] += f'⨉{self.op.weights[i]}'
+                formatters[colnames[j]] = NumberFormatter(format='0.0', text_align='center')
+        df.columns = colnames
+
         table = pn.widgets.Tabulator(
             df, 
             show_index=False, 
@@ -656,10 +649,6 @@ class TideGates(pn.template.BootstrapTemplate):
 
         budget_max, budget_delta = self.budget_box.values()
         num_budgets = budget_max // budget_delta
-
-        # Uncomment this line to show a progress bar below the Optimize button (and uncomment
-        # the line below that updates the bar after each optimizer run)
-        # self.info.show_progress(num_budgets)
 
         self.op = OP(
             self.bf, 

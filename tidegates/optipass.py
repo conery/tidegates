@@ -151,7 +151,6 @@ class OP:
         for i in range(num_budgets + 1):
             outfile = f'{root}_{i+1}.txt'
             budget = self.budget_delta * i
-            # cmnd = f'wine bin/OptiPassMain.exe -f {barrier_file} -o {outfile} -b {budget}'
             cmnd = template.format(bf=barrier_file, of=outfile, n=budget)
             if (num_targets := len(self.targets)) > 1:
                 cmnd += ' -t {}'.format(num_targets)
@@ -185,14 +184,9 @@ class OP:
             G.add_node(x)
         self.paths = { n: self._path_from(n,G) for n in G.nodes }
 
-        # costs = { self.project.data.BARID[i]: self.project.data.COST[i] for i in self.project.data.index }
-
-        # cols = { x: [] for x in ['budget', 'weights', 'habitat', 'gates']}
         cols = { x: [] for x in ['budget', 'habitat', 'gates']}
         for fn in self.outputs:
             self._parse_op_output(fn, cols)
-        # self.weights = cols['weights'][0]           # should all be the same
-        # del cols['weights']
         self.summary = pd.DataFrame(cols)
         
         dct = {}
