@@ -58,8 +58,8 @@ with open(fn) as f:
         if rec['NPROJ'] not in ['0', '1']:
             errors.append(f'Line {reader.line_num}: NPROJ not 0 or 1')
 
-        if not re.match(r'\d+', rec['COST']):
-            errors.append(f'Line {reader.line_num}: COST not an integer')
+        if not re.fullmatch(r'\d+(\.\d+)?', rec['COST']):
+            errors.append(f'Line {reader.line_num}: COST not a number')
 
         for col in ['POINT_X','POINT_Y']:
             if not re.match(r'-?\d+\.\d+', rec[col]):
