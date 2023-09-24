@@ -69,7 +69,7 @@ def make_app():
     # return template
     return TideGates(
         title='Tide Gate Optimization', 
-        sidebar_width=425
+        sidebar_width=450
     )
 
 def start_app():
@@ -143,14 +143,14 @@ if __name__ == '__main__':
                 op.outputs = output_files(args.output)
                 op.collect_results(args.scaled)
                 print(op.table_view())
-                op.roi_curves(*budgets).show()
+                op.make_roi_curves(*budgets).show()
             case 'all':
                 op.generate_input_frame()
                 op.run(budgets, args.action=='preview')
                 if op.outputs is not None:
                     op.collect_results(args.scaled)
                     print(op.table_view())
-                    op.roi_curves(*budgets).show()
+                    op.make_roi_curves(*budgets).show()
             case 'gui':
                 if not (args.budget and args.output):
                     print('gui action requires --output and --budget')
@@ -165,7 +165,7 @@ if __name__ == '__main__':
                 m = app.bf.targets['Current']
                 for t in targets:
                     s = m[t].long
-                    for b in app.target_boxes.grid:
+                    for b in app.target_boxes.tabs[0].grid:
                         if b.name == s:
                             b.value = True
                 op = OP(p,regions,targets,None,climate)

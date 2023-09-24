@@ -1,14 +1,20 @@
 
 <p>The goal for the plot shown above was to see the potential increase in the number of acres available for fish habitat.
-To make this plot we ran OptiPass 10 times, with budgets of $2.5M, $5M, <i>etc</i>, ending at $25M.</p>
-<p>The circles in the plot show the potential habitat gained at each budget level.  For example, at an investment level of $5M, OptiPass found a set of gates that would potentially add 4,000 acres of habitat.</p>
+To make this plot we ran the optimizer 10 times, with budgets of $2.5 million, $5 million, <i>etc</i>, ending at $25 million.</p>
+<blockquote>
+    Since budget values can be large numbers we use abbreviations. $K stands for "thousands of dollars" and $M stands for "millions of dollars".  For example, $2.5M is short for $2,500,000.
+</blockquote>
+<p>The circles in the plot show the potential habitat gained at each budget level.  For example, at an investment level of $5M, the optimizer found a set of gates that would potentially add 4,000 acres of habitat.</p>
+<p>ROI curves typically start to "flatten out" at some point.
+    The area where the slope of the curve levels off indicates the point at which additional financial investment would provide diminishing gains. </p>
 
 <H3>Running the Optimizer</H3>
-<p>To run the optimizer for your own projects you need to specify three types of information:</p>
+<p>To run the optimizer for your area of interest you need to specify four types of information:</p>
 <ul>
-    <li>The estuaries that contain the barriers you are interested in</li>
-    <li>The set of budget values for the optimizer to consider</li>
+    <li>The estuaries (regions) that contain the barriers you are interested in</li>
+    <li>The range of budget values for the optimizer to consider</li>
     <li>The types of benefits you hope to achieve</li>
+    <li>Whether the optimizer should consider current sea levels or future sea levels resulting from climate change</li>
 </ul>
 
 <p>You will see places to specify all of this information when you click the <b>Start</b> tab at the top of the page.</p>
@@ -20,17 +26,20 @@ To make this plot we ran OptiPass 10 times, with budgets of $2.5M, $5M, <i>etc</
 
 <H4>Targets</H4>
 <p>There are a variety of potential benefits that can be considered.  Some are number of stream miles available to a single species of fish, others are physical infrastructure such as acreage of farmland or miles of roads.</p>
-<p>If you select more than one target, OptiPass will consider them all simultaneously.  You will see one ROI curve for each individual target and one overall "net benefit" plot based on all targets.</p>
+<p>If you select more than one target, the optimizer will consider them all simultaneously.  You will see one ROI curve for each individual target and one overall "net benefit" plot based on all targets.</p>
 
-<H4>Submit Your Request to the Server</H4>
-<p>After you have entered values in all three sections click the <b>Optimize</b> button at the bottom of that page.  This will send your specifications to our web server, which will run OptiPass and return the results to your browser.</p>
+<H4>Climate Scenario</H4>
+<p>You can choose whether the optimizer uses current water levels or predicted future levels expected as the result of climate change.</p>
+
+<H4>Submit Your Request</H4>
+<p>After you have entered values in all three sections click the <b>Optimize</b> button at the bottom of that page.</p>
 
 <p>When the results are ready you can click on the <b>Output</b> tab to see plots showing the predicted benefits at each budget level along with tables that contain detailed information about the barriers identified by the optimizer.</p>
 
-<p>You can use the <b>Download</b> tab to save your results.  Select the type of data you want and click the <b>Create Archive</b> button.  The web server will create a compressed archive and then show you a button to click to download the archive to your system.</p>
+<p>You can use the <b>Download</b> tab to save your results.  Select the type of data you want and click the <b>Create Archive</b> button.  A zipped (compressed) file will be created that you can download to your system.</p>
 
 <H3>Detailed Help Messages</H3>
 
-<p>At various places on these pages you will see an "information" symbol (a lower case "i" inside a blue box).</p>
-<p>These are buttons.  When you click on a button a new window will pop up with more detailed information about parts of this tool.  For example, you should see an information button now, just below the map on the left side of the page.  If you click that button you will see detailed information about how to interact with the map (zoom in, scroll left and right, <i>etc.</i>).</p>
-<p>The windows that have these details can be left on the screen as long as you need them.  You can move them around wherever you want: click in the window title and drag the window to a new location anywhere on the screen.  When you are done with the window click the X in the right side of the title bar.</p>
+<p>At various places on these pages you will see a &#8505; icon (the international symbol for "information", a lower case "i" inside a blue box).</p>
+<p>These are buttons.  When you click on a button a new panel will pop up with more detailed information about parts of this tool.  For example, you should see an information button now, by the upper right corner of the map.  If you click that button you will see detailed information about how to interact with the map (zoom in, scroll left and right, <i>etc.</i>).</p>
+<p>The help panels can be left on the screen as long as you need them.  You can move them so you can see the help messages and the controls they describe at the same time. Click in the panel title and drag it to a new location anywhere in your browswer window.  When you are done with the panel click the X in the right side of the title bar.</p>

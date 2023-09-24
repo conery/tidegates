@@ -38,9 +38,10 @@ import panel as pn
 import networkx as nx
 import tempfile
 
-from bokeh.plotting import figure, show
-from bokeh.layouts import row, Spacer
-from bokeh.models import NumeralTickFormatter, Label, HoverTool
+from bokeh.plotting import figure
+from bokeh.models import NumeralTickFormatter, HoverTool
+
+import matplotlib.pyplot as plt
 
 from messages import Logging
 from project import Project
@@ -353,51 +354,100 @@ class OP:
             s = s[:-2]
         return s+suffix
     
-    def roi_curves(self, budget_max, budget_inc):
+    def make_roi_curves(self, budget_max, budget_inc):
 
-        H = 400
-        W = 400
-        LW = 2
-        D = 10
+        # H = 400
+        # W = 400
+        # LW = 2
+        # D = 10
             
         figures = []
+        download_figures = []
+
         for i, t in enumerate(self.targets):
             title = t.long
             if self.weighted:
                 title += f' ⨉ {int(self.weights[i])}'
-            f = figure(
-                title = title, 
-                x_axis_label = 'Budget', 
-                y_axis_label = t.label,
-                width = W,
-                height = H,
-                tools = [HoverTool(mode='vline')],
-                tooltips = 'Budget @x{$0.0a}, Benefit @y{0.0}',
-            )
-            f.line(self.summary.budget, self.summary[t.abbrev], line_width=LW)
-            f.circle(self.summary.budget, self.summary[t.abbrev], fill_color='white', size=D)
-            f.xaxis.formatter = NumeralTickFormatter(format='$0.0a')
-            f.toolbar_location = None
+            # f = figure(
+            #     title = title, 
+            #     x_axis_label = 'Budget', 
+            #     y_axis_label = t.label,
+            #     width = W,
+            #     height = H,
+            #     tools = [HoverTool(mode='vline')],
+            #     tooltips = 'Budget @x{$0.0a}, Benefit @y{0.0}',
+            # )
+            # f.line(self.summary.budget, self.summary[t.abbrev], line_width=LW)
+            # f.circle(self.summary.budget, self.summary[t.abbrev], fill_color='white', size=D)
+            # f.xaxis.formatter = NumeralTickFormatter(format='$0.0a')
+            # f.toolbar_location = None
+            f = self.bokeh_figure(self.summary.budget, self.summary[t.abbrev], title, t.label)
             figures.append((t.short, f))
+            f = self.pyplot_figure(self.summary.budget, self.summary[t.abbrev], title, t.label)
+            download_figures.append((t.short, f))
 
         if len(self.targets) > 1:
-            f = figure(
-                title='Combined Potential Benefit', 
-                x_axis_label='Budget', 
-                y_axis_label='Weighted Net Gain',
-                width=W,
-                height=H,
-                tools = [HoverTool(mode='vline')],
-                tooltips = 'Budget @x{$0.0a}, Benefit @y{0.0}',
-            )
-            f.line(self.summary.budget, self.summary.netgain, line_width=LW)
-            f.circle(self.summary.budget, self.summary.netgain, fill_color='white', size=D)
-            f.xaxis.formatter = NumeralTickFormatter(format='$0.0a')
-            f.toolbar_location = None
+            # f = figure(
+            #     title='Combined Potential Benefit', 
+            #     x_axis_label='Budget', 
+            #     y_axis_label='Weighted Net Gain',
+            #     width=W,
+            #     height=H,
+            #     tools = [HoverTool(mode='vline')],
+            #     tooltips = 'Budget @x{$0.0a}, Benefit @y{0.0}',
+            # )
+            # f.line(self.summary.budget, self.summary.netgain, line_width=LW)
+            # f.circle(self.summary.budget, self.summary.netgain, fill_color='white', size=D)
+            # f.xaxis.formatter = NumeralTickFormatter(format='$0.0a')
+            # f.toolbar_location = None
+            f = self.bokeh_figure(self.summary.budget, self.summary.netgain, 'Combined Potential Benefit', 'Weighted Net Gain')
             figures.insert(0, ('Net', f))
+            f = self.pyplot_figure(self.summary.budget, self.summary[t.abbrev], 'Combined Potential Benefit', 'Weighted Net Gain')
+            download_figures.insert(0, ('Net', f))
 
-        return figures
+        self.display_figures = figures
+        self.download_figures = download_figures
     
+    def bokeh_figure(self, x, y, title, axis_label):
+        H = 400
+        W = 400
+        LW = 2
+        D = 10
+    
+        f = figure(
+            title=title, 
+            x_axis_label='Budget', 
+            y_axis_label=axis_label,
+            width=W,
+            height=H,
+            tools = [HoverTool(mode='vline')],
+            tooltips = 'Budget @x{$0.0a}, Benefit @y{0.0}',
+        )
+        f.line(x, y, line_width=LW)
+        f.circle(x, y, fill_color='white', size=D)
+        f.xaxis.formatter = NumeralTickFormatter(format='$0.0a')
+        f.toolbar_location = None
+        return f
+    
+    def pyplot_figure(self, x, y, title, axis_label):
+
+        def tick_fmt(n, x):
+            return OP.format_budget_amount(n)
+
+        LC = '#3c76af'
+        H = 4
+        W = 4
+        LW = 1.25
+        D = 7
+
+        fig, ax = plt.subplots(figsize=(H,W))
+        ax.grid(linestyle='--', linewidth=0.5)
+        ax.plot(x, y, color=LC, linewidth=LW)
+        ax.plot(x, y, 'o', markerfacecolor='white', markeredgecolor=LC, markersize=D, markeredgewidth=0.75)
+        ax.xaxis.set_major_formatter(tick_fmt)
+        ax.set_title(title, loc='left', weight='bold', fontsize= 10)
+        ax.set_ylabel(axis_label, style='italic', fontsize=10)
+        return fig
 
 ####################
 #

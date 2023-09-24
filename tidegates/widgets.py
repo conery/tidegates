@@ -4,7 +4,7 @@ import panel as pn
 import pandas as pd
 
 import bokeh.plotting as bk
-from bokeh.io import export_png
+from bokeh.io import save as savehtml
 from bokeh.models.widgets.tables import NumberFormatter
 from bokeh.tile_providers import get_provider
 import xyzservices.providers as xyz
@@ -192,7 +192,7 @@ Target weights must be numbers between 1 and 5 (not {})
 
     preview_message_text = '''### Review Optimizer Settings
 
-Clicking Continue will run OptiPass with the following settings:
+Clicking Continue will run the optimizer with the following settings:
 
 '''
 
@@ -203,7 +203,7 @@ Click on the **Output** tab to see the results.
 
     fail_text = '''### Optimization Failed
 
-One or more OptiPass runs failed.  See the log in the Admin panel for details.
+One or more optimizer runs failed.  See the log in the Admin panel for details.
 '''
 
     def __init__(self, template, run_cb):
@@ -237,7 +237,7 @@ One or more OptiPass runs failed.  See the log in the Admin panel for details.
         self.append(pn.pane.Alert(text, alert_type = 'warning'))
         self.template.open_modal()
         
-    def show_params(self, regions, bmax, bstep, targets, weights):
+    def show_params(self, regions, bmax, bstep, targets, weights, climate):
         n = bmax // bstep
         fbmax = OP.format_budget_amount(bmax)
         fbstep = OP.format_budget_amount(bstep)
@@ -250,7 +250,8 @@ One or more OptiPass runs failed.  See the log in the Admin panel for details.
         targets = [t.split(':')[-1] for t in targets]
         if weights:
             targets = [f'{targets[i]} ⨉ {weights[i]}' for i in range(len(targets))]
-        text += f'  * Targets: {", ".join(targets)}\n\n' 
+        text += f'  * Targets: {", ".join(targets)}\n' 
+        text += f'  * Climate: {climate}\n\n'
         self.clear()
         self.append(pn.pane.Alert(text, alert_type = 'secondary'))
         self.append(pn.Row(self.cancel_button, self.continue_button))
@@ -275,23 +276,27 @@ class OutputPane(pn.Column):
         super(OutputPane, self).__init__()
         self.op = op
         self.bf = bf
-        self.figures = None    # will be set to list of plots by _make_figures
+        self.figures = []
 
-        self.append(pn.pane.HTML('<h3>Optimization Complete</h3>'))
+        self.append(pn.pane.HTML('<h3>Optimization Complete</h3>', styles=header_styles))
         self.append(self._make_title())
 
         if op.budget_max > op.budget_delta:
             self.append(pn.pane.HTML('<h3>ROI Curves</h3>'))
-            self.append(self._make_figures())
+            self.figures = self._make_figures()
+            self.append(self.figures)
 
         self.append(pn.pane.HTML('<h3>Budget Summary</h3>'))
-        self.append(self._make_budget_table())
+        self.gate_count = self.op.summary.gates.apply(len).sum()
+        if self.gate_count == 0:
+            self.append(pn.pane.HTML('<i>No barriers selected -- consider increasing the budget</i>'))
+        else:
+            self.append(self._make_budget_table())
+            self.append(pn.Accordion(
+                ('Barrier Details', self._make_gate_table()),
+                stylesheets = [accordion_style_sheet],
+            ))
 
-        self.append(pn.Accordion(
-            ('Barrier Details', self._make_gate_table()),
-            stylesheets = [accordion_style_sheet],
-        ))
-    
     def _make_title(self):
         regions = self.op.regions
         targets = [t.short for t in self.op.targets]
@@ -300,30 +305,31 @@ class OutputPane(pn.Column):
         bmax = self.op.budget_max
         binc = self.op.budget_delta
         if bmax > binc:
-            title_template = '<p><b>Regions:</b> {r}; <b>Targets:</b> {t}; <b>Budgets:</b> {min} to {max}</p>'
+            title_template = '<p><b>Regions:</b> {r}; <b>Targets:</b> {t}; <b>Climate:</b> {c}; <b>Budgets:</b> {min} to {max}</p>'
             return pn.pane.HTML(title_template.format(
                 r = ', '.join(regions),
                 t = ', '.join(targets),
+                c = self.op.climate,
                 min = OP.format_budget_amount(binc),
                 max = OP.format_budget_amount(bmax),
             ))
         else:
-            title_template = '<p><b>Regions:</b> {r}; <b>Targets:</b> {t}; <b>Budget:</b> {b}'
+            title_template = '<p><b>Regions:</b> {r}; <b>Targets:</b> {t}; <b>Climate:</b> {c}; <b>Budget:</b> {b}'
             return pn.pane.HTML(title_template.format(
                 r = ', '.join(regions),
                 t = ', '.join(targets),
+                c = self.op.climate,
                 b = OP.format_budget_amount(bmax),
             ))
             
     def _make_figures(self):
-        self.figures = []
         tabs = pn.Tabs(
             tabs_location='left',
             stylesheets = [tab_style_sheet],
         )
-        for p in self.op.roi_curves(self.op.budget_max, self.op.budget_delta):
+        self.op.make_roi_curves(self.op.budget_max, self.op.budget_delta)
+        for p in self.op.display_figures:
             tabs.append(p)
-            self.figures.append(p[1])
         return tabs
     
     def _make_budget_table(self):
@@ -414,16 +420,17 @@ class OutputPane(pn.Column):
         return table
     
     def make_dots(self, plot):
-        self.selected_row = None
-        self.dots = []
-        for row in self.budget_table.itertuples():
-            df = self.bf.map_info[self.bf.data.BARID.isin(row.gates)]
-            c = plot.circle_dot('x', 'y', size=12, line_color='blue', fill_color='white', source=df)
-            # c = plot.star_dot('x', 'y', size=20, line_color='blue', fill_color='white', source=df)
-            # c = plot.star('x', 'y', size=12, color='blue', source=df)
-            # c = plot.hex('x', 'y', size=12, color='green', source=df)
-            c.visible = False
-            self.dots.append(c)
+        if hasattr(self, 'budget_table'):
+            self.selected_row = None
+            self.dots = []
+            for row in self.budget_table.itertuples():
+                df = self.bf.map_info[self.bf.data.BARID.isin(row.gates)]
+                c = plot.circle_dot('x', 'y', size=12, line_color='blue', fill_color='white', source=df)
+                # c = plot.star_dot('x', 'y', size=20, line_color='blue', fill_color='white', source=df)
+                # c = plot.star('x', 'y', size=12, color='blue', source=df)
+                # c = plot.hex('x', 'y', size=12, color='green', source=df)
+                c.visible = False
+                self.dots.append(c)
 
     def budget_table_cb(self, e):
         if n := self.selected_row:
@@ -456,18 +463,38 @@ class DownloadPane(pn.Column):
             self.grid.objects.append(b)
 
         self.filename_input = pn.widgets.TextInput(
-            name = 'Archive Folder Name', 
+            name = '', 
             value = self.folder_name,
         )
 
-        self.make_archive_button = pn.widgets.Button(name='Create Archive', stylesheets=[button_style_sheet])
+        self.image_type = pn.widgets.RadioBoxGroup(name='IFF', options=['HTML','PDF','PNG','JPEG'], inline=True)
+
+        self.make_archive_button = pn.widgets.Button(name='Create Output Folder', stylesheets=[button_style_sheet])
         self.make_archive_button.on_click(self._archive_cb)
 
         self.append(pn.pane.HTML('<h3>Save Outputs</h3>', styles=header_styles))
-        self.append(self.grid)
-        self.append(self.filename_input)
-        self.append(self.make_archive_button)
-        self.append(pn.pane.HTML('<p>placeholder</p>', visible=False))
+        if outputs.gate_count > 0:
+            self.append(pn.pane.HTML('<b>Items to Include in the Output Folder:</b>')),
+            self.append(self.grid)
+            self.append(pn.Row(
+                pn.pane.HTML('<b>Image File Format:</b>'),
+                self.image_type,
+                margin=(20,0,0,0),
+            ))
+            self.append(pn.Row(
+                pn.pane.HTML('<b>Output Folder Name:</b>'),
+                self.filename_input,
+                margin=(20,0,0,0),
+            ))
+            self.append(self.make_archive_button)
+            self.append(pn.pane.HTML('<p>placeholder</p>', visible=False))
+
+        if len(outputs.figures) == 0 or outputs.figures[0][0] != 'Net':
+            self.boxes[self.NB].value = False
+            self.boxes[self.NB].disabled = True
+        if len(outputs.figures) == 0:
+            self.boxes[self.IT].value = False
+            self.boxes[self.IT].disabled = True
 
     def _make_folder_name(self):
         parts = [s[:3] for s in self.outputs.op.regions]
@@ -486,7 +513,7 @@ class DownloadPane(pn.Column):
         self._save_files(base)
         p = make_archive(base, 'zip', base)
         self.loading = False
-        self[-1] = pn.widgets.FileDownload(file=p, filename=self.filename+'.zip')
+        self[-1] = pn.widgets.FileDownload(file=p, filename=self.filename+'.zip', stylesheets=[button_style_sheet])
 
     def _make_archive_dir(self):
         self.filename = self.filename_input.value_input or self.filename_input.value
@@ -497,15 +524,20 @@ class DownloadPane(pn.Column):
         return archive_dir
 
     def _save_files(self, loc):
-        if self.outputs.figures:
-            if self.boxes[self.NB].value:
-                export_png(self.outputs.figures[0], filename=loc/'net.png')
-                # print(self.NB)
-            if self.boxes[self.IT].value:
-                for i in range(len(self.outputs.figures)-1):
-                    fn = self.outputs.op.targets[i].abbrev + '.png'
-                    export_png(self.outputs.figures[i+1], filename=loc/fn)
-                # print(self.IT)
+        figures = self.outputs.op.display_figures if self.image_type.value == 'HTML' else self.outputs.op.download_figures
+        for name, fig in figures:
+            if name == 'Net' and not self.boxes[self.NB].value:
+                continue
+            if name != 'Net' and not self.boxes[self.IT].value:
+                continue
+            if self.image_type.value == 'HTML':
+                print('saving',loc/f'{name}.html')
+                savehtml(fig, filename=loc/f'{name}.html')
+            else:
+                ext = self.image_type.value.lower()
+                fn = loc/f'{name}.{ext}'
+                print('saving', fn)
+                fig.savefig(fn)
         if self.boxes[self.BS].value:
             df = self.outputs.budget_table.drop(['gates'], axis=1)
             df.to_csv(
@@ -513,14 +545,14 @@ class DownloadPane(pn.Column):
                 index=False,
                 float_format=lambda n: round(n,2)
             )
-            # print(self.BS)
+            print(self.BS)
         if self.boxes[self.BD].value:
             self.outputs.gate_table.to_csv(
                 loc/'gate_table.csv',
                 index=False,
                 float_format=lambda n: round(n,2)
             )
-            # print(self.BD)
+            print(self.BD)
 
 class TideGates(pn.template.BootstrapTemplate):
 
@@ -535,7 +567,7 @@ class TideGates(pn.template.BootstrapTemplate):
         self.budget_box = BudgetBox()
         self.region_boxes = RegionBox(self.bf, self.map, self.budget_box)
         self.target_boxes = TargetBox(list(self.bf.target_map.keys()))
-        self.climate_group = pn.widgets.RadioBoxGroup(name='Climate', options=self.bf.climates, inline=False)
+        self.climate_group = pn.widgets.RadioBoxGroup(name='Climate', options=self.bf.climates)
  
         self.optimize_button = pn.widgets.Button(name='Run Optimizer', stylesheets=[button_style_sheet])
 
@@ -552,6 +584,9 @@ class TideGates(pn.template.BootstrapTemplate):
 
         self.target_help_button = pn.widgets.Button(name='ℹ️', stylesheets = [help_button_style_sheet])
         self.target_help_button.on_click(self.target_help_cb)
+
+        self.climate_help_button = pn.widgets.Button(name='ℹ️', stylesheets = [help_button_style_sheet])
+        self.climate_help_button.on_click(self.climate_help_cb)
 
         welcome_tab = pn.Column(
             self.section_head('Welcome'),
@@ -579,11 +614,12 @@ class TideGates(pn.template.BootstrapTemplate):
             pn.WidgetBox(
                 pn.Row(
                     self.target_boxes,
-                    pn.layout.HSpacer(),
+                    # pn.layout.HSpacer(width=10),
                     pn.Column(
-                        pn.widgets.StaticText(value='<b>Climate Scenario</b>'),
+                        # pn.Row(self.climate_help_button,pn.widgets.StaticText(value='<b>Climate Scenario</b>')),
+                        self.section_head('Climate', self.climate_help_button),
                         self.climate_group, 
-                        margin=(10,0,20,0),
+                        margin=(0,0,0,20),
                     ),
                 ),
                 width=600,
@@ -609,11 +645,10 @@ class TideGates(pn.template.BootstrapTemplate):
             ('Download', download_tab),
             sizing_mode = 'fixed',
             width=800,
-            height=800,
+            # height=700,
         )
         
-        self.sidebar.append(self.map_pane)
-        self.sidebar.append(self.map_help_button)
+        self.sidebar.append(pn.Row(self.map_pane, self.map_help_button))
         self.main.append(self.tabs)
 
         self.info = InfoBox(self, self.run_optimizer)
@@ -639,7 +674,7 @@ class TideGates(pn.template.BootstrapTemplate):
                 self.info.show_invalid_weights(weights)
                 return
 
-        self.info.show_params(regions, budget_max, budget_delta, targets, weights)
+        self.info.show_params(regions, budget_max, budget_delta, targets, weights, self.climate_group.value)
 
     def run_optimizer(self, _):
         Logging.log('running optimizer')
@@ -690,13 +725,15 @@ class TideGates(pn.template.BootstrapTemplate):
 
     def map_help_cb(self, _):
         msg = pn.pane.HTML('''
-        <p>When you move your mouse over the map the cursor will change to a "crosshairs" symbol.  Navigating with the map is similar to using Google maps or other online maps:</p>
+        <p>When you move your mouse over the map the cursor will change to a "crosshairs" symbol and a set of buttons will appear below the map.
+        Navigating with the map is similar to using Google maps or other online maps:</p>
         <ul>
             <li>Left-click and drag to pan (move left and right or up and down).</li>
-            <li>If you want to zoom in and out, first click the magnifying glass symbol below the map; then you can zoom in and out using the scroll wheel on your mouse.</li>   
+            <li>If you want to zoom in and out, first click the magnifying glass button below the map; then you can zoom in and out using the scroll wheel on your mouse.</li>   
+            <li>Click the refresh button to restore the map to its original size and location.</li>
         </ul>
         ''')
-        self.tabs[0].append(pn.layout.FloatPanel(msg, name='Map Controls', contained=False, position='left-bottom', width=400))
+        self.tabs[0].append(pn.layout.FloatPanel(msg, name='Map Controls', contained=False, position='center', width=400))
     
     def region_help_cb(self, _):
         msg = pn.pane.HTML('''
@@ -708,25 +745,33 @@ class TideGates(pn.template.BootstrapTemplate):
     
     def budget_help_cb(self, _):
         msg = pn.pane.HTML('''
-        <p>There are three ways to specify the project budgets used by the optimizer.</p>
+        <p>There are three ways to specify the budgets used by the optimizer.</p>
         <H4>Basic</H4>
-        <p>The simplest method is to specify an upper limit by moving the slider back and forth.  When you use this method, the server will run OptiPass 10 times, ending at the value you select with the slider.  For example, if you set the slider at $10M, the server will make ROI curves based on budgets of $1M, $2M, <i>etc</i>, up to the maximum of $10M.</p>
+        <p>The simplest method is to specify an upper limit by moving the slider back and forth.  When you use this method, the optimizer will run 10 times, ending at the value you select with the slider.  For example, if you set the slider at $10M (the abbreviation for $10 million), the optimizer will make ROI curves based on budgets of $1M, $2M, <i>etc</i>, up to the maximum of $10M.</p>
         <p>Note that the slider is disabled until you select one or more regions.  That's because the maximum value depends on the costs of the gates in each region.
         For example, the total cost of all gates in the Coquille region is $11.8M.  Once you choose that region, you can move the budget slider
-        left and right to pick a maximum budget for OptiPass to consider.
+        left and right to pick a maximum budget for the optimizer to consider.
         <H4>Advanced</H4>
         <p>If you click on the Advanced tab in this section you will see ways to specify the budget interval and the number of budgets.</p>
         <p>You can use this method if you want more control over the layout of the ROI curves, for example you can include more points by increasing the number of budgets.</p>
         <H4>Fixed</H4>
         <p>If you know exactly how much money you have to spend you can enter that amount by clicking on the Fixed tab and entering the budget amount.</p>
-        <p>The server will run OptiPass just once, using that budget.  The output will have tables showing the gets identified by OptiPass, but there will be no ROI curve.</p>
+        <p>The optimizer will run just once, using that budget.  The output will have tables showing the gates identified by the optimizer, but there will be no ROI curve.</p>
+        <p>When entering values, you can write the full amount, with or without commas (<i>e.g.</i>11,500,000 or 11500000) or use the abbreviated form (11.5M).</p>
         ''')
         self.tabs[2].append(pn.layout.FloatPanel(msg, name='Budget Levels', contained=False, position='center', width=400))
     
     def target_help_cb(self, _):
         msg = pn.pane.HTML('''
-        <p>Click a box next to a target name to have OptiPass include that target in its calculations.</p>
-        <p>If more than one target is selected the server will generate an ROI curve for each indivdual target and an overall "net benefit" curve based on considering all targets at the same time.</p>
+        <p>Click boxes next to one or more target names to have the optimizer include those targets in its calculations.</p>
+        <p>The optimizer will create an ROI curve for each target selected. </p>
+        <p>If more than one target is selected the optimizer will also generate an overall "net benefit" curve based on considering all targets at the same time.</p>
         ''')
         self.tabs[2].append(pn.layout.FloatPanel(msg, name='Targets', contained=False, position='center', width=400))
     
+    def climate_help_cb(self, _):
+        msg = pn.pane.HTML('''
+        <p>By default the optimizer uses current water levels when computing potential benefits.  Click the button next to <b>Future</b> to have it use water levels expected due to climate change.</p>
+        <p>The future scenario uses two projected water levels, both for the period to 2100. For fish habitat targets, the future water level is based on projected sea level rise of 5.0 feet.  For agriculture and infrastructure targets, the future water level is projected to be 7.2 feet, which includes sea level rise and the probabilities of extreme water levels causing flooding events.</p>
+        ''')
+        self.tabs[2].append(pn.layout.FloatPanel(msg, name='Targets', contained=False, position='center', width=400))
