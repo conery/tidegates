@@ -276,15 +276,14 @@ class OutputPane(pn.Column):
         super(OutputPane, self).__init__()
         self.op = op
         self.bf = bf
-        self.figures = []
+        # self.figures = []
 
         self.append(pn.pane.HTML('<h3>Optimization Complete</h3>', styles=header_styles))
         self.append(self._make_title())
 
         if op.budget_max > op.budget_delta:
             self.append(pn.pane.HTML('<h3>ROI Curves</h3>'))
-            self.figures = self._make_figures()
-            self.append(self.figures)
+            self.append(self._make_figures_tab())
 
         self.append(pn.pane.HTML('<h3>Budget Summary</h3>'))
         self.gate_count = self.op.summary.gates.apply(len).sum()
@@ -322,7 +321,7 @@ class OutputPane(pn.Column):
                 b = OP.format_budget_amount(bmax),
             ))
             
-    def _make_figures(self):
+    def _make_figures_tab(self):
         tabs = pn.Tabs(
             tabs_location='left',
             stylesheets = [tab_style_sheet],
@@ -458,7 +457,12 @@ class DownloadPane(pn.Column):
         self.grid = pn.GridBox(ncols=2)
         self.boxes = { }
         for x in [self.NB, self.BS, self.IT, self.BD]:
-            b = pn.widgets.Checkbox(name=x, styles=box_styles, stylesheets=[box_style_sheet], value=True)
+            b = pn.widgets.Checkbox(name=x, styles=box_styles, stylesheets=[box_style_sheet])
+            if x in [self.NB, self.IT]:
+                b.disabled = True
+                b.value = False
+            else:
+                b.value = True
             self.boxes[x] = b
             self.grid.objects.append(b)
 
@@ -489,12 +493,16 @@ class DownloadPane(pn.Column):
             self.append(self.make_archive_button)
             self.append(pn.pane.HTML('<p>placeholder</p>', visible=False))
 
-        if len(outputs.figures) == 0 or outputs.figures[0][0] != 'Net':
-            self.boxes[self.NB].value = False
-            self.boxes[self.NB].disabled = True
-        if len(outputs.figures) == 0:
-            self.boxes[self.IT].value = False
-            self.boxes[self.IT].disabled = True
+        # if there are figures at least one of them is an individual target, so enable
+        # that option; if there is a net benefit figure it's the first figure, enable it
+        # if it's there
+
+        if len(outputs.op.display_figures) > 0:
+            if outputs.op.display_figures[0][0] == 'Net':
+                self.boxes[self.NB].value = True
+                self.boxes[self.NB].disabled = False
+            self.boxes[self.IT].value = True
+            self.boxes[self.IT].disabled = False
 
     def _make_folder_name(self):
         parts = [s[:3] for s in self.outputs.op.regions]
@@ -531,28 +539,24 @@ class DownloadPane(pn.Column):
             if name != 'Net' and not self.boxes[self.IT].value:
                 continue
             if self.image_type.value == 'HTML':
-                print('saving',loc/f'{name}.html')
                 savehtml(fig, filename=loc/f'{name}.html')
             else:
                 ext = self.image_type.value.lower()
                 fn = loc/f'{name}.{ext}'
-                print('saving', fn)
                 fig.savefig(fn)
         if self.boxes[self.BS].value:
             df = self.outputs.budget_table.drop(['gates'], axis=1)
             df.to_csv(
-                loc/'budget_table.csv', 
+                loc/'budget_summary.csv', 
                 index=False,
                 float_format=lambda n: round(n,2)
             )
-            print(self.BS)
         if self.boxes[self.BD].value:
             self.outputs.gate_table.to_csv(
-                loc/'gate_table.csv',
+                loc/'barrier_details.csv',
                 index=False,
                 float_format=lambda n: round(n,2)
             )
-            print(self.BD)
 
 class TideGates(pn.template.BootstrapTemplate):
 
