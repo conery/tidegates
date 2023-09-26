@@ -8,6 +8,7 @@ from bokeh.io import save as savehtml
 from bokeh.models.widgets.tables import NumberFormatter
 from bokeh.tile_providers import get_provider
 import xyzservices.providers as xyz
+from bokeh.models import Range1d
 
 from shutil import make_archive, rmtree
 from pathlib import Path
@@ -23,16 +24,14 @@ pn.extension('gridstack', 'tabulator', 'floatpanel')
 
 class TGMap():
     def __init__(self, bf):
-        Logging.log('initializing...')
-        Logging.log('...project')
         self.map, self.dots = self._create_map(bf)
-        Logging.log('...map')
+        self.ranges = self._create_ranges(bf)
 
     def graphic(self):
         return self.map
 
     def _create_map(self, bf):
-        tile_provider = get_provider(xyz.OpenStreetMap.Mapnik)
+        self.tile_provider = get_provider(xyz.OpenStreetMap.Mapnik)
         p = bk.figure(
             title='Oregon Coast', 
             height=900,
@@ -49,7 +48,7 @@ class TGMap():
                 ("Type", "@type"),
             ]
         )
-        p.add_tile(tile_provider)
+        p.add_tile(self.tile_provider)
         p.toolbar.autohide = True
         dots = { }
         for r in bf.regions:
@@ -57,12 +56,49 @@ class TGMap():
             c = p.circle('x', 'y', size=5, color='darkslategray', source=df, tags=list(df.id))
             dots[r] = c
             c.visible = False
+
+        self.outer_x = (bf.map_info.x.min()*0.997,bf.map_info.x.max()*1.003)
+        self.outer_y = (bf.map_info.y.min()*0.997,bf.map_info.y.max()*1.003)
+
         return p, dots
+    
+    def _create_ranges(self, df):
+        g = df.map_info.groupby('region')
+        return pd.DataFrame({
+            'x_min': g.min().x,
+            'x_max': g.max().x,
+            'y_min': g.min().y,
+            'y_max': g.max().y,
+        })
 
     def display_regions(self, lst):
         for r, dots in self.dots.items():
             dots.visible = r in lst
 
+    def zoom(self, selection):
+        if len(selection) > 0:
+            xmin = min([self.ranges['x_min'][r] for r in selection])
+            xmax = max([self.ranges['x_max'][r] for r in selection])
+            ymin = min([self.ranges['y_min'][r] for r in selection])
+            ymax = max([self.ranges['y_max'][r] for r in selection])
+
+            mx = (xmax+xmin)/2
+            my = (ymax+ymin)/2
+            dx = max(5000, xmax - xmin)
+            dy = max(5000, ymax - ymin)
+            ar = self.map.height / self.map.width
+
+            if dy / dx > ar:
+                dx = dy / ar
+            else:
+                dy = dx * ar
+
+            self.map.x_range.update(start=mx-dx/2-5000, end=mx+dx/2+5000)
+            self.map.y_range.update(start=my-dy/2, end=my+dy/2)
+        else:
+            self.map.x_range.update(start=self.outer_x[0], end=self.outer_x[1])
+            self.map.y_range.update(start=self.outer_y[0], end=self.outer_y[1])
+        self.map.add_tile(self.tile_provider)
 
 class BudgetBox(pn.Column):
 
@@ -110,6 +146,7 @@ class RegionBox(pn.Column):
                 amount = sum(self.totals[x] for x in self.selected)
                 self.budget_box.set_budget_max(amount)
         self.map.display_regions(self.selected)
+        self.map.zoom(self.selected)
         if self.external_cb:
             self.external_cb()
 
