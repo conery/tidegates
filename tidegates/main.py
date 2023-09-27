@@ -143,14 +143,14 @@ if __name__ == '__main__':
                 op.outputs = output_files(args.output)
                 op.collect_results(args.scaled)
                 print(op.table_view())
-                op.make_roi_curves(*budgets).show()
+                op.make_roi_curves().show()
             case 'all':
                 op.generate_input_frame()
                 op.run(budgets, args.action=='preview')
                 if op.outputs is not None:
                     op.collect_results(args.scaled)
                     print(op.table_view())
-                    op.make_roi_curves(*budgets).show()
+                    op.make_roi_curves().show()
             case 'gui':
                 if not (args.budget and args.output):
                     print('gui action requires --output and --budget')

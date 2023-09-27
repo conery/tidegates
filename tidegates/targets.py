@@ -4,10 +4,11 @@
 # This file is basically a configuration file, a place to define the names
 # and attribures of restoration targets specific to a set of data set.
 #
-# A Target object has two kinds of information about a restoration target:
+# A Target object has information about a restoration target, including
 #   * names that are displayed in the GUI and appear in data tables and plots
 #   * column names that identify which columns in the main data file are
 #     associated with the target.
+#   * a flag that indicates if the target is an infrastructure target
 #
 # An application can call make_targets to get a dictionary that associates
 # target IDs with Target objects.
@@ -22,7 +23,7 @@ class DataSet(Enum):
     OPM = auto()                # Sample data in the OptiPass User Manual
     TNC_OR = auto()             # Nature Conservancy Southern Oregon Coast
 
-Target = namedtuple('Target', ['abbrev', 'long', 'short', 'habitat', 'prepass', 'postpass', 'unscaled', 'label'])
+Target = namedtuple('Target', ['abbrev', 'long', 'short', 'habitat', 'prepass', 'postpass', 'unscaled', 'label', 'infra'])
 
 # Make the targets for the Southern Oregon Coast 
 
@@ -48,8 +49,8 @@ def make_targets(ds: DataSet) -> dict:
 # used are filled with empty strings.
 
 opm_targets = {
-    'T1':  Target('T1', '', 'Target 1', 'HAB1', 'PRE1', 'POST1', '', ''),
-    'T2':  Target('T2', '', 'Target 2', 'HAB2', 'PRE2', 'POST2', '', ''),
+    'T1':  Target('T1', '', 'Target 1', 'HAB1', 'PRE1', 'POST1', '', '', ''),
+    'T2':  Target('T2', '', 'Target 2', 'HAB2', 'PRE2', 'POST2', '', '', ''),
 }
 
 # Restoration targets for the Oregon Coast
@@ -77,27 +78,27 @@ BL = 'Buildings'
 PS = 'Public-Use Structures'
 
 fish_targets = {
-    'CO':  Target('CO', CO, 'Coho', 'sCO', 'PREPASS_CO', 'POSTPASS', 'Coho_salmon', 'Habitat Potential (miles)'),
-    'CH':  Target('CH', CH, 'Chinook', 'sCH', 'PREPASS_CH', 'POSTPASS', 'Chinook_salmon', 'Habitat Potential (miles)'),
-    'ST':  Target('ST', ST, 'Steelhead', 'sST', 'PREPASS_ST', 'POSTPASS', 'Steelhead', 'Habitat Potential (miles)'),
-    'CT':  Target('CT', CT, 'Cutthroat', 'sCT', 'PREPASS_CT', 'POSTPASS', 'Cutthroat_Trout', 'Habitat Potential (miles)'),
-    'CU':  Target('CU', CU, 'Chum', 'sCU', 'PREPASS_CU', 'POSTPASS', 'Chum', 'Habitat Potential (miles)'),
+    'CO':  Target('CO', CO, 'Coho', 'sCO', 'PREPASS_CO', 'POSTPASS', 'Coho_salmon', 'Habitat Potential (miles)', False),
+    'CH':  Target('CH', CH, 'Chinook', 'sCH', 'PREPASS_CH', 'POSTPASS', 'Chinook_salmon', 'Habitat Potential (miles)', False),
+    'ST':  Target('ST', ST, 'Steelhead', 'sST', 'PREPASS_ST', 'POSTPASS', 'Steelhead', 'Habitat Potential (miles)', False),
+    'CT':  Target('CT', CT, 'Cutthroat', 'sCT', 'PREPASS_CT', 'POSTPASS', 'Cutthroat_Trout', 'Habitat Potential (miles)', False),
+    'CU':  Target('CU', CU, 'Chum', 'sCU', 'PREPASS_CU', 'POSTPASS', 'Chum', 'Habitat Potential (miles)', False),
 }
 
 current_infrastructure_targets = {
-    'FI': Target('FI', FI, 'Inund', 'sInundHab_Current', 'PREPASS_Inund', 'POSTPASS', 'InundHab_Current', 'Habitat Potential (acres)'),
-    'AG': Target('AG', AG, 'Agric', 'sAgri_Current', 'PREPASS_AgrInf', 'POSTPASS', 'Agri_Current', 'Farmland Potentially Protected (acres)'),
-    'RR': Target('RR', RR, 'Roads', 'sRoadRail_Current', 'PREPASS_AgrInf', 'POSTPASS', 'RoadRail_Current', 'Roads Potentially Protected (miles)'),
-    'BL': Target('BL', BL, 'Bldgs', 'sBuilding_Current', 'PREPASS_AgrInf', 'POSTPASS', 'Building_Current', 'Buldings Potentially Protected'),
-    'PS': Target('PS', PS, 'Public', 'sPublicUse_Current', 'PREPASS_AgrInf', 'POSTPASS', 'PublicUse_Current', 'Structures Potentially Protected'),
+    'FI': Target('FI', FI, 'Inund', 'sInundHab_Current', 'PREPASS_Inund', 'POSTPASS', 'InundHab_Current', 'Habitat Potential (acres)', True),
+    'AG': Target('AG', AG, 'Agric', 'sAgri_Current', 'PREPASS_AgrInf', 'POSTPASS', 'Agri_Current', 'Farmland Potentially Protected (acres)', True),
+    'RR': Target('RR', RR, 'Roads', 'sRoadRail_Current', 'PREPASS_AgrInf', 'POSTPASS', 'RoadRail_Current', 'Roads Potentially Protected (miles)', True),
+    'BL': Target('BL', BL, 'Bldgs', 'sBuilding_Current', 'PREPASS_AgrInf', 'POSTPASS', 'Building_Current', 'Buldings Potentially Protected', True),
+    'PS': Target('PS', PS, 'Public', 'sPublicUse_Current', 'PREPASS_AgrInf', 'POSTPASS', 'PublicUse_Current', 'Structures Potentially Protected', True),
 }
 
 future_infrastructure_targets = {
-    'FI': Target('FI', FI, 'Inund', 'sInundHab_Future', 'PREPASS_Inund', 'POSTPASS', 'InundHab_Future', 'Habitat Potential (acres)'),
-    'AG': Target('AG', AG, 'Agric', 'sAgri_Future', 'PREPASS_AgrInf', 'POSTPASS', 'Agri_Future', 'Farmland Potentially Protected (acres)'),
-    'RR': Target('RR', RR, 'Roads', 'sRoadRail_Future', 'PREPASS_AgrInf', 'POSTPASS', 'RoadRail_Future', 'Roads Potentially Protected (miles)'),
-    'BL': Target('BL', BL, 'Bldgs', 'sBuilding_Future', 'PREPASS_AgrInf', 'POSTPASS', 'Building_Future', 'Buldings Potentially Protected'),
-    'PS': Target('PS', PS, 'Public', 'sPublicUse_Future', 'PREPASS_AgrInf', 'POSTPASS', 'PublicUse_Future', 'Structures Potentially Protected'),
+    'FI': Target('FI', FI, 'Inund', 'sInundHab_Future', 'PREPASS_Inund', 'POSTPASS', 'InundHab_Future', 'Habitat Potential (acres)', True),
+    'AG': Target('AG', AG, 'Agric', 'sAgri_Future', 'PREPASS_AgrInf', 'POSTPASS', 'Agri_Future', 'Farmland Potentially Protected (acres)', True),
+    'RR': Target('RR', RR, 'Roads', 'sRoadRail_Future', 'PREPASS_AgrInf', 'POSTPASS', 'RoadRail_Future', 'Roads Potentially Protected (miles)', True),
+    'BL': Target('BL', BL, 'Bldgs', 'sBuilding_Future', 'PREPASS_AgrInf', 'POSTPASS', 'Building_Future', 'Buldings Potentially Protected', True),
+    'PS': Target('PS', PS, 'Public', 'sPublicUse_Future', 'PREPASS_AgrInf', 'POSTPASS', 'PublicUse_Future', 'Structures Potentially Protected', True),
 }
 
 # Create a list of target names in the order they should be displayed

@@ -240,7 +240,7 @@ Click on the **Output** tab to see the results.
 
     fail_text = '''### Optimization Failed
 
-One or more optimizer runs failed.  See the log in the Admin panel for details.
+Reason: {}
 '''
 
     def __init__(self, template, run_cb):
@@ -299,9 +299,12 @@ One or more optimizer runs failed.  See the log in the Admin panel for details.
         self.append(pn.pane.Alert(self.success_text, alert_type = 'success'))
         self.template.open_modal()
 
-    def show_fail(self):
+    def show_fail(self, reason):
         self.clear()
-        self.append(pn.pane.Alert(self.fail_text, alert_type = 'danger'))
+        text = self.fail_text.format(reason)
+        if str(reason) == 'No solution':
+            text += '\n * try increasing the maximum budget'
+        self.append(pn.pane.Alert(text, alert_type = 'danger'))
         self.template.open_modal()
 
 # Create an instance of the OutputPane class to store the tables and plots to
@@ -363,7 +366,7 @@ class OutputPane(pn.Column):
             tabs_location='left',
             stylesheets = [tab_style_sheet],
         )
-        self.op.make_roi_curves(self.op.budget_max, self.op.budget_delta)
+        self.op.make_roi_curves()
         for p in self.op.display_figures:
             tabs.append(p)
         return tabs
@@ -548,6 +551,9 @@ class DownloadPane(pn.Column):
             lst = [f'{lst[i]}x{self.outputs.op.weights[i]}' for i in range(len(lst))]
         parts.extend(lst)
         parts.append(OP.format_budget_amount(self.outputs.op.budget_max)[1:])
+        if any(t.infra for t in self.outputs.op.targets):
+            print(self.outputs.op.climate)
+            parts.append(self.outputs.op.climate[0])
         return '_'.join(parts)
 
     def _archive_cb(self, e):
@@ -580,7 +586,7 @@ class DownloadPane(pn.Column):
             else:
                 ext = self.image_type.value.lower()
                 fn = loc/f'{name}.{ext}'
-                fig.savefig(fn)
+                fig.savefig(fn, bbox_inches='tight')
         if self.boxes[self.BS].value:
             df = self.outputs.budget_table.drop(['gates'], axis=1)
             df.to_csv(
@@ -741,14 +747,17 @@ class TideGates(pn.template.BootstrapTemplate):
         # If OP ran successfully we expect to find one file for each budget level 
         # plus one more for the $0 budget
 
-        if self.op.outputs is not None and len(self.op.outputs) == num_budgets+1:
-            self.info.show_success()
+        try:
             Logging.log('runs complete')
+            if self.op.outputs is None or len(self.op.outputs) != num_budgets+1:
+                raise(RuntimeError('Missing output files'))
             self.op.collect_results(False)
             Logging.log('Output files:' + ','.join(self.op.outputs))
+            self.info.show_success()
             self.add_output_pane()
-        else:
-            self.info.show_fail()
+        except RuntimeError as err:
+            print(err)
+            self.info.show_fail(err)
 
     # After running OptiPass call this method to add a tab to the main
     # panel to show the results.
