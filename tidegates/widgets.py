@@ -552,7 +552,6 @@ class DownloadPane(pn.Column):
         parts.extend(lst)
         parts.append(OP.format_budget_amount(self.outputs.op.budget_max)[1:])
         if any(t.infra for t in self.outputs.op.targets):
-            print(self.outputs.op.climate)
             parts.append(self.outputs.op.climate[0])
         return '_'.join(parts)
 
