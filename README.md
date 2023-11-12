@@ -24,9 +24,12 @@ Before you get to that section, however, there are some important things to know
 - OptiPass is free to use for non-commercial purposes, but for other uses a commercial license is required.
 
 - We do not include an executable binary for OptiPass in this repo; if you want to set up your own server you will have to obtain a copy from the developer ([Ecotelligence LLC](https://www.ecotelligence.net/)).
-- OptiPass comes with its own GUI, but the server runs a command line version of OptiPass.  Since OptiPass is a Windows application, the server either has to be a Windows system, or it has to use Wine to run OptiPass on a Linux or macOS system.  We strongly recommend the former, but if you want to use Wine there is a section in the technical documentation that explains how to configure the system to do it.
+
+- OptiPass comes with its own GUI, but the server runs a command line version of OptiPass.  Since OptiPass is a Windows application, the server either has to be a Windows system, or it has to use Wine to run OptiPass on a Linux or macOS system. 
 
 We have deployed the server on a Windows VM at Amazon Cloud Services.  More information on how we set up our server can be found below in the sections on installing and running the server.
+
+Another way to deploy the server is to use our Docker image.  Based on Ubuntu, it includes Wine so it can run OptiPass.  We don't recommend this approach, however, since OptiPass runs much more slowly than it does on a Windows host.  Details about how to launch a container so it can find the OptiPass binary on the host system are also described below.
 
 ### Configuring a Server for Other Geographical Regions
 
@@ -38,7 +41,49 @@ However there are other things that need to be configured, as well.  Details on 
 
 ## Downloading and Installing the Web App
 
+The first step is to set up the execution environment.
+
+- If you are installing this code on system that will run other Python applications we recommend creating and activating a new virtual environment with `venv`.  You will need Python 3.10 or later.
+
+- If you are setting up a VM dedicated to just this application you can simply install Python 3.10 or later and add the libraries to the global environment.  Log in to your VM with an administrator account.
+
+Obtain a copy of the repo, either by cloning it or downloading the `.zip` file.
+
+Open a terminal and navigate to the directory.  You should see the following structure:
+
+```bash
+tidegates
+├── Dockerfile
+├── README.md
+├── __init__.py
+├── bin/
+├── requirements.txt
+├── sandbox/
+├── static/
+├── templates/
+└── tidegates/
+```
+
+Use PIP to install all the dependencies:
+
+```powershell
+> python -m pip install -r requirements.txt
+```
+
+Move a copy of the OptiPass command line application to the `bin` directory.  After you do this that directory should have the `exe` file for OptiPass and some Python scripts that are part of the repo:
+
+```powershell
+> dir bin
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-a----         1/2/2023   4:45 PM        2699264 OptiPassMain.exe
+-a----         1/2/2023   4:45 PM           1766 parse_optipass_results.py
+-a----        7/12/2023   9:14 PM           2235 sanitize.py
+```
+
 ## Running the Server
+
+
 
 ## Technical Documentation
 
