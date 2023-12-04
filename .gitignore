@@ -132,5 +132,4 @@ dmypy.json
 tmp/
 winedots/
 sandbox/
-bin/OptiPassMain.exe
-
+azure/
