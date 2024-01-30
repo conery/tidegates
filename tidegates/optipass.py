@@ -116,9 +116,6 @@ class OP:
 
         return df
 
-    # This version assumes the web app is running on a host that has wine installed
-    # to run OptiPass (a Windows .exe file).
-
     # To run OptiPass we need (a) a Windows host with the OptiPass command line version
     # or (b) a Linux host with WINE installed.  If the host OS is a Mac print an error
     # message (WINE can't run on Apple silicon).

@@ -133,3 +133,5 @@ tmp/
 winedots/
 sandbox/
 azure/
+.vscode/
+bin/OptiPassMain.exe
