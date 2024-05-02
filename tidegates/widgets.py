@@ -13,12 +13,12 @@ from bokeh.models import Range1d
 from shutil import make_archive, rmtree
 from pathlib import Path
 
-from targets import DataSet, make_layout
-from budgets import BasicBudgetBox, AdvancedBudgetBox, FixedBudgetBox
-from project import Project
-from optipass import OP
-from messages import Logging
-from styles import *
+from .targets import DataSet, make_layout
+from .budgets import BasicBudgetBox, AdvancedBudgetBox, FixedBudgetBox
+from .project import Project
+from .optipass import OP
+from .messages import Logging
+from .styles import *
 
 pn.extension('gridstack', 'tabulator', 'floatpanel')
 

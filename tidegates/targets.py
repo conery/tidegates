@@ -123,7 +123,7 @@ def make_layout():
 #   $ pytest tidegates/targets.py
 #
 
-class TestProject:
+class TestTargets:
 
     @staticmethod
     def test_TNC_columns():

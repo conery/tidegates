@@ -5,11 +5,11 @@ import sys
 
 import panel as pn
 
-from widgets import TideGates
-from targets import DataSet
-from project import Project
-from optipass import OP
-from messages import Logging
+from tidegates.widgets import TideGates
+from tidegates.targets import DataSet
+from tidegates.project import Project
+from tidegates.optipass import OP
+from tidegates.messages import Logging
 
 desc = '''
 User interface for the Tide Gates Optimization app.  If no arguments or options

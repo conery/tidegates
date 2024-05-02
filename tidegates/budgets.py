@@ -25,7 +25,7 @@ from bokeh.models.formatters import NumeralTickFormatter
 #             width = self.BUDGETBOXWIDTH,
 #         )
 
-from styles import slider_style_sheet
+from .styles import slider_style_sheet
 
 class BasicBudgetBox(pn.WidgetBox):
 

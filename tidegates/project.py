@@ -22,7 +22,7 @@
 import pandas as pd
 import numpy as np
 
-from targets import make_targets, DataSet
+from .targets import make_targets, DataSet
 
 class Project:
 
@@ -103,7 +103,7 @@ class TestProject:
         The list of region names should be sorted from north to south
         '''
         p = Project('static/workbook.csv', DataSet.TNC_OR)
-        assert len(p.regions) == 10
+        assert len(p.regions) == 15
         assert p.regions[0] == 'Columbia'
         assert p.regions[-1] == 'Coquille'
 
@@ -131,10 +131,10 @@ class TestProject:
 
         t = p.targets['Current']['CO']
         assert t.short == 'Coho'
-        assert t.long == 'Fish habitat: Coho streams'
+        assert t.long == 'Coho Streams'
         assert t.habitat == 'sCO' 
         assert t.prepass == 'PREPASS_CO'
         assert t.postpass == 'POSTPASS'
 
         assert len(p.target_map) == 10
-        assert p.target_map['Fish habitat: Coho streams'] == 'CO'
+        assert p.target_map['Coho Streams'] == 'CO'

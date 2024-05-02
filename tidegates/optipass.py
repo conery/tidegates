@@ -43,9 +43,9 @@ from bokeh.models import NumeralTickFormatter, HoverTool, Title
 
 import matplotlib.pyplot as plt
 
-from messages import Logging
-from project import Project
-from targets import DataSet
+from .messages import Logging
+from .project import Project
+from .targets import DataSet
 
 class OP:
 
@@ -452,7 +452,7 @@ class TestOP:
         t = op.targets[0]
         assert t.abbrev == 'CO'
         assert t.short == 'Coho'
-        assert t.long == 'Fish habitat: Coho streams'
+        assert t.long == 'Coho Streams'
 
     @staticmethod
     def test_generate_frame():

@@ -1,1 +1,14 @@
-site_name: My Docs
+site_name: Tidegate Optimization Tool
+
+theme:
+  name: "material"
+
+plugins:
+  - search
+  - mkdocstrings
+
+nav:
+  - user.md
+  - install.md
+  - server.md
+  - developer.md
