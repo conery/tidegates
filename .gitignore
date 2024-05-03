@@ -135,3 +135,4 @@ sandbox/
 azure/
 .vscode/
 bin/OptiPassMain.exe
+static/workbook.csv

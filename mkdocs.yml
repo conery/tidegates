@@ -2,7 +2,7 @@ site_name: Tidegate Optimization Tool
 
 theme:
   name: "readthedocs"
-  navigation_depth: 3
+  navigation_depth: 2
 
 plugins:
   - search

@@ -18,6 +18,29 @@ src
     └── widgets.py
 ```
 
+## Unit Tests
+
+If a module has unit tests they are included in the source file.
+Tests are defined at the end of the file, in a class that has a name that starts with `Test`.
+For example, `project.py` defines a class named Project, and at the end of the file is another class named TestProject.
+
+A test class defines a series of static methods that have names beginning with `test`.
+These methods are run in order.
+
+To run tests for a module, open a terminal window and `cd` to the top level folder.
+Then type a command that runs `pytest`, including the name of the module to test:
+
+```
+$ pytest src/tidegates/project.py 
+```
+
+It's also possible to run all the tests with a single shell command:
+
+```
+$ pytest src/tidegates/*.py
+```
+<br/>
+
 ## Main
 
 This module has the code that sets up the application and launches the Bokeh server.
@@ -96,6 +119,16 @@ $ python3 src/main.py --action parse --region Coquille --out tmpwok9i8rl
 ::: src.main.validate_options
 <br/>
 
+## Project
+
+The Project module (`src/tidegates/project.py`) defines a class named Project.
+An instance of this class has data about individual tide gates, names of regions,
+descriptions of restoration targets, _etc_ -- basically everything needed to
+
+
+::: src.tidegates.project
+<br/>
+
 ## `budgets.py`
 
 This module ...
@@ -109,10 +142,6 @@ This module ...
 ## `optipass.py`
 
 ::: src.tidegates.optipass
-
-## `project.py`
-
-::: src.tidegates.project
 
 ## `styles.py`
 
