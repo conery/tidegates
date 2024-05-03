@@ -40,6 +40,12 @@ Example:
 '''
 
 def init_cli():
+    """
+    Use argparse to create the command line API.
+
+    Returns:
+        a Namespace object with values of the command line arguments. 
+    """
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=desc,
@@ -62,18 +68,21 @@ def init_cli():
     return parser.parse_args()
 
 def make_app():
-    # template = pn.template.BootstrapTemplate(title='Tide Gate Optimization', sidebar_width=425)
-    # tg = TideGates()
-    # template.sidebar.append(tg.map_pane)
-    # template.main.append(tg.main)
-    # return template
+    """
+    Instantiate the top level widget.
+
+    Returns:
+        a TideGates object
+    """
     return TideGates(
         title='Tide Gate Optimization', 
         sidebar_width=450
     )
 
 def start_app():
-    # pn.extension(sizing_mode = 'stretch_width')
+    """
+    Launch the Bokeh server.
+    """
     pn.extension(design='native')
     pn.serve( 
         {'tidegates': make_app},
@@ -84,7 +93,26 @@ def start_app():
         websocket_origin= '*',
     )
 
-def validate_options(name, given, expected):
+def validate_options(
+    name: str, 
+    given: list[str], 
+    expected: list[str],
+):
+    """
+    Make sure values specified on the command line are valid for that option.
+    Prints an error message and exits if an unknown value is specified.
+
+    Example: check the names specified for the "region" option by making sure
+    the values on the command line ("args.region") are in the list of valid
+    names ("region_names").
+
+        validate_options('region', args.regions, region_names)
+
+    Args:
+        name: the argument name
+        given:  the strings typed by the user on the command line
+        expected:  a list of acceptable values
+    """
     if not all(x in expected for x in given):
         print(f'unknown {name} not in {expected}')
         exit(1)

@@ -1,7 +1,8 @@
 site_name: Tidegate Optimization Tool
 
 theme:
-  name: "material"
+  name: "readthedocs"
+  navigation_depth: 3
 
 plugins:
   - search
