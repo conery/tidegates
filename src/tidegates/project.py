@@ -1,23 +1,6 @@
 # 
 # Project
 #
-# A Project object has all the information used by the GUI to display
-# a set of tide gates.  The constructor is passed the name of a CSV file
-# that has a list of all the barriers and uses it to define attributes:
-#
-#   data: a copy of the original data, in the form of a Pandas data frame
-#   map_info:  a table containging geographical coordinates of the gates
-#   regions:  a list of the unique region names in the file
-#   climates:  a list of climate scenarios
-# 
-# The constructor aslo gets region-specific restoration target information
-# from the targets module and saves it in the object.
-#
-#   targets:     a dictionary of restoration target attributes for each 
-#                climate scenario
-#   target_map:  a dictionary that associates the target name displayed in
-#                the GUI with the target's ID
-#
 
 import pandas as pd
 import numpy as np
@@ -25,12 +8,23 @@ import numpy as np
 from .targets import make_targets, DataSet
 
 class Project:
+    """
+    A Project object has all the information used by the GUI to display
+    a set of tide gates.  The constructor is passed the name of a CSV file
+    that has a list of all the barriers and the ID of one of the data sets
+    (currently either OPM or TNC_OR).  The data in the CSV file use used
+    to initialize the attributes.
+
+    Attributes:
+      data: a copy of the original data, in the form of a Pandas data frame
+      map_info:  a table containging geographical coordinates of the gates
+      regions:  a list of the unique region names in the file
+      climates:  a list of climate scenarios
+      targets:   a dictionary of restoration target attributes for each climate scenario
+      target_map:  a dictionary that associates target names with the target IDs
+    """
 
     def __init__(self, fn, ds):
-        '''
-        Instantiate a Project object and initialize its attributes using
-        data in a CSV file
-        '''
         self.data = pd.read_csv(fn)
         self.targets = make_targets(ds)
         if ds == DataSet.TNC_OR:

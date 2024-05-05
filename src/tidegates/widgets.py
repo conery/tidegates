@@ -23,6 +23,16 @@ from .styles import *
 pn.extension('gridstack', 'tabulator', 'floatpanel')
 
 class TGMap():
+    """
+    A TGMap object manages the display of a map that shows the locations of the barriers
+    in a project.  The constructor is passed a reference to Project object that has
+    barrier definitions.
+
+    Attributes:
+      map:  a Bokeh figure object, with x and y ranges defined by the locations of the barriers
+      dots: a dictionary that maps region names to a list of circle glyphs for each barrier in a region
+      ranges: a data frame that has the range of x and y coordinates for each region    
+    """
     def __init__(self, bf):
         self.map, self.dots = self._create_map(bf)
         self.ranges = self._create_ranges(bf)
@@ -31,6 +41,11 @@ class TGMap():
         return self.map
 
     def _create_map(self, bf):
+        """
+        Hidden method, called by the constructor to create a Bokeh figure 
+        based on the latitude and longitude of the barriers in
+        a project.
+        """
         self.tile_provider = get_provider(xyz.OpenStreetMap.Mapnik)
         p = bk.figure(
             title='Oregon Coast', 
@@ -63,6 +78,11 @@ class TGMap():
         return p, dots
     
     def _create_ranges(self, df):
+        """
+        Hidden method, called by the constructor to create a Pandas Dataframe 
+        containing the range of latitudes and longitudes of the barriers in
+        a project.
+        """
         g = df.map_info.groupby('region')
         return pd.DataFrame({
             'x_min': g.min().x,
@@ -71,11 +91,26 @@ class TGMap():
             'y_max': g.max().y,
         })
 
-    def display_regions(self, lst):
+    def display_regions(self, selection):
+        """
+        This method is called when the user clicks the checkbox next to the name
+        of a region.  Set the visible attribute of each dot to True or False depending
+        on whether the region it is in is selected.
+
+        Arguments:
+          selection:  a list of names of regions currently selected
+        """
         for r, dots in self.dots.items():
-            dots.visible = r in lst
+            dots.visible = r in selection
 
     def zoom(self, selection):
+        """
+        Update the map, setting the x and y range based on the currently selected
+        regions.
+
+        Arguments:
+          selection:  a list of names of regions currently selected
+        """
         if len(selection) > 0:
             xmin = min([self.ranges['x_min'][r] for r in selection])
             xmax = max([self.ranges['x_max'][r] for r in selection])
@@ -101,6 +136,12 @@ class TGMap():
         self.map.add_tile(self.tile_provider)
 
 class BudgetBox(pn.Column):
+    """
+    There are three ways users can specify the range of budget values
+    when running OptiPass.  A BudgetBox widget has one tab for each option.
+    The widgets displayed inside a tab are defined by their own classes
+    (BasicBudgetBox, AdvancedBudgetBox, and FixedBudgetBox).
+    """
 
     def __init__(self):
         super(BudgetBox, self).__init__()
@@ -111,11 +152,26 @@ class BudgetBox(pn.Column):
         )
         self.append(self.tabs)
 
-    def set_budget_max(self, n):
+    def set_budget_max(self, n: int):
+        """
+        When the user selects or deselects a region the budget widgets need
+        to know the new total cost for all the selected regions.  This method
+        passes that information to each of the budget widgets.
+
+        Arguments:
+          n: the new maximum budget amount
+        """
         for t in self.tabs:
             t.set_budget_max(n)
 
     def values(self):
+        """
+        Return the budget settings for the currently selected budget type.
+
+        Returns:
+          bmax:  the maximum budget to pass to OptiPass
+          binc:  the increment between budget values
+        """
         return self.tabs[self.tabs.active].values()
  
 class RegionBox(pn.Column):

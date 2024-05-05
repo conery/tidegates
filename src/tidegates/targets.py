@@ -21,7 +21,7 @@ from enum import Enum, auto
 
 class DataSet(Enum):
     OPM = auto()                # Sample data in the OptiPass User Manual
-    TNC_OR = auto()             # Nature Conservancy Southern Oregon Coast
+    TNC_OR = auto()             # Nature Conservancy Oregon Coast data
 
 Target = namedtuple('Target', ['abbrev', 'long', 'short', 'habitat', 'prepass', 'postpass', 'unscaled', 'label', 'infra'])
 
@@ -32,6 +32,12 @@ def make_targets(ds: DataSet) -> dict:
     Create dictionaries that map two-letter target IDs to complete target
     descriptioms.  The TNC data set has two dictionaries, one for each
     climate scenario.
+
+    Args:
+        ds: a data set ID
+
+    Returns:
+        a dictionary ot Target objects
     '''
     if ds == DataSet.TNC_OR:
         current = dict(fish_targets)
@@ -54,17 +60,6 @@ opm_targets = {
 }
 
 # Restoration targets for the Oregon Coast
-
-# CO = 'Fish habitat: Coho streams'
-# CH = 'Fish habitat: Chinook streams'
-# ST = 'Fish habitat: Steelhead streams'
-# CT = 'Fish habitat: Cutthroat streams'
-# CU = 'Fish habitat: Chum streams'
-# FI = 'Fish habitat: Inundation'
-# AG = 'Agriculture'
-# RR = 'Roads & Railroads'
-# BL = 'Buildings'
-# PS = 'Public-Use Structures'
 
 CO = 'Coho Streams'
 CH = 'Chinook Streams'

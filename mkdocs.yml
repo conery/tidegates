@@ -2,8 +2,10 @@ site_name: Tidegate Optimization Tool
 
 theme:
   name: "readthedocs"
-  navigation_depth: 2
 
+extra_css:
+  - css/tidegates.css
+  
 plugins:
   - search
   - mkdocstrings

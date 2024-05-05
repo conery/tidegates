@@ -6,28 +6,14 @@ import panel as pn
 import param
 from bokeh.models.formatters import NumeralTickFormatter
 
-# The GUI displays three ways users can specify a range of budgets when
-# runnoing OptiPass.  The main budget widget is a collection of tabs,
-# one for each type of budget.  
-
-# # The BudgetBox class is an abstract base class that defines the visual
-# # attributes for each view. 
-
-# class BudgetBox(pn.WidgetBox):
-
-#     BUDGETBOXHEIGHT = 100
-#     BUDGETBOXWIDTH = 600
-
-#     def __init__(self):
-#         super(BudgetBox, self).__init__(
-#             margin = (15,0,15,5),
-#             height = self.BUDGETBOXHEIGHT,
-#             width = self.BUDGETBOXWIDTH,
-#         )
-
 from .styles import slider_style_sheet
 
 class BasicBudgetBox(pn.WidgetBox):
+    """
+    The default budget widget displays a slider that ranges from 0
+    up to a maximum value based on the total cost of all barriers in
+    currently selected regions.
+    """
 
     levels = [
         ('$0', 0),
@@ -57,16 +43,41 @@ class BasicBudgetBox(pn.WidgetBox):
         self.append(self.slider)
 
     def set_budget_max(self, n):
+        """
+        Choose a maximum budget by scanning a table of budget levels to
+        find the first one less than the total cost.
+
+        Arguments:
+          n: the total cost of all barriers in the current selection.
+        """
         for i in range(len(self.levels)-1, -1, -1):
             if n >= self.levels[i][1]:
                 self.slider.options = self.labels[:i+1]
                 break
 
     def values(self):
+        """
+        Return the selected budget level (based on the slider position) and
+        the number of budgets.  For basic budgets the interval between budgets
+        is computed by dividing the select budget value by the number of increments
+        (a constant defined in the class, currently equal to 10).
+
+        Returns:
+          bmax:  the highest budget to pass to OptiPass
+          binc:  the increment between budgets
+        """
         x = self.map[self.slider.value]
         return x, (x // self.increments)
     
 class FixedBudgetBox(pn.WidgetBox):
+    """
+    This option is for situations where a user knows exactly how much money they
+    have to spend and want to know the optimal set of barriers to replace for that
+    amount of money.  OptiPass is run twice -- once to determine the current 
+    passabilities, and once to compute the benefit from the specified budget.
+    The widget simply displays a box where the user enters the dollar amount for
+    their budget.
+    """
 
     def __init__(self):
         super(FixedBudgetBox, self).__init__(margin=(15,0,15,5))
@@ -77,13 +88,30 @@ class FixedBudgetBox(pn.WidgetBox):
         pass
 
     def values(self):
+        """
+        Return the specified budget amount as both the maximum budget and the
+        budget interval.
+        """
         s = self.input.value
         if s.startswith('$'):
             s = s[1:]
         n = self.parse_dollar_amount(self.input.value)
         return n, n
 
-    def parse_dollar_amount(self,s):
+    def parse_dollar_amount(self, s: str):
+        """
+        Make sure the sring entered by the user has an acceptable format.
+        It can be all digits (e.g. "1500000"), or digits separated by commas
+        (e.g. "1,500,000"), or a number followed by a K or M (e.g. "1.5M").
+        There can be a dollar sign at the front of the string.
+
+        Arguments:
+          s:  the string entered into the text box
+
+        Returns:
+          the value of the string converted into an integer
+    
+        """
         try:
             if s.startswith('$'):
                 s = s[1:]
@@ -101,6 +129,19 @@ class FixedBudgetBox(pn.WidgetBox):
             raise ValueError('unexpected format in dollar amount')
             
 class AdvancedBudgetBox(pn.WidgetBox):
+    """
+    The "advanced" option gives the user the most control over the budget values processed
+    by OptiPass by letting them specify the number of budget levels (in the basic budget
+    there are always 10 budget levels).  
+    
+    This box has three widgets:  a slider to specify the
+    maximum amount, another slider to specify the increment between budgets, and
+    an input box to specify the number of budgets.  Adjusting the value of any of these
+    widgets automatically updates the other two.  For example, if the maximum is set to $1M
+    and the number of budgets is 10, the increment is $100K.  If the user changes the number
+    of budgets to 20, the increment drops to $50K.  Or if they change the maximum to $2M, the
+    increment increases to $200K.
+    """
 
     MAX_STEP = 10000
     INC_STEP = 1000
@@ -152,9 +193,20 @@ class AdvancedBudgetBox(pn.WidgetBox):
         self.count_input.param.watch(self.count_updated, ['value'])
 
     def values(self):
+        """
+        In this widget the maximum budget and budget increment are determined
+        by the values in the corresponding widgets.
+        """
         return self.max_slider.value, self.inc_slider.value
 
     def set_budget_max(self, n):
+        """
+        Called when the user selects or deselects a region.  Save the new
+        maximum, and update the value of the increment based on the new maximum.
+
+        Arguments:
+          n:  the total cost of all barriers in the selected regions.
+        """
         self.max_slider.end = max(1, n)
         self.max_slider.start = self.MAX_STEP
         self.inc_slider.end = max(1, n // 2)
@@ -163,13 +215,25 @@ class AdvancedBudgetBox(pn.WidgetBox):
         self[0][1] = pn.pane.HTML(f'<b>Limit: {lim}</b>')
 
     def max_updated(self, e):
+        """
+        Callback function invoked when the user moves the maximum budget
+        slider.  Computs a new budget increment.
+        """
         self.inc_slider.value = self.max_slider.value // self.count_input.value
 
     def inc_updated(self, e):
+        """
+        Callback function invoked when the user changes the budget increment.
+        Computes a new number of budgets.
+        """
         c = max(self.COUNT_MIN, self.max_slider.value // self.inc_slider.value)
         c = min(self.COUNT_MAX, c)
         self.count_input.value = c
 
     def count_updated(self, e):
+        """
+        Callback function invoked when the user changes the number of budget
+        levels.  Computes a new budget increment.
+        """
         self.inc_slider.value = self.max_slider.value // self.count_input.value
 
