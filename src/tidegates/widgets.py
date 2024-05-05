@@ -175,8 +175,26 @@ class BudgetBox(pn.Column):
         return self.tabs[self.tabs.active].values()
  
 class RegionBox(pn.Column):
+    """
+    The region box displays the names of each geographic region in the data set,
+    with a checkbox next to the name.  
+    
+    When the user clicks on one of the checkboxes
+    several actions are triggered:  the set of selected regions is updated, the
+    budget widget is notified so it can update the maximum budget (based on the total
+    cost of all barriers in the current selection), and the map is updated by zooming
+    in to a level that contains only the barriers in the selected regions.
+    """
     
     def __init__(self, project, map, budget):
+        """
+        Create the grid of checkboxes and set up the callback function.
+
+        Arguments:
+          project:  the Project object that has region names
+          map:  the TGMap object that will be updated when regions are selected
+          budget:  the BudgetBox object to update when regions are selected
+        """
         super(RegionBox, self).__init__(margin=(10,0,10,5))
         self.totals = project.totals
         self.map = map
@@ -192,6 +210,12 @@ class RegionBox(pn.Column):
         self.append(self.grid)
 
     def cb(self, *events):
+        """
+        Callback function invoked when one of the checkboxes is clicked.  If the new state
+        of the checkbox is 'selected' the region is added to the set of selected regions,
+        otherwise it is removed.  After updating the set notify the map widget and any
+        other widgets that have been registered as external callbacks.
+        """
         for e in events:
             if e.type == 'changed':
                 r = e.obj.name
@@ -206,17 +230,32 @@ class RegionBox(pn.Column):
         if self.external_cb:
             self.external_cb()
 
-    def selection(self):
+    def selection(self) -> list[str]:
+        """
+        Return a list of the names of currently selected regions.
+        """
         return self.selected
     
     def add_external_callback(self, f):
-        '''Save a reference to an external function to call when a region box is clicked'''
+        """
+        Save a reference to an external function to call when a region box is clicked.
+
+        Arguments:
+          f: aditional function to call when a checkbox is clicked
+        """
         self.external_cb = f
 
 
 class BasicTargetBox(pn.Column):
+    """
+    The BasicTargetBox widget displays a checkbox next to each target name.
+    """
 
-    def __init__(self, targets):
+    def __init__(self):
+        """
+        Make the grid of checkboxes.  The IDs and descriptions of targets are
+        fetched by calling the make_layout function in the Target class.
+        """
         super(BasicTargetBox, self).__init__(margin=(10,0,10,5))
         self.grid = pn.GridBox(ncols=2)
         self.boxes = { }
@@ -229,15 +268,29 @@ class BasicTargetBox(pn.Column):
             self.grid.objects.extend(lst)
         self.append(self.grid)
 
-    def selection(self):
+    def selection(self) -> list[str]:
+        """
+        Return a list of IDs of selected targets.
+        """
         return [t for t in self.boxes if self.boxes[t].value ]
     
     def weights(self):
+        """
+        There are no weights (all targets considered equally) so return an empty list.
+        """
         return []
     
 class WeightedTargetBox(pn.Column):
+    """
+    A WeightedTargetBox shows a text entry widget next to each target to allow
+    users to enter a numeric weight for the target.
+    """
 
-    def __init__(self, targets):
+    def __init__(self):
+        """
+        Make the grid of text entry widgets.  The IDs and descriptions of targets are
+        fetched by calling the make_layout function in the Target class.
+        """
         super(WeightedTargetBox, self).__init__(margin=(10,0,10,5))
         self.grid = pn.GridBox(ncols=2)
         for tnames in make_layout():
@@ -248,26 +301,44 @@ class WeightedTargetBox(pn.Column):
                 self.grid.objects.append(w)
         self.append(self.grid)
 
-    def selection(self):
+    def selection(self) -> list[str]:
+        """
+        Return a list of IDs of selected targets.
+        """
         return [w[1].object for w in self.grid.objects if w[0].value]
 
-    def weights(self):
+    def weights(self) -> list[str]:
+        """
+        Return the text content of each non-empty text entry box.
+        """
         return [w[0].value for w in self.grid.objects if w[0].value]
     
 class TargetBox(pn.Column):
+    """
+    The restoration targets are shown in a matrix with a selection widget
+    next to each target name.  The TargetBox widget has two tabs showing
+    different types of selection widgets, either simple checkboxes (shown
+    by a BasicTargetBox) or text entry widgets (shown by WeightedTargetBox).
+    """
 
-    def __init__(self, targets):
+    def __init__(self):
         super(TargetBox, self).__init__(margin=(10,0,10,5))
         self.tabs = pn.Tabs(
-            ('Basic', BasicTargetBox(targets)),
-            ('Weighted', WeightedTargetBox(targets)),
+            ('Basic', BasicTargetBox()),
+            ('Weighted', WeightedTargetBox()),
         )
         self.append(self.tabs)
 
-    def selection(self):
+    def selection(self) -> list[str]:
+        """
+        Get a list of IDs of selected targets from the current target widget.
+        """
         return self.tabs[self.tabs.active].selection()
     
     def weights(self):
+        """
+        Get target weights from the current target widget.
+        """
         return self.tabs[self.tabs.active].weights()
 
 class InfoBox(pn.Column):
@@ -668,7 +739,7 @@ class TideGates(pn.template.BootstrapTemplate):
 
         self.budget_box = BudgetBox()
         self.region_boxes = RegionBox(self.bf, self.map, self.budget_box)
-        self.target_boxes = TargetBox(list(self.bf.target_map.keys()))
+        self.target_boxes = TargetBox()
         self.climate_group = pn.widgets.RadioBoxGroup(name='Climate', options=self.bf.climates)
  
         self.optimize_button = pn.widgets.Button(name='Run Optimizer', stylesheets=[button_style_sheet])

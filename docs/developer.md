@@ -3,7 +3,7 @@
 This section has details on each class and top level function in the application.
 
 The source code is in a folder named `src`.  The top level application is in `main.py`.
-A module named `tidegates` has submodules for the main parts of the GUI.
+A directory named `tidegates` has modules for the main parts of the GUI.
 
 ```
 src
@@ -200,7 +200,6 @@ The widgets for the three different ways of specifying budgets are defined in th
         ignore_init_summary: true
       merge_init_into_class: true
       heading_level: 4
-      filters: ""
 
 #### AdvancedBudgetBox
 
@@ -211,7 +210,6 @@ The widgets for the three different ways of specifying budgets are defined in th
         ignore_init_summary: true
       merge_init_into_class: true
       heading_level: 4
-      filters: ""
 
 #### FixedBudgetBox
 
@@ -222,7 +220,52 @@ The widgets for the three different ways of specifying budgets are defined in th
         ignore_init_summary: true
       merge_init_into_class: true
       heading_level: 4
+
+### RegionBox
+
+::: src.tidegates.widgets.RegionBox
+    options:
+      show_root_toc_entry: false
+      docstring_options:
+        ignore_init_summary: true
+      merge_init_into_class: true
+      heading_level: 3
+
+### TargetBox
+
+The widget that displays restoration target options is an instance of a class named `TargetBox`, defined in `widgets.py`.  It has a set of two tabs that display different options for specifying targets.  
+
+::: src.tidegates.widgets.TargetBox
+    options:
+      show_root_toc_entry: false
+      docstring_options:
+        ignore_init_summary: true
+      merge_init_into_class: true
+      heading_level: 3
       filters: ""
+
+
+### Target Widgets
+
+#### BasicTargetBox
+
+::: src.tidegates.widgets.BasicTargetBox
+    options:
+      show_root_toc_entry: false
+      docstring_options:
+        ignore_init_summary: true
+      merge_init_into_class: true
+      heading_level: 4
+
+#### WeightedTargetBox
+
+::: src.tidegates.widgets.WeightedTargetBox
+    options:
+      show_root_toc_entry: false
+      docstring_options:
+        ignore_init_summary: true
+      merge_init_into_class: true
+      heading_level: 4
 
 ### TGMap
 
