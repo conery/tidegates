@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Main - Tidegate Optimization Tool</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../css/tidegates.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Main";
+        var mkdocs_page_input_path = "main.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Tidegate Optimization Tool
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">Home</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="..">Introduction</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">User Instructions</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../user/">How to Use the Optimzation Tool</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Installation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../install/">Install and Configure</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../data/">Data</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../server/">Server</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Developer</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/">Modules</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../targets/">Target Definition</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../project/">Project Data</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="#">Widgets</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../widgets/">Widget Classes</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../map/">TGMap</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../regionbox/">RegionBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../budgets/">BudgetBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../targetbox/">TargetBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../infobox/">InfoBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../outputpane/">OutputPane</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../downloadpane/">DownloadPane</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../app/">TideGatesApp</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../optipass/">OP (OptiPass Interface)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Main</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#init_cli">init_cli</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tests/">Tests</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Tidegate Optimization Tool</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Developer</li>
+      <li class="breadcrumb-item active">Main</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="main">Main</h2>
+<p>This module has the code that sets up the application and launches the Bokeh server.</p>
+<h3 id="init_cli"><code>init_cli</code></h3>
+<p>Use <code>argparse</code> to define the command line arguments:</p>
+<ul>
+<li>
+<p><code>--action</code>:  a verb that defines how the app will run:</p>
+<ul>
+<li><code>generate</code>: used to test the code that makes the input file for OptiPass;  make the file, print it, and exit</li>
+<li><code>run</code>: used to test the code that runs OptiPass; make the input file, then create and run the shell commands that run OptiPass.exe</li>
+<li><code>preview</code>: same as <code>run</code> but just prints the shell commands instead of executing them</li>
+<li><code>parse</code>: used to test the code that parses the output from OptiPass; requires the <code>--output</code> option to specify the path to files created by OptiPass</li>
+<li><code>all</code>: used to run an integration test:  generates the input for OptiPass, runs OptiPass, parses the results, displays the plots</li>
+<li><code>gui</code>: same as <code>all</code> but puts the results in the GUI</li>
+</ul>
+</li>
+<li>
+<p><code>--project</code>: path to a CSV file with barrier descriptions (default: <code>static/workbook.csv</code>)</p>
+</li>
+<li>
+<p><code>--regions</code>: one or more region names (used to test data file generation and parsing)</p>
+</li>
+</ul>
+<p><strong>Command Line</strong></p>
+<p>The application needs files in the <code>bin</code> and <code>static</code> folders of the project.
+To run the application, open a terminal window and <code>cd</code> to the top level folder.
+The application is in the <code>src</code> folder.
+Type this command to make sure the application is installed and configured:</p>
+<pre><code>$ python3 src/main.py --help
+</code></pre>
+<p><strong>Start the Server</strong></p>
+<p>To start the application simply run the program without any command line arguments:</p>
+<pre><code>$ python3 src/main.py
+</code></pre>
+<p><strong>Integration Tests</strong></p>
+<p>The command line arguments allow the developer to run various integration tests.</p>
+<p>This example tests the code that creates the input files for OptiPass by making a file for
+gates in the Coos region and targets CO and CH.</p>
+<pre><code>$ python3 src/main.py --action generate --region Coos --targets CO CH --output test1
+</code></pre>
+<p>Test the code that makes the output panes (data tables and ROI plots) by parsing
+the results of a previous run, in this case a set of files that start with the
+string <code>tmpwok9i8rl</code>.  </p>
+<pre><code>$ python3 src/main.py --action parse --region Coquille --out tmpwok9i8rl 
+</code></pre>
+<p><strong>Source</strong></p>
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<a id="src.main.init_cli"></a>
+  <div class="doc doc-contents first">
+  
+      <p>Use argparse to create the command line API.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+            –
+            <div class="doc-md-description">
+              <p>a Namespace object with values of the command line arguments.</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+          <details class="quote">
+            <summary> <code>src/main.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">init_cli</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use argparse to create the command line API.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        a Namespace object with values of the command line arguments. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">formatter_class</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">RawDescriptionHelpFormatter</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="n">desc</span><span class="p">,</span>
+        <span class="n">epilog</span><span class="o">=</span><span class="n">epi</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># NOTE:  no argument can be required -- it should be possible to run this script with no</span>
+    <span class="c1"># command line arguments, which is how it&#39;s run in the Docker container when launching the</span>
+    <span class="c1"># web app</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--action&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;generate&#39;</span><span class="p">,</span> <span class="s1">&#39;preview&#39;</span><span class="p">,</span> <span class="s1">&#39;run&#39;</span><span class="p">,</span> <span class="s1">&#39;parse&#39;</span><span class="p">,</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="s1">&#39;gui&#39;</span><span class="p">],</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;operation to perform&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--project&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;static/workbook.csv&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;CSV file with barrier data&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--regions&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;one or more region names&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--targets&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CO&#39;</span><span class="p">,</span><span class="s1">&#39;FI&#39;</span><span class="p">],</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;one or more restoration targets&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--budget&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="mi">5000</span><span class="p">,</span><span class="mi">1000</span><span class="p">],</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;max budget, budget delta&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--climate&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;current&#39;</span><span class="p">,</span><span class="s1">&#39;future&#39;</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;current&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;climate scenario&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--output&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;base name of output files (optional)&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--scaled&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;compute benefit using scaled amounts&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div><h3 id="make_app"><code>make_app</code></h3>
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<a id="src.main.make_app"></a>
+  <div class="doc doc-contents first">
+  
+      <p>Instantiate the top level widget.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+            –
+            <div class="doc-md-description">
+              <p>a TideGatesApp object</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+          <details class="quote">
+            <summary> <code>src/main.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">make_app</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Instantiate the top level widget.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        a TideGatesApp object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TideGatesApp</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Tide Gate Optimization&#39;</span><span class="p">,</span> 
+        <span class="n">sidebar_width</span><span class="o">=</span><span class="mi">450</span>
+    <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div><h3 id="start_app"><code>start_app</code></h3>
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<a id="src.main.start_app"></a>
+  <div class="doc doc-contents first">
+  
+      <p>Launch the Bokeh server.</p>
+
+          <details class="quote">
+            <summary> <code>src/main.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span>
+<span class="normal">93</span>
+<span class="normal">94</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">start_app</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Launch the Bokeh server.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pn</span><span class="o">.</span><span class="n">extension</span><span class="p">(</span><span class="n">design</span><span class="o">=</span><span class="s1">&#39;native&#39;</span><span class="p">)</span>
+    <span class="n">pn</span><span class="o">.</span><span class="n">serve</span><span class="p">(</span> 
+        <span class="p">{</span><span class="s1">&#39;tidegates&#39;</span><span class="p">:</span> <span class="n">make_app</span><span class="p">},</span>
+        <span class="n">port</span> <span class="o">=</span> <span class="mi">5006</span><span class="p">,</span>
+        <span class="n">admin</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">autoreload</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">websocket_origin</span><span class="o">=</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div><h3 id="validate_options"><code>validate_options</code></h3>
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<a id="src.main.validate_options"></a>
+  <div class="doc doc-contents first">
+  
+      <p>Make sure values specified on the command line are valid for that option.
+Prints an error message and exits if an unknown value is specified.</p>
+<p>Example: check the names specified for the "region" option by making sure
+the values on the command line ("args.region") are in the list of valid
+names ("region_names").</p>
+<pre><code>validate_options('region', args.regions, region_names)
+</code></pre>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>name</code></b>
+                  (<code>str</code>)
+              –
+              <div class="doc-md-description">
+                <p>the argument name</p>
+              </div>
+            </li>
+            <li>
+              <b><code>given</code></b>
+                  (<code>list[str]</code>)
+              –
+              <div class="doc-md-description">
+                <p>the strings typed by the user on the command line</p>
+              </div>
+            </li>
+            <li>
+              <b><code>expected</code></b>
+                  (<code>list[str]</code>)
+              –
+              <div class="doc-md-description">
+                <p>a list of acceptable values</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+          <details class="quote">
+            <summary> <code>src/main.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">validate_options</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+    <span class="n">given</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> 
+    <span class="n">expected</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Make sure values specified on the command line are valid for that option.</span>
+<span class="sd">    Prints an error message and exits if an unknown value is specified.</span>
+
+<span class="sd">    Example: check the names specified for the &quot;region&quot; option by making sure</span>
+<span class="sd">    the values on the command line (&quot;args.region&quot;) are in the list of valid</span>
+<span class="sd">    names (&quot;region_names&quot;).</span>
+
+<span class="sd">        validate_options(&#39;region&#39;, args.regions, region_names)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: the argument name</span>
+<span class="sd">        given:  the strings typed by the user on the command line</span>
+<span class="sd">        expected:  a list of acceptable values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">expected</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">given</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unknown </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> not in </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../optipass/" class="btn btn-neutral float-left" title="OP (OptiPass Interface)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../tests/" class="btn btn-neutral float-right" title="Tests">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../optipass/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../tests/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

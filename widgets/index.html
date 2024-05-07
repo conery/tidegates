@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>How to Use the Optimzation Tool - Tidegate Optimization Tool</title>
+    <title>Widget Classes - Tidegate Optimization Tool</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -14,8 +14,8 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "How to Use the Optimzation Tool";
-        var mkdocs_page_input_path = "user.md";
+        var mkdocs_page_name = "Widget Classes";
+        var mkdocs_page_input_path = "widgets.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -47,10 +47,8 @@
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">User Instructions</span></p>
-              <ul class="current">
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">How to Use the Optimzation Tool</a>
-    <ul class="current">
-    </ul>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../user/">How to Use the Optimzation Tool</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Installation</span></p>
@@ -63,16 +61,18 @@
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Developer</span></p>
-              <ul>
+              <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../modules/">Modules</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../targets/">Target Definition</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../project/">Project Data</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="#">Widgets</a>
-    <ul>
-                <li class="toctree-l2"><a class="reference internal" href="../widgets/">Widget Classes</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Widgets</a>
+    <ul class="current">
+                <li class="toctree-l2 current"><a class="reference internal current" href="./">Widget Classes</a>
+    <ul class="current">
+    </ul>
                 </li>
                 <li class="toctree-l2"><a class="reference internal" href="../map/">TGMap</a>
                 </li>
@@ -113,8 +113,9 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">User Instructions</li>
-      <li class="breadcrumb-item active">How to Use the Optimzation Tool</li>
+          <li class="breadcrumb-item">Developer</li>
+          <li class="breadcrumb-item">Widgets</li>
+      <li class="breadcrumb-item active">Widget Classes</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -123,14 +124,48 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="how-to-use-the-optimzation-tool">How to Use the Optimzation Tool</h1>
-<p>TBD</p>
+                <h2 id="widget-classes">Widget Classes</h2>
+<p>The GUI displayed in a user's browser shows dozens of graphical elements.
+These "widgets" include checkboxes that allow users to select geographic regions and restoration targets, sliders to specify budget levels, and buttons that run the optimizer or show help messages.</p>
+<p>If all these widgets are defined in a single module the code will be very messy.
+Instead, the web app uses a common technique:  we define our own widget classes, using inheritance so our objects are a special case of an existing type of widget.</p>
+<p>A good example is a class named RegionBox.  Instead of having 15 separate checkboxes, one for each region in the Oregon Coast data set, we make just one object, an instance of our new RegionBox class.  We pass a Project object to the function that creates this object, and the function scans the data to find all the region names, automatically making one checkbox for each separate region. All these checkboxes are stored internally, inside the RegionBox, keeping our code nice and tidy.</p>
+<p>The Python syntax for defining a new class that is derived from an existing class uses a <code>class</code> statement.
+This is the statement that defines the RegionBox class:</p>
+<pre><code>class RegionBox(pn.Column):
+    ...
+</code></pre>
+<p><code>pn.Column</code> is an existing widget class, defined in the Panel library.
+That means our new RegionBox objects will be special types of columns that can be inserted into the GUI at some place.</p>
+<p>The code that is called to create a new object is a function named <code>__init__</code> defined inside the class.
+The first argument to <code>__init__</code> is always <code>self</code>, which is a reference to the object being built.</p>
+<p>Here is a simplified version of the <code>__init__</code> function for the RegionBox class (the actual definition is shown below, in the documentation for RegionBox):</p>
+<pre><code>class RegionBox(pn.Column):
+
+    def __init__(self, project):
+        boxes = []
+        for name in project.regions:
+            box = pn.widgets.Checkbox(name=name, styles=box_styles)
+            box.param.watch(self.cb, ['value'])
+            boxes.append(box)
+        self.grid = pn.GridBox(*boxes, ncols=3)
+</code></pre>
+<p>When this function is called, it initializes a variable named <code>boxes</code> to be an empty list.  The <code>for</code> loop iterates over all the region names (which are part of the Project object passed to the function).  It makes a Checkbox widget for each region and adds the box to the list of boxes.  At the end of the loop all the boxes are put into a grid with three columns.</p>
+<p>The line in the middle of the loop that calls <code>box.param.watch</code> is where all the "magic" happens.  This function call tells the GUI that whenever a checkbox is clicked it should call a function named <code>cb</code> that is also defined inside the RegionBox class.  Here is a simplified version:</p>
+<pre><code>def cb(self, event):
+    r = event.obj.name
+    if event.new:
+        self.selected.add(r)
+    else:
+        self.selected.remove(r)
+</code></pre>
+<p>The name <code>cb</code> is short for "callback", a common name for this type of function.  The parameter named <code>event</code> has information about what the user just did.  In this case, we want to get the name of the button (which will be one of the region names) and then update the set of selected regions.  If the button was turned on we add the region name to the set, otherwise we remove it.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href=".." class="btn btn-neutral float-left" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../install/" class="btn btn-neutral float-right" title="Install and Configure">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../project/" class="btn btn-neutral float-left" title="Project Data"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../map/" class="btn btn-neutral float-right" title="TGMap">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -153,10 +188,10 @@
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../project/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../install/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../map/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

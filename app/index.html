@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>TideGatesApp - Tidegate Optimization Tool</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../css/tidegates.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "TideGatesApp";
+        var mkdocs_page_input_path = "app.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Tidegate Optimization Tool
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">Home</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="..">Introduction</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">User Instructions</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../user/">How to Use the Optimzation Tool</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Installation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../install/">Install and Configure</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../data/">Data</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../server/">Server</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Developer</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/">Modules</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../targets/">Target Definition</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../project/">Project Data</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Widgets</a>
+    <ul class="current">
+                <li class="toctree-l2"><a class="reference internal" href="../widgets/">Widget Classes</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../map/">TGMap</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../regionbox/">RegionBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../budgets/">BudgetBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../targetbox/">TargetBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../infobox/">InfoBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../outputpane/">OutputPane</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../downloadpane/">DownloadPane</a>
+                </li>
+                <li class="toctree-l2 current"><a class="reference internal current" href="./">TideGatesApp</a>
+    <ul class="current">
+    </ul>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../optipass/">OP (OptiPass Interface)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../main/">Main</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tests/">Tests</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Tidegate Optimization Tool</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Developer</li>
+          <li class="breadcrumb-item">Widgets</li>
+      <li class="breadcrumb-item active">TideGatesApp</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h3 id="tidegatesapp">TideGatesApp</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+  <div class="doc doc-contents first">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="panel.template.BootstrapTemplate">BootstrapTemplate</span></code></p>
+
+  
+      <p>The web application is based on the Bootstrap template provided by Panel.
+It displays a map (an instance of the TGMap class) in the sidebar.  The main content
+area has a Tabs widget with five tabs: a welcome message, a help page, the main page
+(described below) and two tabs for displaying outputs.</p>
+<p>The application also displays several small help buttons next to the main widgets.
+Clicking one of these buttons brings up a floating window with information about
+the widget.</p>
+<p>The main tab (labeled "Start") displays the widgets that allow the user to specify
+optimization parameters:  region names, budget levels, and restoration targets.  It
+also has a Run button.  When the user clicks this button the callback function makes
+sure the necessary parameters have been defined and then uses the template's modal
+dialog area.  Clicking the "OK" button in that dialog invokes another callback, 
+defined here, that runs the optimizer.</p>
+  
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>params</code></b>
+              –
+              <div class="doc-md-description">
+                <p>runtime options passed to the parent class constructor</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+                <details class="quote">
+                  <summary>Source code in <code>src/tidegates/widgets.py</code></summary>
+                  <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">837</span>
+<span class="normal">838</span>
+<span class="normal">839</span>
+<span class="normal">840</span>
+<span class="normal">841</span>
+<span class="normal">842</span>
+<span class="normal">843</span>
+<span class="normal">844</span>
+<span class="normal">845</span>
+<span class="normal">846</span>
+<span class="normal">847</span>
+<span class="normal">848</span>
+<span class="normal">849</span>
+<span class="normal">850</span>
+<span class="normal">851</span>
+<span class="normal">852</span>
+<span class="normal">853</span>
+<span class="normal">854</span>
+<span class="normal">855</span>
+<span class="normal">856</span>
+<span class="normal">857</span>
+<span class="normal">858</span>
+<span class="normal">859</span>
+<span class="normal">860</span>
+<span class="normal">861</span>
+<span class="normal">862</span>
+<span class="normal">863</span>
+<span class="normal">864</span>
+<span class="normal">865</span>
+<span class="normal">866</span>
+<span class="normal">867</span>
+<span class="normal">868</span>
+<span class="normal">869</span>
+<span class="normal">870</span>
+<span class="normal">871</span>
+<span class="normal">872</span>
+<span class="normal">873</span>
+<span class="normal">874</span>
+<span class="normal">875</span>
+<span class="normal">876</span>
+<span class="normal">877</span>
+<span class="normal">878</span>
+<span class="normal">879</span>
+<span class="normal">880</span>
+<span class="normal">881</span>
+<span class="normal">882</span>
+<span class="normal">883</span>
+<span class="normal">884</span>
+<span class="normal">885</span>
+<span class="normal">886</span>
+<span class="normal">887</span>
+<span class="normal">888</span>
+<span class="normal">889</span>
+<span class="normal">890</span>
+<span class="normal">891</span>
+<span class="normal">892</span>
+<span class="normal">893</span>
+<span class="normal">894</span>
+<span class="normal">895</span>
+<span class="normal">896</span>
+<span class="normal">897</span>
+<span class="normal">898</span>
+<span class="normal">899</span>
+<span class="normal">900</span>
+<span class="normal">901</span>
+<span class="normal">902</span>
+<span class="normal">903</span>
+<span class="normal">904</span>
+<span class="normal">905</span>
+<span class="normal">906</span>
+<span class="normal">907</span>
+<span class="normal">908</span>
+<span class="normal">909</span>
+<span class="normal">910</span>
+<span class="normal">911</span>
+<span class="normal">912</span>
+<span class="normal">913</span>
+<span class="normal">914</span>
+<span class="normal">915</span>
+<span class="normal">916</span>
+<span class="normal">917</span>
+<span class="normal">918</span>
+<span class="normal">919</span>
+<span class="normal">920</span>
+<span class="normal">921</span>
+<span class="normal">922</span>
+<span class="normal">923</span>
+<span class="normal">924</span>
+<span class="normal">925</span>
+<span class="normal">926</span>
+<span class="normal">927</span>
+<span class="normal">928</span>
+<span class="normal">929</span>
+<span class="normal">930</span>
+<span class="normal">931</span>
+<span class="normal">932</span>
+<span class="normal">933</span>
+<span class="normal">934</span>
+<span class="normal">935</span>
+<span class="normal">936</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Initialize the application.</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">      params:  runtime options passed to the parent class constructor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">super</span><span class="p">(</span><span class="n">TideGatesApp</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">bf</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="s1">&#39;static/workbook.csv&#39;</span><span class="p">,</span> <span class="n">DataSet</span><span class="o">.</span><span class="n">TNC_OR</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">map</span> <span class="o">=</span> <span class="n">TGMap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bf</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">map_pane</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">panel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">graphic</span><span class="p">())</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">budget_box</span> <span class="o">=</span> <span class="n">BudgetBox</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">region_boxes</span> <span class="o">=</span> <span class="n">RegionBox</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">budget_box</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">target_boxes</span> <span class="o">=</span> <span class="n">TargetBox</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">climate_group</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">RadioBoxGroup</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Climate&#39;</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bf</span><span class="o">.</span><span class="n">climates</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">optimize_button</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Run Optimizer&#39;</span><span class="p">,</span> <span class="n">stylesheets</span><span class="o">=</span><span class="p">[</span><span class="n">button_style_sheet</span><span class="p">])</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">InfoBox</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_optimizer</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">map_help_button</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;ℹ️&#39;</span><span class="p">,</span> <span class="n">stylesheets</span> <span class="o">=</span> <span class="p">[</span><span class="n">help_button_style_sheet</span><span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">map_help_button</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map_help_cb</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">region_help_button</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;ℹ️&#39;</span><span class="p">,</span> <span class="n">stylesheets</span> <span class="o">=</span> <span class="p">[</span><span class="n">help_button_style_sheet</span><span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">region_help_button</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region_help_cb</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">budget_help_button</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;ℹ️&#39;</span><span class="p">,</span> <span class="n">stylesheets</span> <span class="o">=</span> <span class="p">[</span><span class="n">help_button_style_sheet</span><span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">budget_help_button</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">budget_help_cb</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">target_help_button</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;ℹ️&#39;</span><span class="p">,</span> <span class="n">stylesheets</span> <span class="o">=</span> <span class="p">[</span><span class="n">help_button_style_sheet</span><span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">target_help_button</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_help_cb</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">climate_help_button</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;ℹ️&#39;</span><span class="p">,</span> <span class="n">stylesheets</span> <span class="o">=</span> <span class="p">[</span><span class="n">help_button_style_sheet</span><span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">climate_help_button</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">climate_help_cb</span><span class="p">)</span>
+
+    <span class="n">welcome_tab</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">section_head</span><span class="p">(</span><span class="s1">&#39;Welcome&#39;</span><span class="p">),</span>
+        <span class="n">pn</span><span class="o">.</span><span class="n">pane</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s1">&#39;static/welcome.html&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()),</span>
+    <span class="p">)</span>
+
+    <span class="n">help_tab</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">section_head</span><span class="p">(</span><span class="s1">&#39;Instructions&#39;</span><span class="p">),</span>
+        <span class="n">pn</span><span class="o">.</span><span class="n">pane</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s1">&#39;static/help1.html&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()),</span>
+        <span class="n">pn</span><span class="o">.</span><span class="n">pane</span><span class="o">.</span><span class="n">PNG</span><span class="p">(</span><span class="s1">&#39;static/ROI.png&#39;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">400</span><span class="p">),</span>
+        <span class="n">pn</span><span class="o">.</span><span class="n">pane</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s1">&#39;static/help2.html&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()),</span>
+    <span class="p">)</span>
+
+    <span class="n">start_tab</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">section_head</span><span class="p">(</span><span class="s1">&#39;Geographic Regions&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">region_help_button</span><span class="p">),</span>
+        <span class="n">pn</span><span class="o">.</span><span class="n">WidgetBox</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region_boxes</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">),</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">section_head</span><span class="p">(</span><span class="s1">&#39;Budget&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">budget_help_button</span><span class="p">),</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">budget_box</span><span class="p">,</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">section_head</span><span class="p">(</span><span class="s1">&#39;Targets&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_help_button</span><span class="p">),</span>
+        <span class="n">pn</span><span class="o">.</span><span class="n">WidgetBox</span><span class="p">(</span>
+            <span class="n">pn</span><span class="o">.</span><span class="n">Row</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_boxes</span><span class="p">,</span>
+                <span class="n">pn</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">section_head</span><span class="p">(</span><span class="s1">&#39;Climate&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">climate_help_button</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">climate_group</span><span class="p">,</span> 
+                    <span class="n">margin</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">20</span><span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span>
+        <span class="p">),</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimize_button</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">output_tab</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">section_head</span><span class="p">(</span><span class="s1">&#39;Nothing to See Yet&#39;</span><span class="p">),</span>
+        <span class="n">pn</span><span class="o">.</span><span class="n">pane</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="s1">&#39;&lt;p&gt;After running the optimizer this tab will show the results.&lt;/p&gt;&#39;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">download_tab</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">section_head</span><span class="p">(</span><span class="s1">&#39;Nothing to Download Yet&#39;</span><span class="p">),</span>
+        <span class="n">pn</span><span class="o">.</span><span class="n">pane</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="s1">&#39;&lt;p&gt;After running the optimizer use this tab to save the results.&lt;/p&gt;&#39;</span><span class="p">)</span>        <span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">Tabs</span><span class="p">(</span>
+        <span class="p">(</span><span class="s1">&#39;Home&#39;</span><span class="p">,</span> <span class="n">welcome_tab</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">&#39;Help&#39;</span><span class="p">,</span> <span class="n">help_tab</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">&#39;Start&#39;</span><span class="p">,</span> <span class="n">start_tab</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">&#39;Output&#39;</span><span class="p">,</span> <span class="n">output_tab</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">&#39;Download&#39;</span><span class="p">,</span> <span class="n">download_tab</span><span class="p">),</span>
+        <span class="n">sizing_mode</span> <span class="o">=</span> <span class="s1">&#39;fixed&#39;</span><span class="p">,</span>
+        <span class="n">width</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span>
+        <span class="c1"># height=700,</span>
+    <span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">sidebar</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pn</span><span class="o">.</span><span class="n">Row</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map_pane</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_help_button</span><span class="p">))</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">InfoBox</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_optimizer</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">modal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">optimize_button</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">validate_settings</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+                </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h3 id="src.tidegates.widgets.TideGatesApp.section_head" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">section_head</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Create an HTML header for one of the sections in the Start tab.</p>
+
+          <details class="quote">
+            <summary> <code>src/tidegates/widgets.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">938</span>
+<span class="normal">939</span>
+<span class="normal">940</span>
+<span class="normal">941</span>
+<span class="normal">942</span>
+<span class="normal">943</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">section_head</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create an HTML header for one of the sections in the Start tab.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">pane</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;h3&gt;</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">&lt;/h3&gt;&#39;</span><span class="p">,</span> <span class="n">styles</span><span class="o">=</span><span class="n">header_styles</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">header</span> <span class="k">if</span> <span class="n">b</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">pn</span><span class="o">.</span><span class="n">Row</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h3 id="src.tidegates.widgets.TideGatesApp.validate_settings" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">validate_settings</span><span class="p">(</span><span class="n">_</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Callback function invoked when the user clicks the Run Optimizer button.</p>
+
+          <details class="quote">
+            <summary> <code>src/tidegates/widgets.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">945</span>
+<span class="normal">946</span>
+<span class="normal">947</span>
+<span class="normal">948</span>
+<span class="normal">949</span>
+<span class="normal">950</span>
+<span class="normal">951</span>
+<span class="normal">952</span>
+<span class="normal">953</span>
+<span class="normal">954</span>
+<span class="normal">955</span>
+<span class="normal">956</span>
+<span class="normal">957</span>
+<span class="normal">958</span>
+<span class="normal">959</span>
+<span class="normal">960</span>
+<span class="normal">961</span>
+<span class="normal">962</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">validate_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Callback function invoked when the user clicks the Run Optimizer button.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">regions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">region_boxes</span><span class="o">.</span><span class="n">selection</span><span class="p">()</span>
+    <span class="n">budget_max</span><span class="p">,</span> <span class="n">budget_delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">budget_box</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+    <span class="n">targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_boxes</span><span class="o">.</span><span class="n">selection</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">regions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">budget_max</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">show_missing</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">budget_max</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="n">weights</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_boxes</span><span class="o">.</span><span class="n">weights</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="n">w</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;=</span> <span class="nb">int</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">5</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">weights</span><span class="p">]):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">show_invalid_weights</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+            <span class="k">return</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">show_params</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">budget_max</span><span class="p">,</span> <span class="n">budget_delta</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">climate_group</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h3 id="src.tidegates.widgets.TideGatesApp.run_optimizer" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">run_optimizer</span><span class="p">(</span><span class="n">_</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Callback function invoked when the user clicks the Continue button after verifying
+the parameter options.</p>
+<p>Use the settings in the budget widgets to figure out the sequence of budget levels
+to use.  Instantiate an OP object with the budget settings and values from the
+other parameter widgets, then use that widget to run OptiPass.</p>
+
+          <details class="quote">
+            <summary> <code>src/tidegates/widgets.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 964</span>
+<span class="normal"> 965</span>
+<span class="normal"> 966</span>
+<span class="normal"> 967</span>
+<span class="normal"> 968</span>
+<span class="normal"> 969</span>
+<span class="normal"> 970</span>
+<span class="normal"> 971</span>
+<span class="normal"> 972</span>
+<span class="normal"> 973</span>
+<span class="normal"> 974</span>
+<span class="normal"> 975</span>
+<span class="normal"> 976</span>
+<span class="normal"> 977</span>
+<span class="normal"> 978</span>
+<span class="normal"> 979</span>
+<span class="normal"> 980</span>
+<span class="normal"> 981</span>
+<span class="normal"> 982</span>
+<span class="normal"> 983</span>
+<span class="normal"> 984</span>
+<span class="normal"> 985</span>
+<span class="normal"> 986</span>
+<span class="normal"> 987</span>
+<span class="normal"> 988</span>
+<span class="normal"> 989</span>
+<span class="normal"> 990</span>
+<span class="normal"> 991</span>
+<span class="normal"> 992</span>
+<span class="normal"> 993</span>
+<span class="normal"> 994</span>
+<span class="normal"> 995</span>
+<span class="normal"> 996</span>
+<span class="normal"> 997</span>
+<span class="normal"> 998</span>
+<span class="normal"> 999</span>
+<span class="normal">1000</span>
+<span class="normal">1001</span>
+<span class="normal">1002</span>
+<span class="normal">1003</span>
+<span class="normal">1004</span>
+<span class="normal">1005</span>
+<span class="normal">1006</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_optimizer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Callback function invoked when the user clicks the Continue button after verifying</span>
+<span class="sd">    the parameter options.</span>
+
+<span class="sd">    Use the settings in the budget widgets to figure out the sequence of budget levels</span>
+<span class="sd">    to use.  Instantiate an OP object with the budget settings and values from the</span>
+<span class="sd">    other parameter widgets, then use that widget to run OptiPass.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">Logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;running optimizer&#39;</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">close_modal</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">main</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">loading</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">budget_max</span><span class="p">,</span> <span class="n">budget_delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">budget_box</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+    <span class="n">num_budgets</span> <span class="o">=</span> <span class="n">budget_max</span> <span class="o">//</span> <span class="n">budget_delta</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">=</span> <span class="n">OP</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bf</span><span class="p">,</span> 
+        <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region_boxes</span><span class="o">.</span><span class="n">selection</span><span class="p">()),</span>
+        <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bf</span><span class="o">.</span><span class="n">target_map</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_boxes</span><span class="o">.</span><span class="n">selection</span><span class="p">()],</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_boxes</span><span class="o">.</span><span class="n">weights</span><span class="p">(),</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">climate_group</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">generate_input_frame</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">budget_box</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="kc">False</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">main</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">loading</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># If OP ran successfully we expect to find one file for each budget level </span>
+    <span class="c1"># plus one more for the $0 budget</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">Logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;runs complete&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">outputs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">outputs</span><span class="p">)</span> <span class="o">!=</span> <span class="n">num_budgets</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Missing output files&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">collect_results</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">Logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;Output files:&#39;</span> <span class="o">+</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">outputs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">show_success</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_output_pane</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">show_fail</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h3 id="src.tidegates.widgets.TideGatesApp.add_output_pane" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">add_output_pane</span><span class="p">(</span><span class="n">op</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>After running OptiPass call this method to add tabs to the main
+panel to show the results.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>op</code></b>
+              –
+              <div class="doc-md-description">
+                <p>an optional Project object used by integration tests (if no argument
+   is passed use the Project option defined for the application)</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+          <details class="quote">
+            <summary> <code>src/tidegates/widgets.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1009</span>
+<span class="normal">1010</span>
+<span class="normal">1011</span>
+<span class="normal">1012</span>
+<span class="normal">1013</span>
+<span class="normal">1014</span>
+<span class="normal">1015</span>
+<span class="normal">1016</span>
+<span class="normal">1017</span>
+<span class="normal">1018</span>
+<span class="normal">1019</span>
+<span class="normal">1020</span>
+<span class="normal">1021</span>
+<span class="normal">1022</span>
+<span class="normal">1023</span>
+<span class="normal">1024</span>
+<span class="normal">1025</span>
+<span class="normal">1026</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">add_output_pane</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    After running OptiPass call this method to add tabs to the main</span>
+<span class="sd">    panel to show the results.</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">      op:  an optional Project object used by integration tests (if no argument</span>
+<span class="sd">           is passed use the Project option defined for the application)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">op</span> <span class="o">=</span> <span class="n">op</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span>
+
+    <span class="n">output</span> <span class="o">=</span> <span class="n">OutputPane</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bf</span><span class="p">)</span>
+    <span class="n">output</span><span class="o">.</span><span class="n">make_dots</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">graphic</span><span class="p">())</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">region_boxes</span><span class="o">.</span><span class="n">add_external_callback</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">hide_dots</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Output&#39;</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Download&#39;</span><span class="p">,</span> <span class="n">DownloadPane</span><span class="p">(</span><span class="n">output</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h3 id="src.tidegates.widgets.TideGatesApp.map_help_cb" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">map_help_cb</span><span class="p">(</span><span class="n">_</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Callback function for the help button next to the map in the sidebar.</p>
+
+          <details class="quote">
+            <summary> <code>src/tidegates/widgets.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1028</span>
+<span class="normal">1029</span>
+<span class="normal">1030</span>
+<span class="normal">1031</span>
+<span class="normal">1032</span>
+<span class="normal">1033</span>
+<span class="normal">1034</span>
+<span class="normal">1035</span>
+<span class="normal">1036</span>
+<span class="normal">1037</span>
+<span class="normal">1038</span>
+<span class="normal">1039</span>
+<span class="normal">1040</span>
+<span class="normal">1041</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">map_help_cb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Callback function for the help button next to the map in the sidebar.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">pane</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">    &lt;p&gt;When you move your mouse over the map the cursor will change to a &quot;crosshairs&quot; symbol and a set of buttons will appear below the map.</span>
+<span class="s1">    Navigating with the map is similar to using Google maps or other online maps:&lt;/p&gt;</span>
+<span class="s1">    &lt;ul&gt;</span>
+<span class="s1">        &lt;li&gt;Left-click and drag to pan (move left and right or up and down).&lt;/li&gt;</span>
+<span class="s1">        &lt;li&gt;If you want to zoom in and out, first click the magnifying glass button below the map; then you can zoom in and out using the scroll wheel on your mouse.&lt;/li&gt;   </span>
+<span class="s1">        &lt;li&gt;Click the refresh button to restore the map to its original size and location.&lt;/li&gt;</span>
+<span class="s1">    &lt;/ul&gt;</span>
+<span class="s1">    &#39;&#39;&#39;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pn</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">FloatPanel</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Map Controls&#39;</span><span class="p">,</span> <span class="n">contained</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">400</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h3 id="src.tidegates.widgets.TideGatesApp.region_help_cb" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">region_help_cb</span><span class="p">(</span><span class="n">_</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Callback function for the help button next to the region box widget in the start tab.</p>
+
+          <details class="quote">
+            <summary> <code>src/tidegates/widgets.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1043</span>
+<span class="normal">1044</span>
+<span class="normal">1045</span>
+<span class="normal">1046</span>
+<span class="normal">1047</span>
+<span class="normal">1048</span>
+<span class="normal">1049</span>
+<span class="normal">1050</span>
+<span class="normal">1051</span>
+<span class="normal">1052</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">region_help_cb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Callback function for the help button next to the region box widget in the start tab.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">pane</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">    &lt;p&gt;Select a region by clicking in the box to the left of an estuary name.&lt;/p&gt;</span>
+<span class="s1">    &lt;p&gt;Each time you click in a box the map will be updated to show the positions of the barriers that are in our database for the estuary.&lt;/p&gt;</span>
+<span class="s1">    &lt;p&gt;You must select at least one region before you run the optimizer.&lt;/p&gt;</span>
+<span class="s1">    &#39;&#39;&#39;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pn</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">FloatPanel</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Geographic Regions&#39;</span><span class="p">,</span> <span class="n">contained</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">400</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h3 id="src.tidegates.widgets.TideGatesApp.budget_help_cb" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">budget_help_cb</span><span class="p">(</span><span class="n">_</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Callback function for the help button next to the budget box widget in the start tab.</p>
+
+          <details class="quote">
+            <summary> <code>src/tidegates/widgets.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1054</span>
+<span class="normal">1055</span>
+<span class="normal">1056</span>
+<span class="normal">1057</span>
+<span class="normal">1058</span>
+<span class="normal">1059</span>
+<span class="normal">1060</span>
+<span class="normal">1061</span>
+<span class="normal">1062</span>
+<span class="normal">1063</span>
+<span class="normal">1064</span>
+<span class="normal">1065</span>
+<span class="normal">1066</span>
+<span class="normal">1067</span>
+<span class="normal">1068</span>
+<span class="normal">1069</span>
+<span class="normal">1070</span>
+<span class="normal">1071</span>
+<span class="normal">1072</span>
+<span class="normal">1073</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">budget_help_cb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Callback function for the help button next to the budget box widget in the start tab.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">pane</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">    &lt;p&gt;There are three ways to specify the budgets used by the optimizer.&lt;/p&gt;</span>
+<span class="s1">    &lt;H4&gt;Basic&lt;/H4&gt;</span>
+<span class="s1">    &lt;p&gt;The simplest method is to specify an upper limit by moving the slider back and forth.  When you use this method, the optimizer will run 10 times, ending at the value you select with the slider.  For example, if you set the slider at $10M (the abbreviation for $10 million), the optimizer will make ROI curves based on budgets of $1M, $2M, &lt;i&gt;etc&lt;/i&gt;, up to the maximum of $10M.&lt;/p&gt;</span>
+<span class="s1">    &lt;p&gt;Note that the slider is disabled until you select one or more regions.  That&#39;s because the maximum value depends on the costs of the gates in each region.</span>
+<span class="s1">    For example, the total cost of all gates in the Coquille region is $11.8M.  Once you choose that region, you can move the budget slider</span>
+<span class="s1">    left and right to pick a maximum budget for the optimizer to consider.</span>
+<span class="s1">    &lt;H4&gt;Advanced&lt;/H4&gt;</span>
+<span class="s1">    &lt;p&gt;If you click on the Advanced tab in this section you will see ways to specify the budget interval and the number of budgets.&lt;/p&gt;</span>
+<span class="s1">    &lt;p&gt;You can use this method if you want more control over the layout of the ROI curves, for example you can include more points by increasing the number of budgets.&lt;/p&gt;</span>
+<span class="s1">    &lt;H4&gt;Fixed&lt;/H4&gt;</span>
+<span class="s1">    &lt;p&gt;If you know exactly how much money you have to spend you can enter that amount by clicking on the Fixed tab and entering the budget amount.&lt;/p&gt;</span>
+<span class="s1">    &lt;p&gt;The optimizer will run just once, using that budget.  The output will have tables showing the gates identified by the optimizer, but there will be no ROI curve.&lt;/p&gt;</span>
+<span class="s1">    &lt;p&gt;When entering values, you can write the full amount, with or without commas (&lt;i&gt;e.g.&lt;/i&gt;11,500,000 or 11500000) or use the abbreviated form (11.5M).&lt;/p&gt;</span>
+<span class="s1">    &#39;&#39;&#39;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pn</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">FloatPanel</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Budget Levels&#39;</span><span class="p">,</span> <span class="n">contained</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">400</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h3 id="src.tidegates.widgets.TideGatesApp.target_help_cb" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">target_help_cb</span><span class="p">(</span><span class="n">_</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Callback function for the help button next to the target box widget in the start tab.</p>
+
+          <details class="quote">
+            <summary> <code>src/tidegates/widgets.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1075</span>
+<span class="normal">1076</span>
+<span class="normal">1077</span>
+<span class="normal">1078</span>
+<span class="normal">1079</span>
+<span class="normal">1080</span>
+<span class="normal">1081</span>
+<span class="normal">1082</span>
+<span class="normal">1083</span>
+<span class="normal">1084</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">target_help_cb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Callback function for the help button next to the target box widget in the start tab.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">pane</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">    &lt;p&gt;Click boxes next to one or more target names to have the optimizer include those targets in its calculations.&lt;/p&gt;</span>
+<span class="s1">    &lt;p&gt;The optimizer will create an ROI curve for each target selected. &lt;/p&gt;</span>
+<span class="s1">    &lt;p&gt;If more than one target is selected the optimizer will also generate an overall &quot;net benefit&quot; curve based on considering all targets at the same time.&lt;/p&gt;</span>
+<span class="s1">    &#39;&#39;&#39;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pn</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">FloatPanel</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Targets&#39;</span><span class="p">,</span> <span class="n">contained</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">400</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h3 id="src.tidegates.widgets.TideGatesApp.climate_help_cb" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">climate_help_cb</span><span class="p">(</span><span class="n">_</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Callback function for the help button next to the climate scenario checkbox in the start tab.</p>
+
+          <details class="quote">
+            <summary> <code>src/tidegates/widgets.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1086</span>
+<span class="normal">1087</span>
+<span class="normal">1088</span>
+<span class="normal">1089</span>
+<span class="normal">1090</span>
+<span class="normal">1091</span>
+<span class="normal">1092</span>
+<span class="normal">1093</span>
+<span class="normal">1094</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">climate_help_cb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Callback function for the help button next to the climate scenario checkbox in the start tab.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">pane</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">    &lt;p&gt;By default the optimizer uses current water levels when computing potential benefits.  Click the button next to &lt;b&gt;Future&lt;/b&gt; to have it use water levels expected due to climate change.&lt;/p&gt;</span>
+<span class="s1">    &lt;p&gt;The future scenario uses two projected water levels, both for the period to 2100. For fish habitat targets, the future water level is based on projected sea level rise of 5.0 feet.  For agriculture and infrastructure targets, the future water level is projected to be 7.2 feet, which includes sea level rise and the probabilities of extreme water levels causing flooding events.&lt;/p&gt;</span>
+<span class="s1">    &#39;&#39;&#39;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pn</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">FloatPanel</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Targets&#39;</span><span class="p">,</span> <span class="n">contained</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">400</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../downloadpane/" class="btn btn-neutral float-left" title="DownloadPane"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../optipass/" class="btn btn-neutral float-right" title="OP (OptiPass Interface)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../downloadpane/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../optipass/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

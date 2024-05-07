@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Project Data - Tidegate Optimization Tool</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../css/tidegates.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Project Data";
+        var mkdocs_page_input_path = "project.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Tidegate Optimization Tool
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">Home</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="..">Introduction</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">User Instructions</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../user/">How to Use the Optimzation Tool</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Installation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../install/">Install and Configure</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../data/">Data</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../server/">Server</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Developer</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/">Modules</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../targets/">Target Definition</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Project Data</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#src.tidegates.project.Project._make_map_info">_make_map_info()</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#src.tidegates.project.Project._make_region_list">_make_region_list()</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#src.tidegates.project.Project._make_totals">_make_totals()</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="#">Widgets</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../widgets/">Widget Classes</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../map/">TGMap</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../regionbox/">RegionBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../budgets/">BudgetBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../targetbox/">TargetBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../infobox/">InfoBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../outputpane/">OutputPane</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../downloadpane/">DownloadPane</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../app/">TideGatesApp</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../optipass/">OP (OptiPass Interface)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../main/">Main</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tests/">Tests</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Tidegate Optimization Tool</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Developer</li>
+      <li class="breadcrumb-item active">Project Data</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="project-data">Project Data</h2>
+<p>The data required by the web app is stored in a single object defined by a class named Project.</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+  <div class="doc doc-contents first">
+
+  
+      <p>A Project object has all the information used by the GUI to display
+a set of tide gates.  The constructor is passed the name of a CSV file
+that has a list of all the barriers and the ID of one of the data sets
+(currently either OPM or TNC_OR).  The data in the CSV file and the
+target descriptions returned by the make_targets function in the targets
+module are used to initialize the attributes of the Project object.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Attributes:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>data</code></b>
+              –
+              <div class="doc-md-description">
+                <p>a copy of the original data, in the form of a Pandas data frame</p>
+              </div>
+            </li>
+            <li>
+              <b><code>map_info</code></b>
+              –
+              <div class="doc-md-description">
+                <p>a table containging geographical coordinates of the gates</p>
+              </div>
+            </li>
+            <li>
+              <b><code>regions</code></b>
+              –
+              <div class="doc-md-description">
+                <p>a list of the unique region names in the file</p>
+              </div>
+            </li>
+            <li>
+              <b><code>climates</code></b>
+              –
+              <div class="doc-md-description">
+                <p>a list of climate scenarios</p>
+              </div>
+            </li>
+            <li>
+              <b><code>targets</code></b>
+              –
+              <div class="doc-md-description">
+                <p>a dictionary of restoration target attributes for each climate scenario</p>
+              </div>
+            </li>
+            <li>
+              <b><code>target_map</code></b>
+              –
+              <div class="doc-md-description">
+                <p>a dictionary that associates target names with the target IDs</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+                <details class="quote">
+                  <summary>Source code in <code>src/tidegates/project.py</code></summary>
+                  <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="n">ds</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">make_targets</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ds</span> <span class="o">==</span> <span class="n">DataSet</span><span class="o">.</span><span class="n">TNC_OR</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">map_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_map_info</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">regions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_region_list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">totals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_totals</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">climates</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Current&#39;</span><span class="p">,</span> <span class="s1">&#39;Future&#39;</span><span class="p">]</span>
+        <span class="n">dct</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="s1">&#39;Current&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_map</span> <span class="o">=</span> <span class="p">{</span> <span class="n">dct</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">long</span><span class="p">:</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dct</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+</code></pre></div></td></tr></table></div>
+                </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h3 id="src.tidegates.project.Project._make_map_info" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">_make_map_info</span><span class="p">()</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Make a dataframe with attributes needed to display gates on a map.
+Map latitude and longitude columns in the input frame to Mercator
+coordinates, and copy the ID, region and barrier types so they can
+be displayed as tooltips.</p>
+
+          <details class="quote">
+            <summary> <code>src/tidegates/project.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">_make_map_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Make a dataframe with attributes needed to display gates on a map.</span>
+<span class="sd">    Map latitude and longitude columns in the input frame to Mercator</span>
+<span class="sd">    coordinates, and copy the ID, region and barrier types so they can</span>
+<span class="sd">    be displayed as tooltips.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[[</span><span class="s1">&#39;BARID&#39;</span><span class="p">,</span><span class="s1">&#39;REGION&#39;</span><span class="p">,</span><span class="s1">&#39;BarrierType&#39;</span><span class="p">]]</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="mf">6378137.0</span>
+    <span class="n">map_info</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span>
+        <span class="n">df</span><span class="p">,</span> 
+        <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">POINT_X</span><span class="p">)</span><span class="o">*</span><span class="n">R</span><span class="p">,</span> 
+        <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">POINT_Y</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="n">R</span>
+    <span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">map_info</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">map_info</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h3 id="src.tidegates.project.Project._make_region_list" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">_make_region_list</span><span class="p">()</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Make a list of unique region names, sorted by latitude, so regions
+are displayed in order from north to south</p>
+
+          <details class="quote">
+            <summary> <code>src/tidegates/project.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">_make_region_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Make a list of unique region names, sorted by latitude, so regions</span>
+<span class="sd">    are displayed in order from north to south</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[[</span><span class="s1">&#39;BARID&#39;</span><span class="p">,</span><span class="s1">&#39;REGION&#39;</span><span class="p">,</span><span class="s1">&#39;POINT_Y&#39;</span><span class="p">]]</span>
+    <span class="n">mf</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;REGION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">numeric_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;POINT_Y&#39;</span><span class="p">,</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">mf</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h3 id="src.tidegates.project.Project._make_totals" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">_make_totals</span><span class="p">()</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Compute the total cost to repair all barriers in each region</p>
+
+          <details class="quote">
+            <summary> <code>src/tidegates/project.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">_make_totals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Compute the total cost to repair all barriers in each region</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">tf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[[</span><span class="s1">&#39;BARID&#39;</span><span class="p">,</span><span class="s1">&#39;REGION&#39;</span><span class="p">,</span><span class="s1">&#39;COST&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;REGION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">numeric_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span> <span class="n">x</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">COST</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tf</span><span class="o">.</span><span class="n">index</span> <span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div><p><br/></p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../targets/" class="btn btn-neutral float-left" title="Target Definition"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../widgets/" class="btn btn-neutral float-right" title="Widget Classes">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../targets/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../widgets/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

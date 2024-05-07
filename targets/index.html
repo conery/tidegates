@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Target Definition - Tidegate Optimization Tool</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../css/tidegates.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Target Definition";
+        var mkdocs_page_input_path = "targets.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Tidegate Optimization Tool
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">Home</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="..">Introduction</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">User Instructions</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../user/">How to Use the Optimzation Tool</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Installation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../install/">Install and Configure</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../data/">Data</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../server/">Server</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Developer</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/">Modules</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Target Definition</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#target">Target</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#make_targets">make_targets</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../project/">Project Data</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="#">Widgets</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../widgets/">Widget Classes</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../map/">TGMap</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../regionbox/">RegionBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../budgets/">BudgetBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../targetbox/">TargetBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../infobox/">InfoBox</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../outputpane/">OutputPane</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../downloadpane/">DownloadPane</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../app/">TideGatesApp</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../optipass/">OP (OptiPass Interface)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../main/">Main</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tests/">Tests</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Tidegate Optimization Tool</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Developer</li>
+      <li class="breadcrumb-item active">Target Definition</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="restoration-targets">Restoration Targets</h2>
+<p>To allow for cases where a river might be home to several different species, and the fact that barriers impact the passability of those species in different ways, a data file can be multiple columns to describe habitats.
+The example data shown above has two columns of habitat values, named "HAB1" and "HAB2".
+The values in those columns are river miles: the total amount of water upstream from a barrier before the next barrier or the river's source.
+In other cases the column might have land area upstream from a barrier, in units of acres or square miles.</p>
+<p>For each habitat the optimizer also needs to know the current passability at a barrier and the expected passability if the barrier is replaced or updated.
+The columns named "PRE1" and "POST1" are the pre- and post-restoration passabilities for "HAB1", and "PRE2" and "POST2" are the passabilites for "HAB2".</p>
+<p>When we run OptiPass we need to tell it which habitat column(s) to use.
+We can choose a single habitat by itself, or specify several habitat columns and tell the optimizer how to weight them.</p>
+<h3 id="target"><code>Target</code></h3>
+<p>The Targets module defines a data structure called a Target that contains all the information about a habitat.
+There will be one Target object for each habitat.
+The object will have the names of the columns in the data file that have the habitat and passability values.
+It will also have names to use when the habitat is displayed in the GUI and used in output tables and plots.</p>
+<p>The Target type is defined using Python's <code>namedtuple</code> function, which is passed the name of the type to create and the attributes each object will have:</p>
+<pre><code>Target = namedtuple('Target', ['abbrev', 'long', 'short', 'habitat', 'prepass', 'postpass', 'unscaled', 'label', 'infra'])
+</code></pre>
+<p>The attributes are:</p>
+<ul>
+<li><code>abbrev</code> is a short-letter ID for a habitat</li>
+<li><code>long</code> is a string that will be displayed in the GUI</li>
+<li><code>short</code> is a shorter name used in plots and output tables</li>
+<li><code>habitat</code> is the column in the CSV file with the habitat value (see note below)</li>
+<li><code>prepass</code> is the passability before restoration</li>
+<li><code>postpass</code> is passability after restoration</li>
+<li><code>unscaled</code> is the actual habitat, in miles for streams or acres for infrastructure (see note below)</li>
+<li><code>label</code> is a string used to label the y-axis in ROI curves</li>
+<li><code>infra</code> specifies the type of target (True for infrastructure, False for streams)</li>
+</ul>
+<p>This statement creates a Target object for Habitat 1 from the OptiPass Manual.
+Since this data is used for testing, and doesn't show up in the GUI, several of the fields are empty.</p>
+<pre><code>Target('T1', '', 'Target 1', 'HAB1', 'PRE1', 'POST1', '', '', '')
+</code></pre>
+<p>Here is an example of a target definition using columns from the Oregon Coast data.
+In this case we need to use the last three columns to tell the optimizer the target is not an infrastructure target:</p>
+<pre><code>Target('CO', 'Coho Streams, 'Coho', 'sCO', 'PREPASS_CO', 'POSTPASS', 'Coho_salmon', 'Habitat Potential (miles)', False),
+</code></pre>
+<p><strong>Note: Scaled Data</strong></p>
+<p>Both habitats in the example data are based on river miles, but the infrastructure habitats in the Oregon Coast data are based on other units.
+In order to run an optimization that combines habitat types the data file has an extra column for each habitat, containing a scaled value (for example, the "sCO" in the example above for Coho salmon refers to the scaled river miles column in that CSV file).
+The original unscaled values are still in the file, but are not used by the app.</p>
+<p><strong>DataSet</strong></p>
+<p>An enumeration named DataSet defines IDs for the two data sets that can be used by the web app:  </p>
+<ul>
+<li><code>DataSet.OPM</code> refers to data from the OptiPass manual</li>
+<li><code>DataSet.TNC_OR</code> refers to data from the Oregon coast</li>
+</ul>
+<h3 id="make_targets"><code>make_targets</code></h3>
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+  <div class="doc doc-contents first">
+  
+      <p>Create dictionaries that map two-letter target IDs to complete target
+descriptioms.  The TNC data set has two dictionaries, one for each
+climate scenario.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>ds</code></b>
+                  (<code><span title="src.tidegates.targets.DataSet">DataSet</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>a data set ID</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+                <code>dict</code>
+            –
+            <div class="doc-md-description">
+              <p>a dictionary ot Target objects</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+          <details class="quote">
+            <summary> <code>src/tidegates/targets.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">make_targets</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create dictionaries that map two-letter target IDs to complete target</span>
+<span class="sd">    descriptioms.  The TNC data set has two dictionaries, one for each</span>
+<span class="sd">    climate scenario.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ds: a data set ID</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        a dictionary ot Target objects</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">ds</span> <span class="o">==</span> <span class="n">DataSet</span><span class="o">.</span><span class="n">TNC_OR</span><span class="p">:</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">fish_targets</span><span class="p">)</span>
+        <span class="n">current</span> <span class="o">|=</span> <span class="n">current_infrastructure_targets</span>
+        <span class="n">future</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">fish_targets</span><span class="p">)</span>
+        <span class="n">future</span> <span class="o">|=</span> <span class="n">future_infrastructure_targets</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;Current&#39;</span><span class="p">:</span> <span class="n">current</span><span class="p">,</span>
+            <span class="s1">&#39;Future&#39;</span><span class="p">:</span> <span class="n">future</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">opm_targets</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../modules/" class="btn btn-neutral float-left" title="Modules"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../project/" class="btn btn-neutral float-right" title="Project Data">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../modules/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../project/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>How to Use the Optimzation Tool - Tidegate Optimization Tool</title>
+    <title>Data - Tidegate Optimization Tool</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -14,8 +14,8 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "How to Use the Optimzation Tool";
-        var mkdocs_page_input_path = "user.md";
+        var mkdocs_page_name = "Data";
+        var mkdocs_page_input_path = "data.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -47,17 +47,17 @@
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">User Instructions</span></p>
-              <ul class="current">
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">How to Use the Optimzation Tool</a>
-    <ul class="current">
-    </ul>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../user/">How to Use the Optimzation Tool</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Installation</span></p>
-              <ul>
+              <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../install/">Install and Configure</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../data/">Data</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Data</a>
+    <ul class="current">
+    </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../server/">Server</a>
                   </li>
@@ -113,8 +113,8 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">User Instructions</li>
-      <li class="breadcrumb-item active">How to Use the Optimzation Tool</li>
+          <li class="breadcrumb-item">Installation</li>
+      <li class="breadcrumb-item active">Data</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -123,14 +123,36 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="how-to-use-the-optimzation-tool">How to Use the Optimzation Tool</h1>
-<p>TBD</p>
+                <h2 id="tidegate-data-files">Tidegate Data Files</h2>
+<p>All of the data used by the optimizer is in a single CSV file.
+The file can have data on tide gates, culverts, or any obstacle encountered by migrating fish.
+We'll use the generic term "barrier."</p>
+<p>A data file has one line for each barrier.
+The attributes (columns) define a barrier's ID, the ID of it's downstream neighbor, it's geographic name (typically a river system), and the costs and benefits of restoring the barrier.</p>
+<p>The web app looks for data files in the <code>static</code> directory.
+The repo has one data file, named <code>test_wb.csv</code> created using the example river system shown in the OptiPass user manual:</p>
+<pre><code>BARID,REGION,DSID,HAB1,PRE1,POST1,HAB2,PRE2,POST2,COST
+A,OPM,NA,2.1,0.4,1.0,1.68,0.6,1.0,250
+B,OPM,A,0.9,0.0,1.0,0.72,0.0,1.0,120
+C,OPM,B,4.3,0.3,1.0,3.44,0.45,1.0,70
+D,OPM,A,1.7,0.5,NA,1.36,0.75,NA,NA
+E,OPM,D,1.2,0.2,1.0,0.96,0.3,1.0,100
+F,OPM,D,0.5,0.1,1.0,0.40,0.15,1.0,50
+</code></pre>
+<p>(the "OPM" in the REGION column stands for "OptiPass Manual").</p>
+<p>The Python code for the web app refers to another data file, named <code>workbook.csv</code>, that is also expected to be in the <code>static</code> folder.
+This file has data from over 1,000 tide gates on the Oregon coast.
+It is not include in the repo.</p>
+<blockquote>
+<p><em>Eventually the names and locations of data files will be defined in a configuration file, and all the references to these two CSV files will be replaced with values taken from the configuration file.</em>
+<br/></p>
+</blockquote>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href=".." class="btn btn-neutral float-left" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../install/" class="btn btn-neutral float-right" title="Install and Configure">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../install/" class="btn btn-neutral float-left" title="Install and Configure"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../server/" class="btn btn-neutral float-right" title="Server">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -153,10 +175,10 @@
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../install/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../install/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../server/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
