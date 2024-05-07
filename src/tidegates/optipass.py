@@ -1,29 +1,3 @@
-#
-# Interface to OptiPass.exe (command line version of OptiPass)
-#
-# An instance of the OP class encapsulates all the information
-# related to a single optimization run.  The constructor, called
-# from the GUI, is passed the options selected by the user (budget
-# levels, restoration targets, etc).  Methods of the class set up
-# and run an optimization based on these options:
-#
-#   OP.generate_input_frame
-#       collect the columns from the main data file, save them in
-#       a frame that has all the informtion that will be needed by OP
-#
-#   OP.run
-#       runs the optimizer for each budget level requested by the
-#       user, records the names of the data files generated
-#
-#   OP.collect_results
-#       parse the output files, collect the relevant data in a frame
-#       that is passed back to the calling function
-#
-# An OP object can also be instantiated by the command line API in
-# main.py.  When run on macOS or Linux it can be used to test the 
-# functions that creates the OP input file and parse the results.  
-# When run on a Windows system it can also run OptiPass.
-#
 
 import platform
 import os
@@ -48,14 +22,31 @@ from .project import Project
 from .targets import DataSet
 
 class OP:
+    """
+    Interface to OptiPass.exe (the command line version of OptiPass)
+
+    An instance of the OP class encapsulates all the information
+    related to a single optimization run.  The constructor, called
+    from the GUI, is passed the options selected by the user (budget
+    levels, restoration targets, etc).  Methods of the class set up
+    and run an optimization based on these options:
+
+    An OP object can also be instantiated by the command line API in
+    main.py.  When run on macOS or Linux it can be used to test the 
+    functions that creates the OP input file and parse the results.  
+    When run on a Windows system it can also run OptiPass.
+    """
 
     def __init__(self, project: Project, regions: list[str], targets: list[str], weights: list[str], climate: str):
         '''
         Instantiate a new OP object.
-        * project is a Project object containing barrier data
-        * regions is a list of unique names from the barrier file
-        * targets is a list of 2-letter target IDs
-        * climate is either 'Current' or 'Future'
+
+        Arguments:
+          project: a Project object containing barrier file
+          regions: a list of region names from the barrier file
+          targets: a list of 2-letter target IDs
+          weights: optional list of integer weights for each target
+          climate: either 'Current' or 'Future'
         '''
         self.project = project
         self.regions = regions
@@ -116,16 +107,25 @@ class OP:
 
         return df
 
-    # To run OptiPass we need (a) a Windows host with the OptiPass command line version
-    # or (b) a Linux host with WINE installed.  If the host OS is a Mac print an error
-    # message (WINE can't run on Apple silicon).
-
-    def run(self, budgets: list[int], preview: bool, progress_hook = lambda: 0):
+    # def run(self, budgets: list[int], preview: bool, progress_hook = lambda: 0):
+    def run(self, budgets: list[int], preview: bool):
         '''
         Generate and execute the shell commands that run OptiPass.  If the shell
         environment includes a variable named WINEARCH it means the script is
         running on Linux, and we need to use Wine, otherwise build a command that
         will run on Windows.
+
+        The first time OptiPass is run it will be given a budget of $0 to establish
+        the current passage levels.  It's then run once more at each level in the
+        budgets list.
+
+        Each time OptiPass is run it is passed the same input file, but it will
+        write outputs to a separate file that includes the budget level in the file name.
+        The list of output file names is saved in an instance variable.
+
+        Arguments:
+          budgets:  a list of budget values (dollar amounts)
+          preview:  if True, print shell commands but don't execute them
         '''
         if platform.system() == 'Windows':
             app = 'bin\\OptiPassMain.exe'
@@ -161,7 +161,7 @@ class OP:
                 print(res.stderr)
             if preview or (res.returncode == 0):
                 outputs.append(outfile)
-                progress_hook()
+                # progress_hook()
             else:
                 Logging.log('OptiPass failed:')
                 Logging.log(res.stderr)
@@ -169,7 +169,9 @@ class OP:
 
     def collect_results(self, scaled=False):
         '''
-        Parse the output files produced by OptiPass
+        Parse the output files produced by OptiPass (the file names are in
+        self.outputs) and collect the results, which are saved in two Pandas
+        data frames.
         '''
         df = self.input_frame
         G = nx.from_pandas_edgelist(
@@ -197,8 +199,12 @@ class OP:
 
     def _path_from(self, x, graph):
         '''
-        Return a list of nodes in the path from `x` to a downstream barrier that
+        Return a list of nodes in the path from a barrier to a downstream barrier that
         has no descendants.
+
+        Arguments:
+          x: the barrier at the start of the path
+          graph:  the digraph with barrier connectivity
         '''
         return [x] + [child for _, child in nx.dfs_edges(graph,x)]
 
@@ -207,6 +213,10 @@ class OP:
         Parse an output file, appending results to the lists.  We need to handle
         two different formats, depending on whether there was one target or more
         than one.
+
+        Arguments:
+          fn:  the name of the file to parse
+          dct:  a dictionary of column names, results are appended to lists in this dictionary
         '''
 
         def parse_header_line(line, tag):
@@ -251,6 +261,10 @@ class OP:
         '''
         Compute the potential habitat available before and after restoration, using
         the original unscaled habitat values.
+
+        Arguments:
+          tlist:  list of target IDs
+          scaled:  True if we should create weighted potential habitat values
         '''
         filtered = self.project.data[self.project.data.REGION.isin(self.regions)].fillna(0)
         filtered.index = filtered.BARID
@@ -271,10 +285,17 @@ class OP:
         self.summary['netgain'] = self.summary.habitat - self.summary.habitat[0]
         return self.summary
     
-    # Private method: compute the available habitat for a target, in the form of
-    # a vector of habitat values for each budget level
 
     def _ah(self, target, data, scaled):
+        """
+        Compute the available habitat for a target, in the form of
+        a vector of habitat values for each budget level;
+
+        Arguments:
+          target:  a Target object (with ID and names of data columns to use)
+          data:  the barrier dataframe
+          scaled:  if True is the scaled benefit column
+        """
         budgets = self.summary.budget
         m = self.matrix
         res = np.zeros(len(budgets))
@@ -351,6 +372,9 @@ class OP:
         return s+suffix
     
     def make_roi_curves(self):
+        """
+        Generate ROI plots based on computed benefits.
+        """
         figures = []
         download_figures = []
 

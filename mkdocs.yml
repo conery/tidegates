@@ -11,7 +11,28 @@ plugins:
   - mkdocstrings
 
 nav:
-  - user.md
-  - install.md
-  - server.md
-  - developer.md
+  - "Home":
+    - index.md
+  - "User Instructions":
+    - user.md
+  - "Installation":
+    - "Install and Configure": install.md
+    - data.md
+    - server.md
+  - "Developer":
+    - modules.md
+    - "Target Definition": targets.md
+    - "Project Data": project.md
+    - "Widgets":
+      - "Widget Classes": widgets.md
+      - "TGMap": map.md
+      - "RegionBox": regionbox.md
+      - "BudgetBox": budgets.md
+      - "TargetBox": targetbox.md
+      - "InfoBox": infobox.md
+      - "OutputPane": outputpane.md
+      - "DownloadPane": downloadpane.md
+      - "TideGatesApp": app.md
+    - "OP (OptiPass Interface)": optipass.md
+    - main.md
+    - tests.md

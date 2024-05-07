@@ -5,7 +5,7 @@ import sys
 
 import panel as pn
 
-from tidegates.widgets import TideGates
+from tidegates.widgets import TideGatesApp
 from tidegates.targets import DataSet
 from tidegates.project import Project
 from tidegates.optipass import OP
@@ -72,9 +72,9 @@ def make_app():
     Instantiate the top level widget.
 
     Returns:
-        a TideGates object
+        a TideGatesApp object
     """
-    return TideGates(
+    return TideGatesApp(
         title='Tide Gate Optimization', 
         sidebar_width=450
     )

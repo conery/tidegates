@@ -8,6 +8,46 @@ from bokeh.models.formatters import NumeralTickFormatter
 
 from .styles import slider_style_sheet
 
+class BudgetBox(pn.Column):
+    """
+    There are three ways users can specify the range of budget values
+    when running OptiPass.  A BudgetBox widget has one tab for each option.
+    The widgets displayed inside a tab are defined by their own classes
+    (BasicBudgetBox, AdvancedBudgetBox, and FixedBudgetBox).
+    """
+
+    def __init__(self):
+        super(BudgetBox, self).__init__()
+        self.tabs = pn.Tabs(
+            ('Basic', BasicBudgetBox()),
+            ('Advanced', AdvancedBudgetBox()),
+            ('Fixed', FixedBudgetBox()),
+        )
+        self.append(self.tabs)
+
+    def set_budget_max(self, n: int):
+        """
+        When the user selects or deselects a region the budget widgets need
+        to know the new total cost for all the selected regions.  This method
+        passes that information to each of the budget widgets.
+
+        Arguments:
+          n: the new maximum budget amount
+        """
+        for t in self.tabs:
+            t.set_budget_max(n)
+
+    def values(self):
+        """
+        Return the budget settings for the currently selected budget type.
+
+        Returns:
+          bmax:  the maximum budget to pass to OptiPass
+          binc:  the increment between budget values
+        """
+        return self.tabs[self.tabs.active].values()
+
+
 class BasicBudgetBox(pn.WidgetBox):
     """
     The default budget widget displays a slider that ranges from 0
@@ -100,7 +140,7 @@ class FixedBudgetBox(pn.WidgetBox):
 
     def parse_dollar_amount(self, s: str):
         """
-        Make sure the sring entered by the user has an acceptable format.
+        Make sure the string entered by the user has an acceptable format.
         It can be all digits (e.g. "1500000"), or digits separated by commas
         (e.g. "1,500,000"), or a number followed by a K or M (e.g. "1.5M").
         There can be a dollar sign at the front of the string.
@@ -217,7 +257,7 @@ class AdvancedBudgetBox(pn.WidgetBox):
     def max_updated(self, e):
         """
         Callback function invoked when the user moves the maximum budget
-        slider.  Computs a new budget increment.
+        slider.  Computes a new budget increment.
         """
         self.inc_slider.value = self.max_slider.value // self.count_input.value
 

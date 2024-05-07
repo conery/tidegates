@@ -8,13 +8,12 @@ from bokeh.io import save as savehtml
 from bokeh.models.widgets.tables import NumberFormatter
 from bokeh.tile_providers import get_provider
 import xyzservices.providers as xyz
-from bokeh.models import Range1d
 
 from shutil import make_archive, rmtree
 from pathlib import Path
 
 from .targets import DataSet, make_layout
-from .budgets import BasicBudgetBox, AdvancedBudgetBox, FixedBudgetBox
+from .budgets import BudgetBox
 from .project import Project
 from .optipass import OP
 from .messages import Logging
@@ -135,45 +134,7 @@ class TGMap():
             self.map.y_range.update(start=self.outer_y[0], end=self.outer_y[1])
         self.map.add_tile(self.tile_provider)
 
-class BudgetBox(pn.Column):
-    """
-    There are three ways users can specify the range of budget values
-    when running OptiPass.  A BudgetBox widget has one tab for each option.
-    The widgets displayed inside a tab are defined by their own classes
-    (BasicBudgetBox, AdvancedBudgetBox, and FixedBudgetBox).
-    """
 
-    def __init__(self):
-        super(BudgetBox, self).__init__()
-        self.tabs = pn.Tabs(
-            ('Basic', BasicBudgetBox()),
-            ('Advanced', AdvancedBudgetBox()),
-            ('Fixed', FixedBudgetBox()),
-        )
-        self.append(self.tabs)
-
-    def set_budget_max(self, n: int):
-        """
-        When the user selects or deselects a region the budget widgets need
-        to know the new total cost for all the selected regions.  This method
-        passes that information to each of the budget widgets.
-
-        Arguments:
-          n: the new maximum budget amount
-        """
-        for t in self.tabs:
-            t.set_budget_max(n)
-
-    def values(self):
-        """
-        Return the budget settings for the currently selected budget type.
-
-        Returns:
-          bmax:  the maximum budget to pass to OptiPass
-          binc:  the increment between budget values
-        """
-        return self.tabs[self.tabs.active].values()
- 
 class RegionBox(pn.Column):
     """
     The region box displays the names of each geographic region in the data set,
@@ -342,6 +303,12 @@ class TargetBox(pn.Column):
         return self.tabs[self.tabs.active].weights()
 
 class InfoBox(pn.Column):
+    """
+    When the user clicks the Run Optimizer button in the Start panel
+    the GUI displays a message by calling one of the methods in 
+    this class.  Messages are displayed in the modal dialog area
+    defined by the GUI template.
+    """
 
     missing_params_text = '''### Missing Information
 
@@ -371,6 +338,13 @@ Reason: {}
 '''
 
     def __init__(self, template, run_cb):
+        """
+        Initialize the module.
+
+        Arguments:
+          template:  the application template (which contains the modal dialog area to use)
+          run_cb:  a callback function to invoke after the user reviews settings and clicks "Continue"
+        """
         super(InfoBox, self).__init__()
         self.template = template
 
@@ -378,12 +352,19 @@ Reason: {}
         self.continue_button.on_click(run_cb)
 
         self.cancel_button = pn.widgets.Button(name='Cancel')
-        self.cancel_button.on_click(self.cancel_cb)
+        self.cancel_button.on_click(self._cancel_cb)
 
-    def cancel_cb(self, _):
+    def _cancel_cb(self, _):
+        """
+        Close the dialog when the user clicks the "Cancel" button.
+        """
         self.template.close_modal()
  
     def show_missing(self, rlist, bmax, tlist):
+        """
+        Method called by the OP class when it detects missing parameters (e.g.
+        if the user did not select a region or a target).
+        """
         text = self.missing_params_text
         if len(rlist) == 0:
             text += ' * one or more geographic regions\n'
@@ -395,13 +376,32 @@ Reason: {}
         self.append(pn.pane.Alert(text, alert_type = 'warning'))
         self.template.open_modal()
 
-    def show_invalid_weights(self, w):
+    def show_invalid_weights(self, w: list[str]):
+        """
+        Method called when weighted targets are being used and one of the
+        text boxes does not have a valid entry (must be a number between 1 and 5).
+
+        Arguments:
+          w: the list of strings read from the text entry widgets
+        """
         text = self.invalid_weights_text.format(w)
         self.clear()
         self.append(pn.pane.Alert(text, alert_type = 'warning'))
         self.template.open_modal()
         
     def show_params(self, regions, bmax, bstep, targets, weights, climate):
+        """
+        Method called to allow the user to review the optimization parameters read from the
+        various widgets.  Displays each parameter and two buttons ("Cancel" and "Continue").
+
+        Arguments:
+          regions:  list of region names
+          bmax:  maximum budget amount
+          bstep:  incremwnt in budget amounts
+          targets:  list of restoration target names
+          weights:  list of target weights
+          climate:  climate scenario
+        """
         n = bmax // bstep
         fbmax = OP.format_budget_amount(bmax)
         fbstep = OP.format_budget_amount(bstep)
@@ -422,11 +422,21 @@ Reason: {}
         self.template.open_modal()
 
     def show_success(self):
+        """
+        Method called after OptiPass has finished running and the results have been
+        parsed successfully.
+        """
         self.clear()
         self.append(pn.pane.Alert(self.success_text, alert_type = 'success'))
         self.template.open_modal()
 
     def show_fail(self, reason):
+        """
+        Method called if OptiPass failed.
+
+        Arguments:
+          reason:  string containing the error message
+        """
         self.clear()
         text = self.fail_text.format(reason)
         if str(reason) == 'No solution':
@@ -434,12 +444,26 @@ Reason: {}
         self.append(pn.pane.Alert(text, alert_type = 'danger'))
         self.template.open_modal()
 
-# Create an instance of the OutputPane class to store the tables and plots to
-# show after running the optimizer
 
 class OutputPane(pn.Column):
+    """
+    After OptiPass has completed the last optimization run the GUI creates
+    an instance of this class and saves it in the Output tab of the top 
+    level display.
+    """
 
     def __init__(self, op, bf):
+        """
+        Use the optimization parameters (region names, target names, budget
+        levels) and barrier data to format the output from OptiPass.  
+        The first part of the panel has a set of ROI curves
+        (displayed in a tab widget showing one figure at a time), the second
+        part has tables showing data about barriers included in solutions.
+
+        Arguments:
+          op:  the main TideGatesApp object containing the optimization parameters
+          bf:  the Project object that has barrier data
+        """
         super(OutputPane, self).__init__()
         self.op = op
         self.bf = bf
@@ -464,6 +488,9 @@ class OutputPane(pn.Column):
             ))
 
     def _make_title(self):
+        """
+        The top section of the output pane is a title showing the optimization parameters.
+        """
         regions = self.op.regions
         targets = [t.short for t in self.op.targets]
         if self.op.weighted:
@@ -489,6 +516,9 @@ class OutputPane(pn.Column):
             ))
             
     def _make_figures_tab(self):
+        """
+        Create a Tabs object with one tab for each ROI curve.
+        """
         tabs = pn.Tabs(
             tabs_location='left',
             stylesheets = [tab_style_sheet],
@@ -499,6 +529,13 @@ class OutputPane(pn.Column):
         return tabs
     
     def _make_budget_table(self):
+        """
+        Display a table that has one column for each budget level, showing
+        which barriers were included in the solution for that level.  Attach
+        a callback function that is called when the user clicks on a row
+        in the table (the callback updates the map to show gates used in a
+        solution).
+        """
         df = self.op.summary[['budget','habitat', 'gates']]
         colnames = ['Budget', 'Net Gain', 'gates']
         formatters = { 
@@ -540,6 +577,9 @@ class OutputPane(pn.Column):
         return table
 
     def _make_gate_table(self):
+        """
+        Make a table showing details about gates used in solutions.
+        """
         formatters = { }
         alignment = { }
         df = self.op.table_view()
@@ -586,6 +626,10 @@ class OutputPane(pn.Column):
         return table
     
     def make_dots(self, plot):
+        """
+        Called after the output panel is initialized, make a set of glyphs to display
+        for each budget level.
+        """
         if hasattr(self, 'budget_table'):
             self.selected_row = None
             self.dots = []
@@ -599,17 +643,31 @@ class OutputPane(pn.Column):
                 self.dots.append(c)
 
     def budget_table_cb(self, e):
+        """
+        The callback function invoked when the user clicks a row in the budget table.
+        Use the event to figure out which row was clicked.  Hide any dots that were displayed
+        previously, then make the dots for the selected row visible.
+        """
         if n := self.selected_row:
             self.dots[n].visible = False
         self.selected_row = e.row
         self.dots[self.selected_row].visible = True
 
     def hide_dots(self):
+        """
+        Callback function invoked when users click on a region name in the start panel to hide
+        any dots that might be on the map.
+        """
         if self.selected_row:
             self.dots[self.selected_row].visible = False
         self.selected_row = None
 
 class DownloadPane(pn.Column):
+    """
+    After OptiPass has completed the last optimization run the GUI creates
+    an instance of this class and saves it in the Download tab of the top 
+    level display.
+    """
 
     NB = 'Net benefit plot'
     IT = 'Individual target plots'
@@ -617,6 +675,19 @@ class DownloadPane(pn.Column):
     BD = 'Barrier detail table'
 
     def __init__(self, outputs):
+        """
+        Display a set of checkboxes for the user to select what sort of data to
+        include in a zip file.  If the gate table is not empty enable table downloads.
+        Check the output panel to see which plots were created and to enable the
+        net benefit plot if there is one.
+
+        The pane also has a form to allow the user to enter the name of the download
+        file, the format for the figures, and a button to click when they are ready
+        to download the data.
+
+        Arguments:
+          outputs:  the OutputPane object containing data tables and plots
+        """
         super(DownloadPane, self).__init__()
         self.outputs = outputs
         self.folder_name = self._make_folder_name()
@@ -672,6 +743,9 @@ class DownloadPane(pn.Column):
             self.boxes[self.IT].disabled = False
 
     def _make_folder_name(self):
+        """
+        Use the region names, target names, and budget range to create the default name of the zip file.
+        """
         parts = [s[:3] for s in self.outputs.op.regions]
         lst = [t.abbrev for t in self.outputs.op.targets]
         if self.outputs.op.weighted:
@@ -683,6 +757,11 @@ class DownloadPane(pn.Column):
         return '_'.join(parts)
 
     def _archive_cb(self, e):
+        """
+        Function called when the user clicks the Download button.  Create the output
+        folder and compress it.  When the archive is ready, display a FileDownload
+        widget with a button that starts the download.
+        """
         if not any([x.value for x in self.boxes.values()]):
             return
         self.loading = True
@@ -693,6 +772,9 @@ class DownloadPane(pn.Column):
         self[-1] = pn.widgets.FileDownload(file=p, filename=self.filename+'.zip', stylesheets=[button_style_sheet])
 
     def _make_archive_dir(self):
+        """
+        Create an empty directory for the download, using the name in the form.
+        """
         self.filename = self.filename_input.value_input or self.filename_input.value
         archive_dir = Path.cwd() / 'tmp' / self.filename
         if Path.exists(archive_dir):
@@ -701,6 +783,12 @@ class DownloadPane(pn.Column):
         return archive_dir
 
     def _save_files(self, loc):
+        """
+        Write the tables and figures to the download directory.
+
+        Arguments:
+          loc:  the path to the directory.
+        """
         figures = self.outputs.op.display_figures if self.image_type.value == 'HTML' else self.outputs.op.download_figures
         for name, fig in figures:
             if name == 'Net' and not self.boxes[self.NB].value:
@@ -727,10 +815,33 @@ class DownloadPane(pn.Column):
                 float_format=lambda n: round(n,2)
             )
 
-class TideGates(pn.template.BootstrapTemplate):
+class TideGatesApp(pn.template.BootstrapTemplate):
+    """
+    The web application is based on the Bootstrap template provided by Panel.
+    It displays a map (an instance of the TGMap class) in the sidebar.  The main content
+    area has a Tabs widget with five tabs: a welcome message, a help page, the main page
+    (described below) and two tabs for displaying outputs.
+
+    The application also displays several small help buttons next to the main widgets.
+    Clicking one of these buttons brings up a floating window with information about
+    the widget.
+
+    The main tab (labeled "Start") displays the widgets that allow the user to specify
+    optimization parameters:  region names, budget levels, and restoration targets.  It
+    also has a Run button.  When the user clicks this button the callback function makes
+    sure the necessary parameters have been defined and then uses the template's modal
+    dialog area.  Clicking the "OK" button in that dialog invokes another callback, 
+    defined here, that runs the optimizer.
+    """
 
     def __init__(self, **params):
-        super(TideGates, self).__init__(**params)
+        """
+        Initialize the application.
+
+        Arguments:
+          params:  runtime options passed to the parent class constructor
+        """
+        super(TideGatesApp, self).__init__(**params)
 
         self.bf = Project('static/workbook.csv', DataSet.TNC_OR)
 
@@ -774,22 +885,17 @@ class TideGates(pn.template.BootstrapTemplate):
         )
 
         start_tab = pn.Column(
-            # pn.Row(self.info),
             self.section_head('Geographic Regions', self.region_help_button),
             pn.WidgetBox(self.region_boxes, width=600),
 
-            # pn.layout.VSpacer(height=5),
             self.section_head('Budget', self.budget_help_button),
             self.budget_box,
 
-            # pn.layout.VSpacer(height=5),
             self.section_head('Targets', self.target_help_button),
             pn.WidgetBox(
                 pn.Row(
                     self.target_boxes,
-                    # pn.layout.HSpacer(width=10),
                     pn.Column(
-                        # pn.Row(self.climate_help_button,pn.widgets.StaticText(value='<b>Climate Scenario</b>')),
                         self.section_head('Climate', self.climate_help_button),
                         self.climate_group, 
                         margin=(0,0,0,20),
@@ -830,10 +936,16 @@ class TideGates(pn.template.BootstrapTemplate):
         self.optimize_button.on_click(self.validate_settings)
 
     def section_head(self, s, b = None):
+        """
+        Create an HTML header for one of the sections in the Start tab.
+        """
         header = pn.pane.HTML(f'<h3>{s}</h3>', styles=header_styles)
         return header if b is None else pn.Row(header, b)
 
     def validate_settings(self, _):
+        """
+        Callback function invoked when the user clicks the Run Optimizer button.
+        """
         regions = self.region_boxes.selection()
         budget_max, budget_delta = self.budget_box.values()
         targets = self.target_boxes.selection()
@@ -850,6 +962,14 @@ class TideGates(pn.template.BootstrapTemplate):
         self.info.show_params(regions, budget_max, budget_delta, targets, weights, self.climate_group.value)
 
     def run_optimizer(self, _):
+        """
+        Callback function invoked when the user clicks the Continue button after verifying
+        the parameter options.
+
+        Use the settings in the budget widgets to figure out the sequence of budget levels
+        to use.  Instantiate an OP object with the budget settings and values from the
+        other parameter widgets, then use that widget to run OptiPass.
+        """
         Logging.log('running optimizer')
 
         self.close_modal()
@@ -885,10 +1005,16 @@ class TideGates(pn.template.BootstrapTemplate):
             print(err)
             self.info.show_fail(err)
 
-    # After running OptiPass call this method to add a tab to the main
-    # panel to show the results.
 
     def add_output_pane(self, op=None):
+        """
+        After running OptiPass call this method to add tabs to the main
+        panel to show the results.
+
+        Arguments:
+          op:  an optional Project object used by integration tests (if no argument
+               is passed use the Project option defined for the application)
+        """
         op = op or self.op
 
         output = OutputPane(op, self.bf)
@@ -900,6 +1026,9 @@ class TideGates(pn.template.BootstrapTemplate):
         self.tabs[4] = ('Download', DownloadPane(output))
 
     def map_help_cb(self, _):
+        """
+        Callback function for the help button next to the map in the sidebar.
+        """
         msg = pn.pane.HTML('''
         <p>When you move your mouse over the map the cursor will change to a "crosshairs" symbol and a set of buttons will appear below the map.
         Navigating with the map is similar to using Google maps or other online maps:</p>
@@ -912,6 +1041,9 @@ class TideGates(pn.template.BootstrapTemplate):
         self.tabs[0].append(pn.layout.FloatPanel(msg, name='Map Controls', contained=False, position='center', width=400))
     
     def region_help_cb(self, _):
+        """
+        Callback function for the help button next to the region box widget in the start tab.
+        """
         msg = pn.pane.HTML('''
         <p>Select a region by clicking in the box to the left of an estuary name.</p>
         <p>Each time you click in a box the map will be updated to show the positions of the barriers that are in our database for the estuary.</p>
@@ -920,6 +1052,9 @@ class TideGates(pn.template.BootstrapTemplate):
         self.tabs[2].append(pn.layout.FloatPanel(msg, name='Geographic Regions', contained=False, position='center', width=400))
     
     def budget_help_cb(self, _):
+        """
+        Callback function for the help button next to the budget box widget in the start tab.
+        """
         msg = pn.pane.HTML('''
         <p>There are three ways to specify the budgets used by the optimizer.</p>
         <H4>Basic</H4>
@@ -938,6 +1073,9 @@ class TideGates(pn.template.BootstrapTemplate):
         self.tabs[2].append(pn.layout.FloatPanel(msg, name='Budget Levels', contained=False, position='center', width=400))
     
     def target_help_cb(self, _):
+        """
+        Callback function for the help button next to the target box widget in the start tab.
+        """
         msg = pn.pane.HTML('''
         <p>Click boxes next to one or more target names to have the optimizer include those targets in its calculations.</p>
         <p>The optimizer will create an ROI curve for each target selected. </p>
@@ -946,6 +1084,9 @@ class TideGates(pn.template.BootstrapTemplate):
         self.tabs[2].append(pn.layout.FloatPanel(msg, name='Targets', contained=False, position='center', width=400))
     
     def climate_help_cb(self, _):
+        """
+        Callback function for the help button next to the climate scenario checkbox in the start tab.
+        """
         msg = pn.pane.HTML('''
         <p>By default the optimizer uses current water levels when computing potential benefits.  Click the button next to <b>Future</b> to have it use water levels expected due to climate change.</p>
         <p>The future scenario uses two projected water levels, both for the period to 2100. For fish habitat targets, the future water level is based on projected sea level rise of 5.0 feet.  For agriculture and infrastructure targets, the future water level is projected to be 7.2 feet, which includes sea level rise and the probabilities of extreme water levels causing flooding events.</p>

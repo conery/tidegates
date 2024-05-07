@@ -12,8 +12,9 @@ class Project:
     A Project object has all the information used by the GUI to display
     a set of tide gates.  The constructor is passed the name of a CSV file
     that has a list of all the barriers and the ID of one of the data sets
-    (currently either OPM or TNC_OR).  The data in the CSV file use used
-    to initialize the attributes.
+    (currently either OPM or TNC_OR).  The data in the CSV file and the
+    target descriptions returned by the make_targets function in the targets
+    module are used to initialize the attributes of the Project object.
 
     Attributes:
       data: a copy of the original data, in the form of a Pandas data frame
