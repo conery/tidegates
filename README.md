@@ -4,7 +4,7 @@ The code in this repository is a web interface to the Tide Gate Optimization Too
 
 ## Documentation
 
-The complete documentation is at [](https://conery.github.io/tidegates/).  That site has
+The complete documentation is at [https://conery.github.io/tidegates](https://conery.github.io/tidegates).  That site has
 * instructions on how to use the app
 * installation and configuration instructions for administrators who want to run the app
 * technical documentation of the source code
