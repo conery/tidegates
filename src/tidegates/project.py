@@ -18,7 +18,7 @@ class Project:
 
     Attributes:
       data: a copy of the original data, in the form of a Pandas data frame
-      map_info:  a table containging geographical coordinates of the gates
+      map_info:  a table containing geographical coordinates of the gates
       regions:  a list of the unique region names in the file
       climates:  a list of climate scenarios
       targets:   a dictionary of restoration target attributes for each climate scenario
